@@ -58,16 +58,37 @@ SRS Q5 已定；行政区按深圳 10 区建模（福田/罗湖/南山/盐田/�
 - MySQL 8.0 运行中；Docker Desktop **未运行**
 - npm 走 npmmirror + 本地代理 127.0.0.1:7892
 
+## 前端进度（M3 提前完成）
+
+**状态：可演示的完整前端已上线（数据用真实 OSM 种子 + 本地 mock API）**
+
+| 页面 | 路由 | 能力 |
+| --- | --- | --- |
+| 地图查询 | `/` | Leaflet + OSM 瓦片（灰度滤镜）、视口内渲染、图层切换、框选、点击弹窗、详情侧栏、周边 1km 银行 |
+| 列表查询 | `/list` | 区域/类型/价格/年份筛选、排序、分页、详情抽屉、纠错入口 |
+| 数据洞察 | `/stats` | 数量卡片、银行品牌 Top8、小区均价分布、2km 网格密度 Top6 |
+| 数据说明 | `/compliance` | 三级授权模型、来源清单、不采集清单、免责声明 |
+| 404 | 任意 | 兜底页 |
+
+**设计语言**：白底（`#f5f6f8` 画布 / `#fff` 卡片）、`rounded-card(16px)`、双层柔和阴影（`shadow-card` / `shadow-float`）、主色蓝 `#2563eb` + 小区琥珀 `#f59e0b`。
+
+**数据**：`public/data/pois.json`（394 KB），来自 OSM Overpass 实拉：339 银行/ATM + 1287 住宅面，过滤「29栋」类噪音并按名称去重。小区均价/年份为名称哈希生成的稳定演示值，标注「演示属性」。
+
+**验证**：`pnpm build` 通过；单测 17/17；E2E 10/10（Chromium + Pixel 5）。
+
 ## 已知坑
 
-- pnpm 必须 `nodeLinker: hoisted`；Tailwind v4 走 postcss；Element Plus CSS 要 `layer(base)`；TS 锁 5.9
+- pnpm 必须 `nodeLinker: hoisted`；Tailwind v4 走 postcss；TS 锁 5.9（EP CSS 已从全局移除，后续做后台再接）
 - VitePress 构建前必须清 `dist`（已内置 `docs:clean`）
-- 子代理给的 License/条款结论必须自己核验（已抓到 2 次错误：一次 License、一次把 API 当成可入库源）
+- 子代理给的 License/条款结论必须自己核验（已抓到 2 次错误）
+- **地图坑**：CARTO 瓦片现在要 API Key（会盖水印），已换 OSM 标准瓦片 + CSS 灰度滤镜
+- **Prettier 坑**：多语句内联事件（`@click="a=1; b()"`）会被拆行导致 Vue 编译失败，必须用具名方法
+- Overpass 必须带自定义 User-Agent，否则 406；主站常 502，脚本已配 3 个镜像
 
-## 下一步（M1 设计）
+## 下一步
 
-1. 确认 Q1-Q4/Q6/Q7。
-2. ~~实测 OSM 覆盖~~ ✅ 已完成：深圳福田+罗湖 78 km² 内银行/ATM 182、住宅面 792（脚本 `scripts/probe-osm.mjs`，可加 bbox 参数复用）。
-3. 出 C4 容器图 + ER 图（12 张表）+ OpenAPI 契约。
-4. 写 ADR：后端 / DB / 地图 / 数据源授权 / 部署。
-5. 派子代理做设计评审。
+1. ~~前端~~ ✅ 完成
+2. 后端：Spring Boot 3 + MySQL 8 + MyBatis-Plus（Q1/Q2 已确认）
+3. 把前端 `src/api/pois.ts` 的 mock 换成真实 `/api/v1/*` 调用（接口契约待定）
+4. 运营后台：反馈审核队列、抓取任务、热点重算（复用 Element Plus 表格）
+5. 出 ER 图 + OpenAPI + ADR，再派子代理做设计评审

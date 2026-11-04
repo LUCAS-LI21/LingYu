@@ -1,34 +1,60 @@
 import { expect, test } from '@playwright/test'
 
-test.describe('核心链路', () => {
-  test('首页展示六大阶段', async ({ page }) => {
+/** 读取隐藏计数器里的命中数（桌面与移动布局通用） */
+async function readCount(page: import('@playwright/test').Page): Promise<number> {
+  const text = await page.getByTestId('result-count').textContent()
+  return Number((text ?? '').replace(/[^\d]/g, ''))
+}
+
+test.describe('邻域 POI 主流程', () => {
+  test('地图页加载真实 POI 并展示结果', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByRole('heading', { name: /网站开发六阶段/ })).toBeVisible()
-    for (const phase of ['需求分析', '设计', '实现', '测试', '部署', '业务闭环']) {
-      await expect(page.getByText(phase, { exact: true }).first()).toBeVisible()
-    }
+    await expect.poll(() => readCount(page), { timeout: 25_000 }).toBeGreaterThan(100)
+    await expect(page.locator('[data-testid="poi-card"]:visible').first()).toBeVisible()
   })
 
-  test('任务看板可新增并推进任务', async ({ page }) => {
-    await page.goto('/board')
+  test('搜索可缩小结果集', async ({ page }) => {
+    await page.goto('/')
+    await expect.poll(() => readCount(page), { timeout: 25_000 }).toBeGreaterThan(100)
+    const before = await readCount(page)
 
-    const input = page.getByPlaceholder('写下一个待办，例如：补齐登录页 E2E')
-    await input.fill('补齐登录页 E2E')
-    await page.getByRole('button', { name: '添加任务' }).click()
-
-    const row = page.locator('li', { hasText: '补齐登录页 E2E' })
-    await expect(row).toBeVisible()
-    await expect(row.getByText('待开始')).toBeVisible()
-
-    await row.getByRole('button', { name: '推进' }).click()
-    await expect(row.getByText('进行中')).toBeVisible()
+    await page.getByPlaceholder('搜索网点 / 小区名称').fill('招商')
+    await expect.poll(() => readCount(page), { timeout: 10_000 }).toBeGreaterThan(0)
+    expect(await readCount(page)).toBeLessThan(before)
   })
 
-  test('未知路由落到 404 页', async ({ page }) => {
-    await page.goto('/not-exist-page')
+  test('列表页可按均价排序并打开详情', async ({ page }) => {
+    await page.goto('/list')
+    await expect(page.getByTestId('poi-card').first()).toBeVisible({ timeout: 20_000 })
 
-    await expect(page.getByText('404')).toBeVisible()
-    await expect(page.getByRole('heading', { name: /这个页面还没被设计出来/ })).toBeVisible()
+    await page.locator('select').first().selectOption('priceDesc')
+    await page.getByTestId('poi-card').first().click()
+
+    await expect(page.getByText('数据来源')).toBeVisible()
+  })
+
+  test('提交纠错反馈得到受理编号', async ({ page }) => {
+    await page.goto('/list')
+    await expect(page.getByTestId('poi-card').first()).toBeVisible({ timeout: 20_000 })
+    await page.getByTestId('poi-card').first().click()
+
+    await page.getByRole('button', { name: '提交纠错' }).click()
+    await page.locator('select').last().selectOption({ index: 1 })
+    await page
+      .getByPlaceholder('请描述你看到的情况，例如：该网点已搬迁至对面')
+      .fill('E2E 回归：该网点已搬迁')
+    await page.getByRole('button', { name: '提交反馈' }).click()
+
+    await expect(page.getByText(/反馈已提交：FB/)).toBeVisible({ timeout: 10_000 })
+  })
+
+  test('数据说明页展示三级授权模型', async ({ page }) => {
+    await page.goto('/compliance')
+
+    await expect(page.getByRole('heading', { name: '数据来源与合规声明' })).toBeVisible()
+    await expect(page.getByText('L1 可入库').first()).toBeVisible()
+    await expect(page.getByText('L2 仅展示').first()).toBeVisible()
+    await expect(page.getByText('L3 禁用').first()).toBeVisible()
   })
 })

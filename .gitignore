@@ -22,3 +22,6 @@ docs/.vitepress/cache
 stats.html
 .env.local
 .env.*.local
+
+# 本地截图产物
+shot-*.png

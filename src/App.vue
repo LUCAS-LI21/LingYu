@@ -1,66 +1,76 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
+
+import ToastHost from '@/components/ToastHost.vue'
 
 const route = useRoute()
 
 const navItems = [
-  { name: 'home', label: '总览', path: '/' },
-  { name: 'board', label: '任务看板', path: '/board' },
+  { name: 'map', label: '地图', path: '/' },
+  { name: 'list', label: '列表', path: '/list' },
+  { name: 'stats', label: '洞察', path: '/stats' },
+  { name: 'compliance', label: '数据说明', path: '/compliance' },
 ]
 
-const activeName = computed(() => String(route.name ?? 'home'))
-const buildStamp = `${__APP_VERSION__} · ${new Date(__BUILD_TIME__).toLocaleDateString('zh-CN')}`
+const activeName = computed(() => String(route.name ?? 'map'))
+const version = __APP_VERSION__
 </script>
 
 <template>
-  <el-config-provider :locale="zhCn">
-    <div class="flex min-h-screen flex-col">
-      <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur">
-        <div class="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-          <RouterLink to="/" class="flex items-center gap-2 text-base font-semibold text-slate-900">
-            <span
-              class="grid h-7 w-7 place-items-center rounded-lg bg-brand-500 text-sm font-bold text-white"
-            >
-              B
-            </span>
-            BISAI Agent
+  <div class="flex min-h-screen flex-col">
+    <header class="sticky top-0 z-[1100] h-14 border-b border-line bg-surface/90 backdrop-blur">
+      <div class="mx-auto flex h-full max-w-[1440px] items-center gap-5 px-4">
+        <RouterLink to="/" class="flex shrink-0 items-center gap-2">
+          <span
+            class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-[13px] font-bold text-white shadow-card"
+          >
+            邻
+          </span>
+          <span class="text-sm font-semibold tracking-tight text-ink-900">邻域 POI</span>
+          <span
+            class="hidden rounded-md bg-surface-soft px-1.5 py-0.5 text-[10px] text-ink-400 sm:inline"
+          >
+            深圳
+          </span>
+        </RouterLink>
+
+        <nav class="flex items-center gap-1">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.name"
+            :to="item.path"
+            class="rounded-lg px-3 py-1.5 text-[13px] transition"
+            :class="
+              activeName === item.name
+                ? 'bg-brand-50 font-medium text-brand-600'
+                : 'text-ink-500 hover:bg-surface-soft hover:text-ink-900'
+            "
+          >
+            {{ item.label }}
           </RouterLink>
-          <nav class="flex items-center gap-1">
-            <RouterLink
-              v-for="item in navItems"
-              :key="item.name"
-              :to="item.path"
-              class="rounded-lg px-3 py-1.5 text-sm transition"
-              :class="
-                activeName === item.name
-                  ? 'bg-brand-50 font-medium text-brand-700'
-                  : 'text-slate-600 hover:bg-slate-100'
-              "
-            >
-              {{ item.label }}
-            </RouterLink>
-          </nav>
-        </div>
-      </header>
+        </nav>
 
-      <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <RouterView v-slot="{ Component }">
-          <Transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </Transition>
-        </RouterView>
-      </main>
-
-      <footer class="border-t border-slate-200 bg-white">
-        <div
-          class="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>BISAI Agent · 全流程工程骨架</span>
-          <span>构建 {{ buildStamp }}</span>
+        <div class="ml-auto flex items-center gap-3">
+          <span
+            class="hidden items-center gap-1.5 rounded-full border border-mint-500/20 bg-mint-50 px-2.5 py-1 text-[11px] text-mint-600 sm:flex"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-mint-500" />
+            数据合规
+          </span>
+          <span class="text-[11px] text-ink-400">v{{ version }}</span>
         </div>
-      </footer>
-    </div>
-  </el-config-provider>
+      </div>
+    </header>
+
+    <main class="flex-1">
+      <RouterView v-slot="{ Component }">
+        <Transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
+    </main>
+
+    <ToastHost />
+  </div>
 </template>

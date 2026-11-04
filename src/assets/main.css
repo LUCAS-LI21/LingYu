@@ -1,35 +1,240 @@
 @import 'tailwindcss';
-/* Element Plus 样式必须放进 base 层：
-   Tailwind v4 的 utilities 在 @layer 中，未分层的库样式会反过来压住工具类 */
-@import 'element-plus/dist/index.css' layer(base);
+/* Leaflet 基础样式放进 base 层，保证 Tailwind utilities 能覆盖它 */
+@import 'leaflet/dist/leaflet.css' layer(base);
 
 @theme {
-  --color-brand-50: #eefbf4;
-  --color-brand-100: #d6f5e3;
-  --color-brand-500: #42b883;
-  --color-brand-600: #369d6f;
-  --color-brand-700: #2b7d58;
+  /* 画布与表面 */
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-soft: #fafbfc;
+  --color-line: #e8ecf2;
+  --color-line-strong: #dbe2ec;
+
+  /* 文本 */
+  --color-ink-900: #0f172a;
+  --color-ink-700: #334155;
+  --color-ink-500: #64748b;
+  --color-ink-400: #94a3b8;
+
+  /* 品牌（蓝，金融感）+ 小区（琥珀） */
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dce7fe;
+  --color-brand-500: #2563eb;
+  --color-brand-600: #1d4ed8;
+  --color-amber-50: #fff8ed;
+  --color-amber-100: #ffeed6;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-mint-50: #ecfdf5;
+  --color-mint-500: #10b981;
+  --color-mint-600: #059669;
+
+  /* 阴影：克制的双层，边缘有形但不脏 */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -18px rgba(15, 23, 42, 0.28);
+  --shadow-float: 0 2px 6px rgba(15, 23, 42, 0.05), 0 18px 48px -24px rgba(15, 23, 42, 0.32);
+  --shadow-pop: 0 12px 40px -12px rgba(15, 23, 42, 0.28);
+
+  --radius-card: 16px;
+  --radius-soft: 12px;
 }
 
-html,
-body,
-#app {
-  height: 100%;
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+      'Microsoft YaHei', sans-serif;
+  }
+
+  ::selection {
+    background: var(--color-brand-100);
+  }
+
+  /* 细滚动条，避免破坏白净感 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d7dde6 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #d7dde6;
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
-body {
-  @apply bg-slate-50 text-slate-800 antialiased;
-}
-
+/* ---------------- 页面过渡 ---------------- */
 .fade-enter-active,
 .fade-leave-active {
   transition:
     opacity 0.18s ease,
     transform 0.18s ease;
 }
-
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(4px);
+}
+
+/* ---------------- Leaflet 定制 ---------------- */
+/* 底图去饱和：OSM 原生瓦片偏彩色，用滤镜压成浅灰，贴合白净的界面风格 */
+.leaflet-tile-pane {
+  filter: grayscale(1) brightness(1.08) contrast(0.82);
+  opacity: 0.88;
+}
+
+.leaflet-container {
+  background: #eef1f6;
+  font-family: inherit;
+  outline: none;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-radius: 6px 0 0 0;
+  font-size: 10px;
+  color: var(--color-ink-400);
+  padding: 2px 6px;
+}
+.leaflet-control-attribution a {
+  color: var(--color-ink-500);
+}
+
+.leaflet-bar,
+.leaflet-control-zoom {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--shadow-card) !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  background: #fff !important;
+  color: var(--color-ink-700) !important;
+  border-bottom-color: var(--color-line) !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+}
+.leaflet-control-zoom a:hover {
+  background: var(--color-surface-soft) !important;
+}
+
+/* 标记点 */
+.poi-pin {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid #fff;
+  box-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.24),
+    0 6px 14px -6px rgba(15, 23, 42, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.poi-pin::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.poi-pin--bank::after {
+  background: var(--color-brand-500);
+}
+.poi-pin--community::after {
+  background: var(--color-amber-500);
+}
+.poi-pin.is-active {
+  transform: scale(1.22);
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.16),
+    0 8px 20px -6px rgba(15, 23, 42, 0.4);
+}
+.poi-pin--community.is-active {
+  box-shadow:
+    0 0 0 4px rgba(245, 158, 11, 0.18),
+    0 8px 20px -6px rgba(15, 23, 42, 0.4);
+}
+
+/* 弹窗 */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--color-line);
+  padding: 0;
+}
+.leaflet-popup-content {
+  margin: 0;
+  width: 228px !important;
+  line-height: 1.5;
+}
+.leaflet-popup-tip {
+  box-shadow: none;
+  border: 1px solid var(--color-line);
+}
+.leaflet-popup-close-button {
+  color: var(--color-ink-400) !important;
+  padding: 8px 8px 0 0 !important;
+}
+
+.poi-popup {
+  padding: 14px 14px 12px;
+}
+.poi-popup__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink-900);
+  padding-right: 14px;
+}
+.poi-popup__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-ink-500);
+  word-break: break-all;
+}
+.poi-popup__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.poi-popup__btn {
+  flex: 1;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid var(--color-line-strong);
+  background: #fff;
+  color: var(--color-ink-700);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.poi-popup__btn:hover {
+  border-color: var(--color-brand-500);
+  color: var(--color-brand-600);
+}
+.poi-popup__btn--primary {
+  background: var(--color-brand-500);
+  border-color: var(--color-brand-500);
+  color: #fff;
+}
+.poi-popup__btn--primary:hover {
+  background: var(--color-brand-600);
+  color: #fff;
 }

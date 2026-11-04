@@ -8,15 +8,27 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('@/views/HomeView.vue'),
-      meta: { title: '总览' },
+      name: 'map',
+      component: () => import('@/views/MapView.vue'),
+      meta: { title: '地图查询' },
     },
     {
-      path: '/board',
-      name: 'board',
-      component: () => import('@/views/BoardView.vue'),
-      meta: { title: '任务看板' },
+      path: '/list',
+      name: 'list',
+      component: () => import('@/views/ListView.vue'),
+      meta: { title: '列表查询' },
+    },
+    {
+      path: '/stats',
+      name: 'stats',
+      component: () => import('@/views/StatsView.vue'),
+      meta: { title: '数据洞察' },
+    },
+    {
+      path: '/compliance',
+      name: 'compliance',
+      component: () => import('@/views/ComplianceView.vue'),
+      meta: { title: '数据说明' },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -36,7 +48,7 @@ router.afterEach((to, from, failure) => {
     })
   }
   const title = to.meta.title
-  document.title = typeof title === 'string' ? `${title} · BISAI Agent` : 'BISAI Agent'
+  document.title = typeof title === 'string' ? `${title} · 邻域 POI` : '邻域 POI'
 })
 
 export default router
