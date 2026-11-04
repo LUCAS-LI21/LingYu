@@ -2,19 +2,35 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: 'BISAI Agent',
-  description: '网站开发全流程工程手册',
+  title: '邻域 POI 情报系统',
+  description: '银行/小区 POI 采集与查询系统 · 工程手册',
   cleanUrls: true,
   lastUpdated: false,
   themeConfig: {
     nav: [
       { text: '总览', link: '/' },
-      { text: '六阶段', link: '/01-需求分析' },
+      { text: '项目需求', link: '/requirements/01-SRS' },
+      { text: '六阶段方法', link: '/01-需求分析' },
       { text: '命令速查', link: '/07-命令速查' },
     ],
     sidebar: [
       {
-        text: '全流程',
+        text: '项目需求（M0）',
+        items: [
+          { text: '① 需求规格说明书', link: '/requirements/01-SRS' },
+          { text: '② 数据字典', link: '/requirements/02-数据字典' },
+          { text: '③ 合规与数据来源', link: '/requirements/03-合规与数据来源' },
+        ],
+      },
+      {
+        text: '调研与核查',
+        items: [
+          { text: '开源选型调研', link: '/research/poi-开源选型调研' },
+          { text: '核查记录', link: '/research/verification-log' },
+        ],
+      },
+      {
+        text: '全流程方法',
         items: [
           { text: '① 需求分析', link: '/01-需求分析' },
           { text: '② 设计', link: '/02-设计' },
@@ -35,7 +51,7 @@ export default defineConfig({
     returnToTopLabel: '回到顶部',
     sidebarMenuLabel: '菜单',
     footer: {
-      message: '基于 Vue 3 + Vite + TypeScript 的全流程工程骨架',
+      message: '邻域 POI 情报系统 · 需求驱动 · 数据闭环',
       copyright: '© 2026 BISAI Agent',
     },
   },

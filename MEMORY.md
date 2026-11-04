@@ -1,53 +1,73 @@
 # MEMORY.md — 项目状态快照
 
 > 每次会话结束前更新；新会话开始先读这里，避免上下文丢失。
-> 最后更新：2026-11-05
+> 最后更新：2026-11-05（M0 收尾）
 
 ## 当前阶段
 
-**M0 需求分析 —— 进行中**
+**M0 需求分析 —— 已完成，待你拍板 Q1-Q7 后进 M1 设计**
 
-已完成：
-- 子代理调研：Agent Skill 标准格式（已核验 agentskills.io）、软件工程六阶段方法论
-- 需求规格：`docs/requirements/01-SRS.md`（含 6 条用例、41 条 FR、12 条 NFR、3 条闭环链路）
-- 数据字典草案：`docs/requirements/02-数据字典.md`
-- 合规说明：`docs/requirements/03-合规与数据来源.md`
-- Skill 体系：`skills/`（7 个技能 + 索引）
-- Git 仓库初始化，首提交 `b1bc5d5`
+### 已完成
 
-进行中：
-- 子代理 A：GitHub 同类开源项目调研（待回收 → 核验 → 写入 `docs/research/`）
+| 产物           | 位置                                     | 状态                                    |
+| -------------- | ---------------------------------------- | --------------------------------------- |
+| 需求规格说明书 | `docs/requirements/01-SRS.md`            | v0.2，经独立子代理对抗评审后修订        |
+| 数据字典       | `docs/requirements/02-数据字典.md`       | 11 张表，含 `geo_region` / `ingest_log` |
+| 合规说明       | `docs/requirements/03-合规与数据来源.md` | 来源分级 A/B/C/D + 检查清单             |
+| 开源选型调研   | `docs/research/poi-开源选型调研.md`      | 含主代理复核记录                        |
+| 核查记录       | `docs/research/verification-log.md`      | 8 条已核验、3 条待核验                  |
+| Skill 体系     | `skills/`                                | 7 个技能（六阶段 + 核查）               |
+| Git            | 仓库根                                   | 3 次提交，`main` 分支                   |
 
-## 待决问题（阻塞设计阶段）
+### 评审结论（v0.1 → v0.2）
 
-| 编号 | 问题 | 建议 | 状态 |
-| --- | --- | --- | --- |
-| Q1 | 后端栈 | Spring Boot 3 + Java 17 + MyBatis-Plus | 待确认 |
-| Q2 | 数据库 | MySQL 8（本机已有，免 Docker） | 待确认 |
-| Q3 | 地图方案 | Leaflet + 开源瓦片（免 Key），高德 JS 作增强 | 待确认 |
-| Q4 | 数据来源 | 高德 API + 种子数据双轨 | 待确认 |
-| Q5 | 目标城市 | 杭州 | 待确认 |
-| Q6 | 用户体系 | 仅内置账号，不开放注册 | 待确认 |
-| Q7 | 演示环境 | 本机 / 服务器 | 待确认 |
+独立子代理按赛题原文核对，提 14 条问题（5 个 P0），主代理裁决：**13 条采纳、1 条部分采纳（审计日志保留）**。
+最大三个修正：
+
+1. 补 §7.4 字段—来源矩阵——回答"小区均价高德不给你怎么办"。
+2. 补 FR-O-06 手动重算/立即调度——让链路 C 在 10 分钟内可演示。
+3. 服务范围/ATM 口径落字段（`service_radius` + `branch_type` 过滤）。
+
+### 选型结论（待你确认）
+
+| 决策   | 建议                                           | 依据                                                       |
+| ------ | ---------------------------------------------- | ---------------------------------------------------------- |
+| 地图   | Leaflet + vue-leaflet + leaflet-geoman         | MIT/BSD，框选/弹窗/图层一次到位，直接嵌现有 Vue3 骨架      |
+| 采集   | 自研适配器（借鉴四叉树切分思路，**不抄代码**） | AMapPoi 是 GPL-3.0、GaoDe-poi-crawler 无 LICENSE，均已核验 |
+| 脚手架 | 不整体套 RuoYi/Jeecg，只借鉴权限与审核流       | RuoYi 零 GIS；Jeecg 过重且条款模糊                         |
+| 数据库 | MySQL 8 本地实例                               | 免 Docker，`ST_Distance_Sphere` 可用                       |
+
+## 待决问题（阻塞设计）
+
+| 编号 | 问题     | 建议                                   | 状态   |
+| ---- | -------- | -------------------------------------- | ------ |
+| Q1   | 后端栈   | Spring Boot 3 + Java 17 + MyBatis-Plus | 待确认 |
+| Q2   | 数据库   | MySQL 8（本机已有）                    | 待确认 |
+| Q3   | 地图     | Leaflet + 开源瓦片                     | 待确认 |
+| Q4   | 数据来源 | 高德 API + 种子数据双轨                | 待确认 |
+| Q5   | 目标城市 | 杭州                                   | 待确认 |
+| Q6   | 用户体系 | 两档（访客/运营），不开放注册          | 待确认 |
+| Q7   | 演示环境 | 本机 / 服务器                          | 待确认 |
 
 ## 环境事实（已核实）
 
-- 工作区：`E:\TraeMaven\BISAI-AGENT`（Windows）
-- Node 24.11 / pnpm 11.9 / Java 17.0.12 / Maven 3.9.12
-- MySQL 8.0 服务运行中：`MySQL80`（D:\MySQL\MySQL Server 8.0）
-- Docker Desktop **未运行**（`docker info` 连不上命名管道）
-- 网络：npm 走 npmmirror 镜像 + 本地代理 127.0.0.1:7892
-- 前端骨架已存在并通过 `pnpm check`（14 单测 + 6 E2E）
+- 工作区 `E:\TraeMaven\BISAI-AGENT`（Windows），Git 已初始化
+- Node 24.11 / pnpm 11.9 / **Java 17.0.12** / Maven 3.9.12
+- MySQL 8.0 服务运行中（`MySQL80`）
+- **Docker Desktop 未运行**（`docker info` 连不上）→ 部署阶段需先启动或提供非容器兜底
+- npm 走 npmmirror + 本地代理 127.0.0.1:7892
+
+## 已知坑（别重复踩）
+
+- pnpm 必须 `nodeLinker: hoisted`（已配）
+- Tailwind v4 走 `@postcss`，不能进 vite 配置
+- Element Plus CSS 要 `layer(base)`
+- TS 锁 5.9（vue-tsc 不兼容 TS7）
+- 子代理给的 License 结论必须自己拉 LICENSE 原文（已抓到一次错误）
 
 ## 下一步（M1 设计）
 
-1. 回收并核验 OSS 调研结论 → `docs/research/oss-survey.md`
-2. 用户拍板 Q1-Q7
-3. 出 C4 容器图 + ER 图 + OpenAPI 契约 + 5 条 ADR
-4. 设计评审（派子代理挑刺）
-
-## 工作习惯备忘
-
-- 关键结论必有证据；不确定就写「未核实」
-- 每完成一个可交付物立即 `git commit`
-- 复杂调研派子代理，主代理负责核验与裁决
+1. 你拍板 Q1-Q7。
+2. 出 C4 容器图 + ER 图（11 张表）+ OpenAPI 契约。
+3. 写 5 条 ADR（后端/DB/地图/采集/部署）。
+4. 派子代理做设计评审，修订后进 M2 数据管道。

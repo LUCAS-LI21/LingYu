@@ -11,14 +11,14 @@
 
 ## 2. 六阶段与对应 Skill
 
-| 阶段 | 开工前必读 | 主要产出 |
-| --- | --- | --- |
+| 阶段       | 开工前必读                                                                     | 主要产出                |
+| ---------- | ------------------------------------------------------------------------------ | ----------------------- |
 | ① 需求分析 | [skills/requirements-analysis/SKILL.md](skills/requirements-analysis/SKILL.md) | SRS、数据字典、验收矩阵 |
-| ② 设计 | [skills/system-design/SKILL.md](skills/system-design/SKILL.md) | C4、ER、接口契约、ADR |
-| ③ 实现 | [skills/implementation/SKILL.md](skills/implementation/SKILL.md) | 代码、迁移脚本 |
-| ④ 测试 | [skills/testing/SKILL.md](skills/testing/SKILL.md) | 用例、四层测试 |
-| ⑤ 部署 | [skills/deployment/SKILL.md](skills/deployment/SKILL.md) | 镜像、compose、CI |
-| ⑥ 业务闭环 | [skills/business-loop/SKILL.md](skills/business-loop/SKILL.md) | 三条闭环、看板、SOP |
+| ② 设计     | [skills/system-design/SKILL.md](skills/system-design/SKILL.md)                 | C4、ER、接口契约、ADR   |
+| ③ 实现     | [skills/implementation/SKILL.md](skills/implementation/SKILL.md)               | 代码、迁移脚本          |
+| ④ 测试     | [skills/testing/SKILL.md](skills/testing/SKILL.md)                             | 用例、四层测试          |
+| ⑤ 部署     | [skills/deployment/SKILL.md](skills/deployment/SKILL.md)                       | 镜像、compose、CI       |
+| ⑥ 业务闭环 | [skills/business-loop/SKILL.md](skills/business-loop/SKILL.md)                 | 三条闭环、看板、SOP     |
 
 贯穿全程：[skills/verification/SKILL.md](skills/verification/SKILL.md) —— **下任何结论前先过一遍**。
 
@@ -62,11 +62,12 @@ git log --oneline                                # 查看历史
 
 ## 7. 环境已知坑（踩过了，别再踩）
 
-| 坑 | 现象 | 处理 |
-| --- | --- | --- |
-| pnpm 隔离布局 | Windows 上 symlink 栈溢出、vite 解析不到 transitive 依赖 | `pnpm-workspace.yaml` 固定 `nodeLinker: hoisted` |
-| esbuild postinstall | 本机沙箱 spawn EPERM | `allowBuilds.esbuild: false`，二进制由平台包提供 |
-| Tailwind v4 原生模块 | 打包 vite.config 时读全平台 `.node` 失败 | 走 `postcss.config.js` 接入 |
-| Element Plus 样式层级 | 压住 Tailwind 工具类（输入框被挤扁） | `@import '...' layer(base)` |
-| TypeScript 7 | vue-tsc 不兼容 `./lib/tsc` 导出 | 锁 TS 5.9.x |
-| Docker | Desktop 未启动 | 部署阶段先确认；提供非容器兜底 |
+| 坑                    | 现象                                                         | 处理                                             |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------------------ |
+| pnpm 隔离布局         | Windows 上 symlink 栈溢出、vite 解析不到 transitive 依赖     | `pnpm-workspace.yaml` 固定 `nodeLinker: hoisted` |
+| esbuild postinstall   | 本机沙箱 spawn EPERM                                         | `allowBuilds.esbuild: false`，二进制由平台包提供 |
+| Tailwind v4 原生模块  | 打包 vite.config 时读全平台 `.node` 失败                     | 走 `postcss.config.js` 接入                      |
+| Element Plus 样式层级 | 压住 Tailwind 工具类（输入框被挤扁）                         | `@import '...' layer(base)`                      |
+| TypeScript 7          | vue-tsc 不兼容 `./lib/tsc` 导出                              | 锁 TS 5.9.x                                      |
+| Docker                | Desktop 未启动                                               | 部署阶段先确认；提供非容器兜底                   |
+| VitePress 构建崩溃    | 已有 `docs/.vitepress/dist` 时 `0xC0000409` 栈溢出，3/3 复现 | `docs:build` 已内置 `docs:clean` 前置清空        |
