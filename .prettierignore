@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+pnpm-lock.yaml
+package-lock.json
+stats.html
+playwright-report
+test-results
+docs/.vitepress/cache
+docs/.vitepress/dist
+src/auto-imports.d.ts
+src/components.d.ts

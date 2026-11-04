@@ -1,0 +1,38 @@
+name: bisai-agent
+
+services:
+  # 前端静态站（Nginx）
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bisai-agent-web:latest
+    container_name: bisai-web
+    ports:
+      - '8081:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1/healthz']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    networks: [bisai]
+
+  # 后端占位：按需 `docker compose --profile backend up -d` 启动
+  # 实际落地时把 image 换成你的 Spring Boot 构建产物即可
+  backend:
+    profiles: ['backend']
+    image: eclipse-temurin:21-jre
+    container_name: bisai-backend
+    working_dir: /app
+    command: ['sh', '-c', 'java -jar /app/app.jar']
+    volumes:
+      - ./backend/target:/app
+    expose:
+      - '8080'
+    restart: unless-stopped
+    networks: [bisai]
+
+networks:
+  bisai:
+    driver: bridge

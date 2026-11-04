@@ -1,0 +1,11 @@
+packages:
+  - '.'
+
+# Windows 下隔离布局的 junction 会导致 vite 内部解析不到 transitive deps，
+# 且 pnpm 的 symlink 逻辑会栈溢出，统一改用扁平布局。
+nodeLinker: hoisted
+packageImportMethod: copy
+
+# esbuild 的 postinstall 只做二进制校验；本机沙箱禁止子进程管道 stdio（EPERM），故跳过。
+allowBuilds:
+  esbuild: false

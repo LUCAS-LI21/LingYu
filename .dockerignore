@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.git
+.github
+.vscode
+.idea
+docs/.vitepress/cache
+docs/.vitepress/dist
+playwright-report
+test-results
+*.log
+.env.local
+.env.*.local
+stats.html

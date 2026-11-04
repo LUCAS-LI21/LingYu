@@ -1,0 +1,35 @@
+@import 'tailwindcss';
+/* Element Plus 样式必须放进 base 层：
+   Tailwind v4 的 utilities 在 @layer 中，未分层的库样式会反过来压住工具类 */
+@import 'element-plus/dist/index.css' layer(base);
+
+@theme {
+  --color-brand-50: #eefbf4;
+  --color-brand-100: #d6f5e3;
+  --color-brand-500: #42b883;
+  --color-brand-600: #369d6f;
+  --color-brand-700: #2b7d58;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
