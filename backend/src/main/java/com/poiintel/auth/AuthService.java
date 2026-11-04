@@ -1,0 +1,136 @@
+package com.poiintel.auth;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Optional;
+
+import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * 轻量鉴权：PBKDF2 存口令 + HMAC-SHA256 签 token。
+ * 不引 Spring Security 是为了保持依赖最小；生产环境应换成标准 OIDC/JWT 库。
+ */
+@Service
+@RequiredArgsConstructor
+public class AuthService {
+
+    private static final String HMAC = "HmacSHA256";
+    private static final int ITERATIONS = 120_000;
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Value("${app.auth.secret:dev-only-change-me-please-32bytes}")
+    private String secret;
+
+    @Value("${app.auth.ttl-minutes:720}")
+    private long ttlMinutes;
+
+    public record Session(String token, String username, long expiresAt) {
+    }
+
+    public Optional<Session> login(String username, String password) {
+        var rows = jdbcTemplate.queryForList(
+                "SELECT username, password_hash FROM sys_user WHERE username = ? AND status = 1", username);
+        if (rows.isEmpty()) {
+            return Optional.empty();
+        }
+        String stored = String.valueOf(rows.get(0).get("password_hash"));
+        if (!verifyPassword(password, stored)) {
+            return Optional.empty();
+        }
+        jdbcTemplate.update("UPDATE sys_user SET last_login_at = NOW() WHERE username = ?", username);
+        long expiresAt = Instant.now().plusSeconds(ttlMinutes * 60).getEpochSecond();
+        return Optional.of(new Session(sign(username, expiresAt), username, expiresAt));
+    }
+
+    /** 校验并返回用户名 */
+    public Optional<String> verify(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 2) {
+                return Optional.empty();
+            }
+            String payload = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            String[] fields = payload.split("\\|");
+            if (fields.length != 2) {
+                return Optional.empty();
+            }
+            String username = fields[0];
+            long expiresAt = Long.parseLong(fields[1]);
+            if (Instant.now().getEpochSecond() > expiresAt) {
+                return Optional.empty();
+            }
+            String expected = base64Url(hmac(payload));
+            if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),
+                    parts[1].getBytes(StandardCharsets.UTF_8))) {
+                return Optional.empty();
+            }
+            return Optional.of(username);
+        } catch (Exception ex) {
+            return Optional.empty();
+        }
+    }
+
+    private String sign(String username, long expiresAt) {
+        String payload = username + "|" + expiresAt;
+        return base64Url(payload.getBytes(StandardCharsets.UTF_8)) + "." + base64Url(hmac(payload));
+    }
+
+    private byte[] hmac(String payload) {
+        try {
+            Mac mac = Mac.getInstance(HMAC);
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC));
+            return mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new IllegalStateException("签名失败", ex);
+        }
+    }
+
+    public static String hashPassword(String password, byte[] salt) {
+        try {
+            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, 256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            return Base64.getEncoder().encodeToString(factory.generateSecret(spec).getEncoded());
+        } catch (Exception ex) {
+            throw new IllegalStateException("口令哈希失败", ex);
+        }
+    }
+
+    private boolean verifyPassword(String raw, String stored) {
+        try {
+            String[] parts = stored.split("\\$");
+            if (parts.length != 2) {
+                return false;
+            }
+            // 格式：base64(salt)$base64(hash)
+            byte[] salt = Base64.getDecoder().decode(parts[0]);
+            String computed = hashPassword(raw, salt);
+            return MessageDigest.isEqual(computed.getBytes(StandardCharsets.UTF_8),
+                    parts[1].getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public static String encodeSaltAndHash(String password) {
+        byte[] salt = new byte[16];
+        new SecureRandom().nextBytes(salt);
+        return Base64.getEncoder().encodeToString(salt) + "$" + hashPassword(password, salt);
+    }
+
+    private String base64Url(byte[] bytes) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+}

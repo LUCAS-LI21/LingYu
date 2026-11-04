@@ -1,3 +1,4 @@
+import { clearToken, getToken } from './auth'
 import type { Poi } from '@/types/poi'
 
 const BASE = '/api/v1'
@@ -30,11 +31,21 @@ interface ServerPoi {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  // 运营接口需要 Bearer token；其余接口带了也无害
+  const token = getToken()
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
   const response = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: { ...headers, ...((init?.headers as Record<string, string>) ?? {}) },
   })
   const body = (await response.json().catch(() => null)) as ApiEnvelope<T> | null
+  if (response.status === 401) {
+    clearToken()
+    throw new Error('未登录或登录已过期')
+  }
   if (!response.ok) {
     throw new Error(body?.message || `请求失败（HTTP ${response.status}）`)
   }

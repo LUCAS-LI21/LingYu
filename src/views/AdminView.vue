@@ -16,12 +16,18 @@ import {
   type JobRow,
 } from '@/api/admin'
 import { isServerMode } from '@/api/pois'
+import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
 type Tab = 'overview' | 'feedback' | 'jobs' | 'hotspots'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
+const authed = ref(isLoggedIn())
+const username = ref('operator')
+const password = ref('')
+const loggingIn = ref(false)
+const loginError = ref('')
 const loading = ref(false)
 const overview = ref<AdminOverview | null>(null)
 const feedback = ref<FeedbackRow[]>([])
@@ -29,6 +35,27 @@ const feedbackStatus = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending
 const jobs = ref<JobRow[]>([])
 const hotspots = ref<HotspotRow[]>([])
 const busy = ref('')
+
+async function onLogin(): Promise<void> {
+  loggingIn.value = true
+  loginError.value = ''
+  try {
+    await login(username.value.trim(), password.value)
+    authed.value = true
+    toast('登录成功', 'success')
+    await refresh()
+  } catch (error) {
+    loginError.value = error instanceof Error ? error.message : '登录失败'
+  } finally {
+    loggingIn.value = false
+  }
+}
+
+function onLogout(): void {
+  clearToken()
+  authed.value = false
+  password.value = ''
+}
 
 const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'overview', label: '概览' },
@@ -104,7 +131,11 @@ async function refresh(): Promise<void> {
       hotspots.value = await fetchHotspots()
     }
   } catch (error) {
-    toast(error instanceof Error ? error.message : '加载失败', 'error')
+    const message = error instanceof Error ? error.message : '加载失败'
+    if (message.includes('登录')) {
+      authed.value = false
+    }
+    toast(message, 'error')
   } finally {
     loading.value = false
   }
@@ -112,6 +143,11 @@ async function refresh(): Promise<void> {
 
 async function switchTab(next: Tab): Promise<void> {
   tab.value = next
+  await refresh()
+}
+
+async function setFeedbackStatus(next: string): Promise<void> {
+  feedbackStatus.value = next as typeof feedbackStatus.value
   await refresh()
 }
 
@@ -170,7 +206,8 @@ async function onRecompute(): Promise<void> {
 
 onMounted(async () => {
   online.value = await isServerMode()
-  if (online.value) {
+  // 未登录时不打运营接口，避免一进来就弹 401
+  if (online.value && authed.value) {
     await refresh()
   }
 })
@@ -193,8 +230,15 @@ onMounted(async () => {
           刷新
         </button>
         <button
+          v-if="authed"
+          class="h-9 rounded-[10px] border border-line bg-surface px-3 text-xs text-ink-600 transition hover:border-line-strong"
+          @click="onLogout"
+        >
+          退出
+        </button>
+        <button
           class="h-9 rounded-[10px] bg-brand-500 px-3 text-xs font-medium text-white shadow-card transition hover:bg-brand-600 disabled:opacity-60"
-          :disabled="busy === 'job' || !online"
+          :disabled="busy === 'job' || !online || !authed"
           @click="onTriggerJob"
         >
           {{ busy === 'job' ? '抓取中…' : '触发抓取' }}
@@ -210,6 +254,45 @@ onMounted(async () => {
       <p class="mt-1 text-xs text-ink-400">
         运营后台需要 Spring Boot 服务（默认 http://127.0.0.1:8080）
       </p>
+    </div>
+
+    <div
+      v-else-if="!authed"
+      class="mx-auto max-w-sm rounded-card border border-line bg-surface p-6 shadow-float"
+    >
+      <h2 class="text-sm font-semibold text-ink-900">运营登录</h2>
+      <p class="mt-1 text-[11px] text-ink-400">后台接口需要鉴权，默认账号 operator / operator123</p>
+
+      <div class="mt-4 space-y-3">
+        <label class="block">
+          <span class="mb-1 block text-[11px] text-ink-400">账号</span>
+          <input
+            v-model="username"
+            class="h-9 w-full rounded-[10px] border border-line bg-surface px-3 text-xs text-ink-700 outline-none focus:border-brand-500"
+            @keyup.enter="onLogin"
+          />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-[11px] text-ink-400">口令</span>
+          <input
+            v-model="password"
+            type="password"
+            class="h-9 w-full rounded-[10px] border border-line bg-surface px-3 text-xs text-ink-700 outline-none focus:border-brand-500"
+            placeholder="请输入口令"
+            @keyup.enter="onLogin"
+          />
+        </label>
+      </div>
+
+      <p v-if="loginError" class="mt-3 text-[11px] text-red-500">{{ loginError }}</p>
+
+      <button
+        class="mt-4 h-9 w-full rounded-[10px] bg-brand-500 text-xs font-medium text-white shadow-card transition hover:bg-brand-600 disabled:opacity-60"
+        :disabled="loggingIn"
+        @click="onLogin"
+      >
+        {{ loggingIn ? '登录中…' : '登录' }}
+      </button>
     </div>
 
     <template v-else>
@@ -273,10 +356,7 @@ onMounted(async () => {
                 ? 'bg-brand-50 font-medium text-brand-600'
                 : 'text-ink-500 hover:bg-surface-soft'
             "
-            @click="
-              feedbackStatus = option.key as typeof feedbackStatus
-              refresh()
-            "
+            @click="setFeedbackStatus(option.key)"
           >
             {{ option.label }}
           </button>

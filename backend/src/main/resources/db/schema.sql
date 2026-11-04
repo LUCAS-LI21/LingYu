@@ -185,3 +185,15 @@ VALUES ('osm_overpass', 'OpenStreetMap Overpass API', 'open_data', 'storable', 0
         'ODbL 许可，可入库；需署名，公共实例限速')
 ON DUPLICATE KEY UPDATE name = VALUES(name), notes = VALUES(notes);
 
+CREATE TABLE IF NOT EXISTS sys_user (
+  id            BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username      VARCHAR(64)  NOT NULL,
+  password_hash VARCHAR(255) NOT NULL COMMENT 'base64(salt)$base64(pbkdf2)',
+  role          VARCHAR(16)  NOT NULL DEFAULT 'operator',
+  display_name  VARCHAR(64)  NOT NULL DEFAULT '',
+  status        TINYINT(1)   NOT NULL DEFAULT 1,
+  last_login_at DATETIME     NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user (username)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '运营账号';
+

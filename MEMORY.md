@@ -103,20 +103,31 @@ pnpm dev
 
 **三条链路都有真实数据支撑，全部实测：**
 
-| 链路 | 实现 | 实测证据 |
-| --- | --- | --- |
+| 链路       | 实现                                                                                           | 实测证据                                                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | A 纠错闭环 | 反馈 → 风险分流（低风险 system 自动采纳 / 高风险进队列）→ 写 `poi_version` → 改主表 → 视图排除 | 提交营业时间 → 自动 approved；提交"已关闭" → 审核后 `poi_bank.status=closed`，详情接口 400，总数 339→338 |
-| B 补采闭环 | `POST /admin/jobs` → 异步 Overpass 抓取 → 幂等 upsert → 任务记录 | job#2：88 秒抓 431 条，新增 0 / 更新 431（说明幂等生效） |
-| C 热点闭环 | 每次 list/nearby 写 `query_log` → `POST /admin/hotspots/recompute` 聚合 | 10 次查询 → 2 个网格，priority 6 / 4 |
+| B 补采闭环 | `POST /admin/jobs` → 异步 Overpass 抓取 → 幂等 upsert → 任务记录                               | job#2：88 秒抓 431 条，新增 0 / 更新 431（说明幂等生效）                                                 |
+| C 热点闭环 | 每次 list/nearby 写 `query_log` → `POST /admin/hotspots/recompute` 聚合                        | 10 次查询 → 2 个网格，priority 6 / 4                                                                     |
 
 **新增表**：`ds_source`、`ingest_job`、`poi_version`、`query_log`、`hot_region`。
 
 **运营后台** `/admin`：概览 KPI、反馈审核（采纳/驳回）、抓取任务列表 + 一键触发、热点排行 + 一键重算。
 
 **抓取工程要点**
+
 - Java 直连 Overpass 会 502，必须走代理：`app.ingest.proxy=${HTTP_PROXY:}`
 - `landuse=residential` 查询极慢，已拆**两段式**：银行先落库，小区失败只记 `partial`，不让整任务失败
 - 公共实例要带自定义 UA，并被限速 0.5 QPS
+
+## 鉴权与自动化（本轮新增）
+
+| 项       | 实现                                                                                         | 验证                                                    |
+| -------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 运营鉴权 | PBKDF2 存口令（`sys_user`）+ HMAC-SHA256 签 token，`AdminAuthFilter` 保护 `/api/v1/admin/**` | 无 token 401、登录 200、错口令 400                      |
+| 登录界面 | `/admin` 未登录显示登录卡，登录后带 Bearer 调接口，401 自动清 token                          | 截图见 `shot-admin-login.png` / `shot-admin-authed.png` |
+| 定时抓取 | `@Scheduled` + 热点驱动选区域（无热点退回福田默认框）                                        | 启动 8s 后自动产生 `triggerType=hotspot` 的 job#3       |
+
+**默认账号**：`operator / operator123`（口令可用 `OPERATOR_PASSWORD` 覆盖，`AUTH_SECRET` 务必在生产替换）。
 
 ## 已知坑
 

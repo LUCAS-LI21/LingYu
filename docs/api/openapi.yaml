@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: 邻域 POI 情报系统 API
+  version: 0.2.0
+  description: |
+    银行/小区 POI 采集与查询系统。统一响应体 `{code, message, data}`，code=0 表示成功。
+    运营接口（/api/v1/admin/**）需要 `Authorization: Bearer <token>`。
+servers:
+  - url: http://127.0.0.1:8080
+
+tags:
+  - name: public
+    description: 公开查询接口
+  - name: feedback
+    description: 用户反馈
+  - name: auth
+    description: 鉴权
+  - name: admin
+    description: 运营接口（需鉴权）
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: token
+
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+          example: ok
+        data:
+          nullable: true
+
+    Poi:
+      type: object
+      properties:
+        id:
+          type: string
+          example: osm-node-6544777125
+        type:
+          type: string
+          enum: [bank, community]
+        name:
+          type: string
+        address:
+          type: string
+        district:
+          type: string
+          example: 福田区
+        lng:
+          type: number
+        lat:
+          type: number
+        brand:
+          type: string
+          nullable: true
+        branchType:
+          type: string
+          nullable: true
+          enum: [branch, atm]
+        phone:
+          type: string
+          nullable: true
+        openingHours:
+          type: string
+          nullable: true
+        builtYear:
+          type: integer
+          nullable: true
+        avgPrice:
+          type: integer
+          nullable: true
+        propertyFee:
+          type: number
+          nullable: true
+        demoAttributes:
+          type: boolean
+        source:
+          type: string
+          example: OpenStreetMap
+        license:
+          type: string
+          example: ODbL
+        sourceLevel:
+          type: string
+          example: L1
+
+    PageResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Poi'
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    FeedbackRequest:
+      type: object
+      required: [poiType, poiId, type, description]
+      properties:
+        poiType:
+          type: string
+          enum: [bank, community]
+        poiId:
+          type: string
+        poiName:
+          type: string
+        type:
+          type: string
+          enum: [error, closed, add]
+        field:
+          type: string
+          example: 营业时间
+        newValue:
+          type: string
+        description:
+          type: string
+        contact:
+          type: string
+
+paths:
+  /api/v1/health:
+    get:
+      tags: [public]
+      summary: 健康检查（含数据库连通）
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/pois:
+    get:
+      tags: [public]
+      summary: 查询 POI 列表
+      parameters:
+        - in: query
+          name: types
+          schema: { type: string }
+          description: 逗号分隔，如 bank,community
+        - in: query
+          name: keyword
+          schema: { type: string }
+        - in: query
+          name: district
+          schema: { type: string }
+        - in: query
+          name: branchType
+          schema: { type: string, enum: [all, branch, atm], default: all }
+        - in: query
+          name: minPrice
+          schema: { type: integer }
+        - in: query
+          name: maxPrice
+          schema: { type: integer }
+        - in: query
+          name: minYear
+          schema: { type: integer }
+        - in: query
+          name: maxYear
+          schema: { type: integer }
+        - in: query
+          name: west
+          schema: { type: number }
+        - in: query
+          name: south
+          schema: { type: number }
+        - in: query
+          name: east
+          schema: { type: number }
+        - in: query
+          name: north
+          schema: { type: number }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [default, name, priceAsc, priceDesc, yearDesc, yearAsc] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20, maximum: 5000 }
+      responses:
+        '200':
+          description: 分页结果
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Envelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PageResult'
+
+  /api/v1/pois/{id}:
+    get:
+      tags: [public]
+      summary: POI 详情（已关闭的网点不在视图内，返回 400）
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 详情
+        '400':
+          description: 不存在
+
+  /api/v1/pois/nearby:
+    get:
+      tags: [public]
+      summary: 球面距离周边查询（MySQL ST_Distance_Sphere）
+      parameters:
+        - in: query
+          name: lng
+          required: true
+          schema: { type: number }
+        - in: query
+          name: lat
+          required: true
+          schema: { type: number }
+        - in: query
+          name: radius
+          schema: { type: number, default: 1000, description: 米 }
+        - in: query
+          name: branchType
+          schema: { type: string, enum: [all, branch, atm], default: all }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        '200':
+          description: '{ items: [{ poi, distance }], total }'
+
+  /api/v1/stats:
+    get:
+      tags: [public]
+      summary: 聚合统计（品牌 Top8 / 价格分桶 / 2km 网格密度）
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/feedback:
+    post:
+      tags: [feedback]
+      summary: 提交纠错/关闭/新增反馈
+      description: |
+        低风险字段（电话、营业时间、均价、物业费、建成年份）由系统自动采纳并写版本；
+        其余进入人工审核队列；`add` 类型需重新采集核实。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '200':
+          description: '{ code: FB20261105-0001, status: approved|pending }'
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: 运营登录，返回 Bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: '{ token, username, expiresAt }'
+        '400':
+          description: 用户名或口令错误
+
+  /api/v1/admin/overview:
+    get:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 运营概览（待审反馈、任务成功率、版本数、平均新鲜度）
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: 未登录
+
+  /api/v1/admin/feedback:
+    get:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 反馈列表
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, approved, rejected, all], default: pending }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: 分页结果
+
+  /api/v1/admin/feedback/{code}/approve:
+    post:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 采纳反馈并生效（写 poi_version + 改主表）
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: '{ status, applied: [opening_hours=09:00-18:00] }'
+
+  /api/v1/admin/feedback/{code}/reject:
+    post:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 驳回反馈
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/admin/jobs:
+    get:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 抓取任务列表
+      responses:
+        '200':
+          description: 分页结果
+    post:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 手动触发一次 OSM 抓取（异步）
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                south: { type: number }
+                west: { type: number }
+                north: { type: number }
+                east: { type: number }
+      responses:
+        '200':
+          description: '{ jobId }'
+
+  /api/v1/admin/hotspots:
+    get:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 热点排行
+      responses:
+        '200':
+          description: OK
+
+  /api/v1/admin/hotspots/recompute:
+    post:
+      tags: [admin]
+      security: [{ bearerAuth: [] }]
+      summary: 重算热点（query_count + 2 × zero_result_count）
+      responses:
+        '200':
+          description: '{ affected }'
