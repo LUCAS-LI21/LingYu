@@ -45,7 +45,12 @@ const community = (id: string, over: Partial<CommunityPoi> = {}): CommunityPoi =
   ...over,
 })
 
-const filters = (over: Partial<Filters> = {}): Filters => ({ ...DEFAULT_FILTERS, ...over })
+// 测试不依赖产品默认图层（地图默认只显示银行），这里显式指定两类都开
+const filters = (over: Partial<Filters> = {}): Filters => ({
+  ...DEFAULT_FILTERS,
+  layers: ['bank', 'community'],
+  ...over,
+})
 
 const dataset: Poi[] = [
   bank('b1'),

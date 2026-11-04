@@ -29,7 +29,7 @@ interface ServerPoi {
   sourceLevel?: string | null
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...init,
@@ -43,6 +43,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return body.data
 }
+
+const request = apiRequest
 
 /** 探测后端是否可用；失败即整体降级到本地 mock，保证离线也能演示 */
 export async function probeServer(): Promise<boolean> {

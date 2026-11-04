@@ -11,6 +11,7 @@ const navItems = [
   { name: 'list', label: '列表', path: '/list' },
   { name: 'stats', label: '洞察', path: '/stats' },
   { name: 'compliance', label: '数据说明', path: '/compliance' },
+  { name: 'admin', label: '运营', path: '/admin' },
 ]
 
 const activeName = computed(() => String(route.name ?? 'map'))

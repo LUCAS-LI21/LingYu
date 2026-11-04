@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.poiintel.admin.QueryLogService;
 import com.poiintel.common.ApiResult;
 
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class PoiController {
 
     private final PoiService poiService;
+    private final QueryLogService queryLogService;
     private final JdbcTemplate jdbcTemplate;
 
     @GetMapping("/health")
@@ -64,7 +66,16 @@ public class PoiController {
         query.setSize(safeSize);
         query.setOffset(Math.max(0, (Math.max(page, 1) - 1) * safeSize));
 
-        return ApiResult.ok(poiService.list(query));
+        long started = System.currentTimeMillis();
+        PoiService.PageResult result = poiService.list(query);
+
+        // 查询日志 → 热点闭环的原料（失败不影响主流程）
+        Double centerLng = (west != null && east != null) ? (west + east) / 2 : null;
+        Double centerLat = (south != null && north != null) ? (south + north) / 2 : null;
+        queryLogService.log("list", keyword, district, QueryLogService.gridOf(centerLng, centerLat),
+                result.items().size(), System.currentTimeMillis() - started);
+
+        return ApiResult.ok(result);
     }
 
     @GetMapping("/pois/nearby")
@@ -75,8 +86,11 @@ public class PoiController {
             @RequestParam(required = false, defaultValue = "all") String branchType,
             @RequestParam(defaultValue = "50") int limit) {
 
+        long started = System.currentTimeMillis();
         List<PoiService.NearbyItem> items = poiService.nearby(lng, lat, radius, branchType,
                 Math.min(Math.max(limit, 1), 200));
+        queryLogService.log("nearby", "", "", QueryLogService.gridOf(lng, lat), items.size(),
+                System.currentTimeMillis() - started);
         return ApiResult.ok(Map.of("items", items, "total", items.size()));
     }
 

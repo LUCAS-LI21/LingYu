@@ -4,9 +4,12 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import com.poiintel.admin.AdminService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,12 +20,15 @@ public class FeedbackService {
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final JdbcTemplate jdbcTemplate;
+    private final AdminService adminService;
+
+    /** 低风险字段：可由系统直接采纳生效；坐标/名称/关闭状态与新增点位必须人工审核 */
+    private static final Set<String> LOW_RISK_FIELDS = Set.of("电话", "营业时间", "均价", "物业费", "建成年份");
 
     public Map<String, Object> submit(FeedbackRequest request) {
         int next = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) + 1 FROM feedback", Integer.class);
         String code = "FB" + LocalDate.now().format(DAY) + "-" + String.format("%04d", next);
-        // 新增点位需要人工/抓取核实，其余低风险字段先按「已受理」处理
-        String status = "add".equals(request.type()) ? "pending" : "auto_applied";
+        String status = "pending";
 
         jdbcTemplate.update("""
                 INSERT INTO feedback
@@ -39,6 +45,21 @@ public class FeedbackService {
                 request.description(),
                 request.contact() == null ? "" : request.contact(),
                 status);
+
+        // 低风险字段走「系统自动审核」：复用同一套生效逻辑，保证版本留痕一致
+        boolean autoApply = !"add".equals(request.type())
+                && LOW_RISK_FIELDS.contains(request.field())
+                && request.newValue() != null
+                && !request.newValue().isBlank();
+        if (autoApply) {
+            try {
+                adminService.approve(code, "system");
+                status = "approved";
+            } catch (Exception ex) {
+                // 自动生效失败则退回人工队列，不让用户白填
+                status = "pending";
+            }
+        }
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("code", code);

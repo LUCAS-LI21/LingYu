@@ -10,3 +10,9 @@ docs/.vitepress/cache
 docs/.vitepress/dist
 src/auto-imports.d.ts
 src/components.d.ts
+
+# 生成/构建产物
+public/data/pois.json
+backend/src/main/resources/seed/pois.json
+backend/target
+backend/*.log

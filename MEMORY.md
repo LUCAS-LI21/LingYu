@@ -99,6 +99,25 @@ cd backend && mvn -DskipTests package && java -jar target/poi-intel.jar
 pnpm dev
 ```
 
+## 运营闭环（M4）—— 已跑通
+
+**三条链路都有真实数据支撑，全部实测：**
+
+| 链路 | 实现 | 实测证据 |
+| --- | --- | --- |
+| A 纠错闭环 | 反馈 → 风险分流（低风险 system 自动采纳 / 高风险进队列）→ 写 `poi_version` → 改主表 → 视图排除 | 提交营业时间 → 自动 approved；提交"已关闭" → 审核后 `poi_bank.status=closed`，详情接口 400，总数 339→338 |
+| B 补采闭环 | `POST /admin/jobs` → 异步 Overpass 抓取 → 幂等 upsert → 任务记录 | job#2：88 秒抓 431 条，新增 0 / 更新 431（说明幂等生效） |
+| C 热点闭环 | 每次 list/nearby 写 `query_log` → `POST /admin/hotspots/recompute` 聚合 | 10 次查询 → 2 个网格，priority 6 / 4 |
+
+**新增表**：`ds_source`、`ingest_job`、`poi_version`、`query_log`、`hot_region`。
+
+**运营后台** `/admin`：概览 KPI、反馈审核（采纳/驳回）、抓取任务列表 + 一键触发、热点排行 + 一键重算。
+
+**抓取工程要点**
+- Java 直连 Overpass 会 502，必须走代理：`app.ingest.proxy=${HTTP_PROXY:}`
+- `landuse=residential` 查询极慢，已拆**两段式**：银行先落库，小区失败只记 `partial`，不让整任务失败
+- 公共实例要带自定义 UA，并被限速 0.5 QPS
+
 ## 已知坑
 
 - pnpm 必须 `nodeLinker: hoisted`；Tailwind v4 走 postcss；TS 锁 5.9（EP CSS 已从全局移除，后续做后台再接）
@@ -107,11 +126,14 @@ pnpm dev
 - **地图坑**：CARTO 瓦片现在要 API Key（会盖水印），已换 OSM 标准瓦片 + CSS 灰度滤镜
 - **Prettier 坑**：多语句内联事件（`@click="a=1; b()"`）会被拆行导致 Vue 编译失败，必须用具名方法
 - Overpass 必须带自定义 User-Agent，否则 406；主站常 502，脚本已配 3 个镜像
+- **PowerShell 坑**：`curl -d "{\"a\":1}"` 会把反斜杠原样传过去导致 400/500，一律用文件 `--data-binary @fb.json`
+- **MySQL 坑**：`DATE_FORMAT` 里写 `%%` 会输出字面量 `%`，JDBC 纯字符串不需要转义
+- 单测别复用产品默认值（默认图层改成只显示银行后，用例全挂）
 
 ## 下一步
 
-1. ~~前端~~ ✅ 完成
-2. 后端：Spring Boot 3 + MySQL 8 + MyBatis-Plus（Q1/Q2 已确认）
-3. 把前端 `src/api/pois.ts` 的 mock 换成真实 `/api/v1/*` 调用（接口契约待定）
-4. 运营后台：反馈审核队列、抓取任务、热点重算（复用 Element Plus 表格）
-5. 出 ER 图 + OpenAPI + ADR，再派子代理做设计评审
+1. ~~前端~~ ✅
+2. ~~后端基础 + 运营闭环~~ ✅
+3. 定时抓取（`@Scheduled` + 热点优先级驱动频率，把链路 C 的"自动"补上）
+4. 抓取任务鉴权（现在后台无登录，任何能访问 8080 的人都能触发采集）
+5. ER 图 + OpenAPI 契约 + ADR，然后派子代理做设计评审
