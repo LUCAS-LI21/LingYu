@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +115,7 @@ public class IngestService {
                     [out:json][timeout:120];
                     node["amenity"~"^(bank|atm)$"](%.5f,%.5f,%.5f,%.5f);
                     out center tags;""", south, west, north, east);
-            JsonNode bankRoot = fetch(bankQuery, Duration.ofSeconds(150));
+            JsonNode bankRoot = fetch(bankQuery, Duration.ofSeconds(100));
             List<Object[]> banks = new ArrayList<>();
             for (JsonNode element : bankRoot.path("elements")) {
                 JsonNode tags = element.path("tags");
@@ -166,7 +167,7 @@ public class IngestService {
                         [out:json][timeout:150];
                         way["landuse"="residential"](%.5f,%.5f,%.5f,%.5f);
                         out center tags;""", south, west, north, east);
-                JsonNode communityRoot = fetch(communityQuery, Duration.ofSeconds(180));
+                JsonNode communityRoot = fetch(communityQuery, Duration.ofSeconds(120));
                 List<Object[]> communities = new ArrayList<>();
                 for (JsonNode element : communityRoot.path("elements")) {
                     JsonNode tags = element.path("tags");
@@ -379,10 +380,10 @@ public class IngestService {
                 """, rows);
     }
 
-    private JsonNode fetch(String query, Duration timeout) throws Exception {
+    private JsonNode fetch(String query, Duration timeout) {
         HttpClient client = buildClient();
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
-        Exception last = null;
+        RuntimeException last = null;
         for (String endpoint : endpoints.split(",")) {
             String url = endpoint.trim();
             if (url.isEmpty()) {
@@ -395,15 +396,28 @@ public class IngestService {
                         .POST(HttpRequest.BodyPublishers.ofString(body))
                         .timeout(timeout)
                         .build();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                // 用 sendAsync + orTimeout 做硬上限：代理 CONNECT 阶段挂住时，
+                // HttpRequest.timeout 不一定生效，sync send 会永久阻塞（实测卡死 12 分钟以上）
+                HttpResponse<String> response = client
+                        .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                        .orTimeout(timeout.toSeconds() + 15, TimeUnit.SECONDS)
+                        .join();
                 if (response.statusCode() == 200) {
                     return objectMapper.readTree(response.body());
                 }
                 last = new IllegalStateException(url + " -> HTTP " + response.statusCode());
             } catch (Exception ex) {
-                last = ex;
+                Throwable cause = ex instanceof java.util.concurrent.CompletionException && ex.getCause() != null
+                        ? ex.getCause()
+                        : ex;
+                last = cause instanceof RuntimeException re ? re : new IllegalStateException(cause);
             }
-            Thread.sleep(1200);
+            try {
+                Thread.sleep(1200);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
         throw last == null ? new IllegalStateException("没有可用的 Overpass 端点") : last;
     }
