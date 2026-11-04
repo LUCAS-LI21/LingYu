@@ -5,11 +5,20 @@ coverage
 .github
 .vscode
 .idea
+
+# 后端由独立镜像构建，不进前端构建上下文
+backend
+
 docs/.vitepress/cache
 docs/.vitepress/dist
+
 playwright-report
 test-results
+shot-*.png
+
 *.log
+.env
 .env.local
 .env.*.local
+.pnpm-store
 stats.html

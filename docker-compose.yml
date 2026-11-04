@@ -1,38 +1,85 @@
-name: bisai-agent
+name: poi-intel
+
+# 一键部署编排：MySQL + Spring Boot + Nginx(前端)
+#
+#   cp .env.deploy.example .env     # 首次
+#   docker compose --env-file .env up -d --build
+#
+# 端口默认：web 8081 / api 18080（仅本机）/ mysql 3307（仅本机）
 
 services:
-  # 前端静态站（Nginx）
+  mysql:
+    image: mysql:8.0
+    container_name: poi-mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-poi_intel}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      # 只绑本机，避免把数据库暴露到局域网
+      - '127.0.0.1:${MYSQL_PORT:-3307}:3306'
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+    networks: [poi-net]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: poi-intel-backend:latest
+    container_name: poi-backend
+    environment:
+      DB_HOST: mysql
+      DB_PORT: '3306'
+      DB_NAME: ${DB_NAME:-poi_intel}
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      # 留空则启动时生成随机密钥（重启后 token 失效）
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operator}
+      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:-operator123}
+      # 抓取代理：容器内访问宿主代理要用 host.docker.internal
+      HTTP_PROXY: ${INGEST_PROXY:-}
+      TZ: Asia/Shanghai
+    extra_hosts:
+      # Linux 上也能解析 host.docker.internal
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      # 仅本机暴露，便于直接用 curl 调接口；平时可删掉
+      - '127.0.0.1:${API_PORT:-18080}:8080'
+    restart: unless-stopped
+    networks: [poi-net]
+
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    image: bisai-agent-web:latest
-    container_name: bisai-web
+    image: poi-intel-web:latest
+    container_name: poi-web
+    depends_on:
+      backend:
+        condition: service_healthy
     ports:
-      - '8081:80'
+      - '${WEB_PORT:-8081}:80'
     restart: unless-stopped
-    healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1/healthz']
-      interval: 30s
-      timeout: 3s
-      retries: 3
-    networks: [bisai]
+    networks: [poi-net]
 
-  # 后端占位：按需 `docker compose --profile backend up -d` 启动
-  # 实际落地时把 image 换成你的 Spring Boot 构建产物即可
-  backend:
-    profiles: ['backend']
-    image: eclipse-temurin:21-jre
-    container_name: bisai-backend
-    working_dir: /app
-    command: ['sh', '-c', 'java -jar /app/app.jar']
-    volumes:
-      - ./backend/target:/app
-    expose:
-      - '8080'
-    restart: unless-stopped
-    networks: [bisai]
+volumes:
+  mysql-data:
 
 networks:
-  bisai:
+  poi-net:
     driver: bridge

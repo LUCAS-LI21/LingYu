@@ -20,6 +20,10 @@ export default defineConfig({
         items: [{ text: '技术栈 / 功能 / 账号 / 使用', link: '/tech/技术文档' }],
       },
       {
+        text: '部署',
+        items: [{ text: '一键部署（Docker Compose）', link: '/deploy/一键部署' }],
+      },
+      {
         text: '项目需求（M0）',
         items: [
           { text: '① 需求规格说明书', link: '/requirements/01-SRS' },

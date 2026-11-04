@@ -163,6 +163,26 @@ pnpm dev
 | 技术文档            | `docs/tech/技术文档.md`：技术栈/功能/账号/使用说明 + 变更记录                         | VitePress 已挂到导航与侧边栏               |
 | README              | 从"工程骨架"改写为项目现状与文档索引                                                  | —                                          |
 
+## 一键部署（文件就绪，未实际部署）
+
+Docker 守护进程当前未启动，本轮只准备与静态校验，**没有真正 build/up**。
+
+| 文件                         | 内容                                                                   | 校验方式                             |
+| ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
+| `docker-compose.yml`         | mysql / backend / web 三服务，健康检查 + `depends_on: service_healthy` | `docker compose config` 通过         |
+| `Dockerfile`（前端）         | Node 24 构建 → Nginx 托管                                              | 仅静态审查                           |
+| `backend/Dockerfile`         | Maven 构建 → JRE alpine 运行，非 root + curl 健康检查                  | 仅静态审查                           |
+| `.env.deploy.example`        | 口令、`AUTH_SECRET`、抓取代理、端口                                    | 被 compose 正确插值                  |
+| `scripts/deploy.ps1` / `.sh` | 生成 .env、构建、等健康、打印地址                                      | PowerShell 解析通过 / `bash -n` 通过 |
+| `docs/deploy/一键部署.md`    | 步骤、配置项、备份、故障排查、上生产清单                               | VitePress 构建通过                   |
+
+关键设计：
+
+- 端口避让本机：web 8081、api 18080、mysql 3307，后两者只绑 `127.0.0.1`
+- 容器内抓取代理必须 `host.docker.internal:7892`，并配 `extra_hosts: host-gateway`
+- 数据源 URL 已参数化为 `DB_HOST/DB_PORT/DB_NAME`，容器传 `DB_HOST=mysql`
+- `package.json` 补 `packageManager: pnpm@11.9.0`，否则 `corepack` 在镜像里选错 pnpm 版本
+
 ## 已知坑
 
 - pnpm 必须 `nodeLinker: hoisted`；Tailwind v4 走 postcss；TS 锁 5.9（EP CSS 已从全局移除，后续做后台再接）
