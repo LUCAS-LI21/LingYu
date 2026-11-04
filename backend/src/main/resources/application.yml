@@ -1,0 +1,33 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: poi-intel
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/poi_intel?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 5000
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+      encoding: UTF-8
+      continue-on-error: false
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+
+logging:
+  level:
+    root: info
+    com.poiintel: info
+    org.springframework.jdbc.datasource.init: warn

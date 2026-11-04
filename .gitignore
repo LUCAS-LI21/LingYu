@@ -25,3 +25,7 @@ stats.html
 
 # 本地截图产物
 shot-*.png
+
+# Java 后端构建产物
+backend/target/
+backend/*.log

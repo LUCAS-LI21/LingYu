@@ -6,7 +6,13 @@ import FilterPanel from '@/components/FilterPanel.vue'
 import PoiCard from '@/components/PoiCard.vue'
 import DetailPanel from '@/components/DetailPanel.vue'
 import FeedbackDialog from '@/components/FeedbackDialog.vue'
-import { filterPois, loadPois, nearby as nearbyQuery, type NearbyItem } from '@/api/pois'
+import {
+  filterPois,
+  loadPois,
+  nearby as nearbyQuery,
+  nearbyFromServer,
+  type NearbyItem,
+} from '@/api/pois'
 import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
 
 interface Bounds {
@@ -70,11 +76,20 @@ function locate(poi: Poi): void {
   mapRef.value?.focusOn(poi.lng, poi.lat, 16)
 }
 
-function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | 'atm' }): void {
+async function handleNearby(payload: {
+  poi: Poi
+  radius: number
+  branchType: 'all' | 'atm'
+}): Promise<void> {
   nearbyLoading.value = true
-  const items = nearbyQuery(pois.value, payload.poi, payload.radius, ['bank'], payload.branchType)
-  nearbyItems.value = items
-  nearbyLoading.value = false
+  try {
+    // 优先走后端 ST_Distance_Sphere，失败再本地算
+    const remote = await nearbyFromServer(payload.poi, payload.radius, payload.branchType)
+    nearbyItems.value =
+      remote ?? nearbyQuery(pois.value, payload.poi, payload.radius, ['bank'], payload.branchType)
+  } finally {
+    nearbyLoading.value = false
+  }
 }
 
 function closeDetail(): void {

@@ -1,4 +1,26 @@
 import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
+import {
+  fetchAllPois,
+  fetchNearby as fetchNearbyRemote,
+  fetchStats as fetchStatsRemote,
+  postFeedback,
+  probeServer,
+} from './server'
+
+let serverMode: boolean | null = null
+let probing: Promise<boolean> | null = null
+
+/** 后端在线则走真实接口，否则整体降级到本地种子数据（离线也能演示） */
+export async function isServerMode(): Promise<boolean> {
+  if (serverMode !== null) return serverMode
+  if (!probing) {
+    probing = probeServer().then((value) => {
+      serverMode = value
+      return value
+    })
+  }
+  return probing
+}
 
 /** 深圳 10 区近似中心，用于把坐标归到行政区（MVP 用最近质心，后端接入后换成点面判定） */
 const DISTRICT_ANCHORS = [
@@ -114,6 +136,19 @@ export async function loadPois(): Promise<Poi[]> {
   if (cache) return cache
   if (loading) return loading
   loading = (async () => {
+    // 优先走真实后端；失败则静默降级到本地种子，保证演示不中断
+    if (await isServerMode()) {
+      try {
+        const remote = await fetchAllPois()
+        if (remote.length > 0) {
+          cache = remote.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+          return cache
+        }
+      } catch {
+        serverMode = false
+      }
+    }
+
     const res = await fetch(`${import.meta.env.BASE_URL}data/pois.json`)
     if (!res.ok) throw new Error(`种子数据加载失败：${res.status}`)
     const dataset = (await res.json()) as PoiDataset
@@ -330,6 +365,22 @@ export interface FeedbackRecord extends FeedbackPayload {
 const feedbackStore: FeedbackRecord[] = []
 
 export async function submitFeedback(payload: FeedbackPayload): Promise<FeedbackRecord> {
+  if (await isServerMode()) {
+    try {
+      const result = await postFeedback(payload)
+      const record: FeedbackRecord = {
+        ...payload,
+        code: result.code,
+        status: result.status === 'pending' ? 'pending' : 'auto_applied',
+        createdAt: new Date().toISOString(),
+      }
+      feedbackStore.unshift(record)
+      return record
+    } catch {
+      // 后端异常时退回本地记录，避免用户白填
+    }
+  }
+
   const seq = String(feedbackStore.length + 1).padStart(4, '0')
   const record: FeedbackRecord = {
     ...payload,
@@ -344,6 +395,30 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
 
 export async function listFeedback(): Promise<FeedbackRecord[]> {
   return [...feedbackStore]
+}
+
+/** 优先走后端统计接口，失败返回 null，调用方用本地统计兜底 */
+export async function statsFromServer(): Promise<Stats | null> {
+  if (!(await isServerMode())) return null
+  try {
+    return await fetchStatsRemote()
+  } catch {
+    return null
+  }
+}
+
+/** 优先走后端球面距离查询，失败返回 null 让调用方本地兜底 */
+export async function nearbyFromServer(
+  poi: Poi,
+  radius: number,
+  branchType: 'all' | BranchType = 'all',
+): Promise<NearbyItem[] | null> {
+  if (!(await isServerMode())) return null
+  try {
+    return await fetchNearbyRemote(poi.lng, poi.lat, radius, branchType)
+  } catch {
+    return null
+  }
 }
 
 /**

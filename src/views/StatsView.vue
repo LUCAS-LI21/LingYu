@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { buildStats, loadPois, type Stats } from '@/api/pois'
+import { buildStats, loadPois, statsFromServer, type Stats } from '@/api/pois'
 
 const stats = ref<Stats | null>(null)
 const loading = ref(true)
 
 onMounted(async () => {
-  const pois = await loadPois()
-  stats.value = buildStats(pois)
+  // 后端在线用后端聚合（SQL GROUP BY），否则用本地统计兜底
+  const remote = await statsFromServer()
+  stats.value = remote ?? buildStats(await loadPois())
   loading.value = false
 })
 

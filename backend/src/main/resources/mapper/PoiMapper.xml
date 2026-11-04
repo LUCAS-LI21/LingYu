@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.poiintel.poi.PoiMapper">
+
+    <sql id="filters">
+        <where>
+            <if test="types != null and types.size() > 0">
+                AND type IN
+                <foreach collection="types" item="t" open="(" separator="," close=")">#{t}</foreach>
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%') OR address LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="district != null and district != '' and district != '全部区域'">
+                AND district = #{district}
+            </if>
+            <if test="branchType != null and branchType != '' and branchType != 'all'">
+                AND (type &lt;&gt; 'bank' OR branch_type = #{branchType})
+            </if>
+            <if test="minPrice != null">
+                AND (type &lt;&gt; 'community' OR (avg_price IS NOT NULL AND avg_price &gt;= #{minPrice}))
+            </if>
+            <if test="maxPrice != null">
+                AND (type &lt;&gt; 'community' OR (avg_price IS NOT NULL AND avg_price &lt;= #{maxPrice}))
+            </if>
+            <if test="minYear != null">
+                AND (type &lt;&gt; 'community' OR (built_year IS NOT NULL AND built_year &gt;= #{minYear}))
+            </if>
+            <if test="maxYear != null">
+                AND (type &lt;&gt; 'community' OR (built_year IS NOT NULL AND built_year &lt;= #{maxYear}))
+            </if>
+            <if test="west != null and east != null and south != null and north != null">
+                AND lng BETWEEN #{west} AND #{east} AND lat BETWEEN #{south} AND #{north}
+            </if>
+        </where>
+    </sql>
+
+    <select id="query" resultType="com.poiintel.poi.PoiRow">
+        SELECT * FROM v_poi
+        <include refid="filters"/>
+        <choose>
+            <when test="sort == 'priceDesc'">ORDER BY avg_price IS NULL, avg_price DESC, name</when>
+            <when test="sort == 'priceAsc'">ORDER BY avg_price IS NULL, avg_price ASC, name</when>
+            <when test="sort == 'yearDesc'">ORDER BY built_year IS NULL, built_year DESC, name</when>
+            <when test="sort == 'yearAsc'">ORDER BY built_year IS NULL, built_year ASC, name</when>
+            <when test="sort == 'name'">ORDER BY name</when>
+            <otherwise>ORDER BY type, name</otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM v_poi
+        <include refid="filters"/>
+    </select>
+
+    <select id="findById" resultType="com.poiintel.poi.PoiRow">
+        SELECT * FROM v_poi WHERE id = #{id}
+    </select>
+
+    <!-- 球面距离用 MySQL 内置函数，避免把全表拉到应用层算 -->
+    <select id="nearby" resultType="com.poiintel.poi.PoiRow">
+        SELECT *,
+               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
+        FROM v_poi
+        WHERE type = 'bank'
+        <if test="branchType != null and branchType != '' and branchType != 'all'">
+            AND branch_type = #{branchType}
+        </if>
+          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <select id="countsByType" resultType="java.util.Map">
+        SELECT type,
+               COALESCE(branch_type, '') AS branchType,
+               COUNT(*)                  AS cnt
+        FROM v_poi
+        GROUP BY type, branch_type
+    </select>
+
+    <select id="districtCount" resultType="int">
+        SELECT COUNT(DISTINCT district) FROM v_poi WHERE district &lt;&gt; ''
+    </select>
+
+    <select id="topBrands" resultType="java.util.Map">
+        SELECT brand AS label, COUNT(*) AS value
+        FROM v_poi
+        WHERE type = 'bank' AND brand &lt;&gt; ''
+        GROUP BY brand
+        ORDER BY value DESC, label
+        LIMIT #{limit}
+    </select>
+
+    <select id="priceBuckets" resultType="java.util.Map">
+        SELECT label, COUNT(*) AS value
+        FROM (
+            SELECT CASE
+                       WHEN avg_price IS NULL THEN '未知'
+                       WHEN avg_price &lt; 50000 THEN '&lt; 5 万'
+                       WHEN avg_price &lt; 70000 THEN '5–7 万'
+                       WHEN avg_price &lt; 90000 THEN '7–9 万'
+                       WHEN avg_price &lt; 110000 THEN '9–11 万'
+                       ELSE '≥ 11 万'
+                       END AS label
+            FROM v_poi
+            WHERE type = 'community'
+        ) t
+        GROUP BY label
+    </select>
+
+    <select id="gridTop" resultType="java.util.Map">
+        SELECT FLOOR(lng / 0.02) AS gx,
+               FLOOR(lat / 0.02) AS gy,
+               COUNT(*)          AS value
+        FROM v_poi
+        WHERE type = 'bank'
+        GROUP BY gx, gy
+        ORDER BY value DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
