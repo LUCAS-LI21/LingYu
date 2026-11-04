@@ -33,6 +33,11 @@ public class AdminService {
 
     private static final List<String> NUMERIC_COLUMNS = List.of("built_year", "avg_price", "property_fee");
 
+    /** POI 类型 → 表名，必须是白名单（表名会拼进 SQL） */
+    private static final Map<String, String> TABLE_BY_TYPE = Map.of(
+            "bank", "poi_bank",
+            "community", "poi_community");
+
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
@@ -105,6 +110,10 @@ public class AdminService {
     @Transactional
     public Map<String, Object> approve(String code, String reviewer) {
         Map<String, Object> feedback = jdbcTemplate.queryForMap("SELECT * FROM feedback WHERE code = ?", code);
+        String currentStatus = String.valueOf(feedback.get("status"));
+        if (!"pending".equals(currentStatus)) {
+            throw new IllegalStateException("该反馈已处理，当前状态：" + currentStatus);
+        }
         long feedbackId = ((Number) feedback.get("id")).longValue();
         String poiType = String.valueOf(feedback.get("poi_type"));
         String poiId = String.valueOf(feedback.get("poi_id"));
@@ -117,16 +126,22 @@ public class AdminService {
 
         if ("add".equals(type)) {
             // 新增点位不能凭空造，转成定向抓取任务，由采集侧核实
-            jdbcTemplate.update("""
+            int updated = jdbcTemplate.update("""
                     UPDATE feedback SET status = 'need_refetch', reviewer = ?, reviewed_at = NOW(),
-                        review_note = '新增点位需重新采集核实' WHERE code = ?
+                        review_note = '新增点位需重新采集核实' WHERE code = ? AND status = 'pending'
                     """, reviewer, code);
+            if (updated == 0) {
+                throw new IllegalStateException("反馈状态已变更，请刷新后重试");
+            }
             result.put("status", "need_refetch");
             result.put("applied", List.of());
             return result;
         }
 
-        String table = "bank".equals(poiType) ? "poi_bank" : "poi_community";
+        String table = TABLE_BY_TYPE.get(poiType);
+        if (table == null) {
+            throw new IllegalArgumentException("未知 POI 类型：" + poiType);
+        }
         Map<String, Object> before = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId);
 
         List<String> applied = new ArrayList<>();
@@ -157,7 +172,7 @@ public class AdminService {
 
         jdbcTemplate.update("""
                 UPDATE feedback SET status = 'approved', reviewer = ?, reviewed_at = NOW(),
-                    review_note = '审核通过并已生效' WHERE code = ?
+                    review_note = '审核通过并已生效' WHERE code = ? AND status = 'pending'
                 """, reviewer, code);
 
         result.put("status", "approved");
@@ -165,25 +180,51 @@ public class AdminService {
         return result;
     }
 
+    /** 关闭是单向操作，补一个重开入口，避免"关错了没法救" */
+    @Transactional
+    public Map<String, Object> reopen(String poiId, String reviewer) {
+        for (String table : TABLE_BY_TYPE.values()) {
+            Map<String, Object> row;
+            try {
+                row = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId);
+            } catch (Exception notFound) {
+                continue;
+            }
+            String poiType = "poi_bank".equals(table) ? "bank" : "community";
+            jdbcTemplate.update("UPDATE " + table + " SET status = 'active', updated_at = NOW() WHERE id = ?", poiId);
+            jdbcTemplate.update("""
+                    INSERT INTO poi_version (poi_type, poi_id, change_type, before_json, after_json,
+                                             changed_fields, operator)
+                    VALUES (?, ?, 'reopen', ?, ?, 'status=active', ?)
+                    """, poiType, poiId, toJson(row),
+                    toJson(jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId)), reviewer);
+            return Map.of("id", poiId, "status", "active", "type", poiType);
+        }
+        throw new IllegalArgumentException("POI 不存在：" + poiId);
+    }
+
     @Transactional
     public Map<String, Object> reject(String code, String reviewer, String note) {
-        jdbcTemplate.update("""
+        int updated = jdbcTemplate.update("""
                 UPDATE feedback SET status = 'rejected', reviewer = ?, reviewed_at = NOW(), review_note = ?
-                WHERE code = ?
+                WHERE code = ? AND status = 'pending'
                 """, reviewer, note == null ? "" : note, code);
+        if (updated == 0) {
+            throw new IllegalStateException("该反馈已处理或不存在，请刷新");
+        }
         return Map.of("code", code, "status", "rejected");
     }
 
     private Object parseNumber(String raw) {
         String cleaned = raw.replaceAll("[^0-9.]", "");
         if (cleaned.isEmpty()) {
-            return null;
+            throw new IllegalArgumentException("数值格式不正确：" + raw);
         }
         try {
             double value = Double.parseDouble(cleaned);
             return value == Math.floor(value) ? (int) value : value;
         } catch (NumberFormatException ex) {
-            return null;
+            throw new IllegalArgumentException("数值格式不正确：" + raw);
         }
     }
 

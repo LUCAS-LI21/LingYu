@@ -12,10 +12,13 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -28,14 +31,28 @@ public class AuthService {
 
     private static final String HMAC = "HmacSHA256";
     private static final int ITERATIONS = 120_000;
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final JdbcTemplate jdbcTemplate;
 
-    @Value("${app.auth.secret:dev-only-change-me-please-32bytes}")
+    @Value("${app.auth.secret:}")
     private String secret;
 
     @Value("${app.auth.ttl-minutes:720}")
     private long ttlMinutes;
+
+    /** 未配置密钥时生成临时随机值，避免默认密钥被拿去伪造 token */
+    @PostConstruct
+    void initSecret() {
+        if (secret == null || secret.isBlank() || secret.startsWith("dev-only")) {
+            byte[] random = new byte[32];
+            new SecureRandom().nextBytes(random);
+            secret = Base64.getEncoder().encodeToString(random);
+            log.warn("[auth] 未配置 AUTH_SECRET，已生成临时密钥；服务重启后已签发的 token 将失效");
+        } else if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            log.warn("[auth] AUTH_SECRET 长度不足 32 字节，建议更换为更长的随机值");
+        }
+    }
 
     public record Session(String token, String username, long expiresAt) {
     }

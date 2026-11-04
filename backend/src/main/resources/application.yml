@@ -34,10 +34,10 @@ logging:
 
 app:
   auth:
-    # 生产必须用环境变量覆盖；默认值仅用于本地演示
-    secret: ${AUTH_SECRET:dev-only-change-me-please-32bytes}
+    # 留空则启动时生成临时密钥（重启后 token 失效）；生产必须显式配置
+    secret: ${AUTH_SECRET:}
     ttl-minutes: 720
-    operator-username: operator
+    operator-username: ${OPERATOR_USERNAME:operator}
     operator-password: ${OPERATOR_PASSWORD:operator123}
   ingest:
     # Java 直连 Overpass 会被 502，必须走本机代理；留空则直连

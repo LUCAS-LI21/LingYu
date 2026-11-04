@@ -1,6 +1,7 @@
 package com.poiintel.admin;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +28,21 @@ public class ScheduledIngest {
 
     private final JdbcTemplate jdbcTemplate;
     private final IngestService ingestService;
+    private final AdminService adminService;
 
     @Value("${app.ingest.enabled:true}")
     private boolean enabled;
+
+    /** 每日重算热点，避免调度器读到过期排名（评审 P2-12） */
+    @Scheduled(cron = "${app.hotspot.recompute-cron:0 30 2 * * *}")
+    public void recomputeHotspotsDaily() {
+        try {
+            Map<String, Object> result = adminService.recomputeHotspots();
+            log.info("[schedule] 每日热点重算完成：{}", result);
+        } catch (Exception ex) {
+            log.warn("[schedule] 热点重算失败：{}", ex.getMessage());
+        }
+    }
 
     @Scheduled(initialDelayString = "${app.ingest.initial-delay-ms:120000}",
             fixedDelayString = "${app.ingest.schedule-ms:1800000}")

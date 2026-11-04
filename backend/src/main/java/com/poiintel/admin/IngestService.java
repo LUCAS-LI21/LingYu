@@ -10,7 +10,13 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +45,15 @@ public class IngestService {
 
     private static final Logger log = LoggerFactory.getLogger(IngestService.class);
 
+    /** 表名白名单：版本写入需要拼表名，必须挡住外部输入 */
+    private static final Set<String> TABLES = Set.of("poi_bank", "poi_community");
+
+    /** 与 upsert 参数顺序严格对应（第 0 位是 id） */
+    private static final List<String> BANK_COLUMNS = List.of(
+            "name", "brand", "branch_type", "address", "district", "lng", "lat", "phone", "opening_hours");
+    private static final List<String> COMMUNITY_COLUMNS = List.of(
+            "name", "address", "district", "lng", "lat", "built_year", "avg_price", "property_fee");
+
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
 
@@ -51,7 +66,16 @@ public class IngestService {
     @Value("${app.ingest.endpoints:https://overpass-api.de/api/interpreter}")
     private String endpoints;
 
-    public long createJob(String triggerType, double south, double west, double north, double east) {
+    /**
+     * 创建任务。synchronized + 在跑任务检查：单实例下不会并发起两个采集，
+     * 否则两个 job 会同时 upsert 同一批 POI（评审 P1-7）。多实例部署需换成 DB 级锁。
+     */
+    public synchronized long createJob(String triggerType, double south, double west, double north, double east) {
+        Integer running = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM ingest_job WHERE status IN ('pending','running')", Integer.class);
+        if (running != null && running > 0) {
+            throw new IllegalStateException("已有抓取任务在执行，请稍后再试");
+        }
         String scope = String.format("%.5f,%.5f,%.5f,%.5f", south, west, north, east);
         jdbcTemplate.update("""
                 INSERT INTO ingest_job (source_code, trigger_type, scope_type, scope_value, status)
@@ -105,6 +129,11 @@ public class IngestService {
                 });
             }
             fetched += banks.size();
+            int bankSkipped = dropHumanEdited("bank", banks);
+            if (bankSkipped > 0) {
+                notes.add("跳过 " + bankSkipped + " 条近期人工修改的网点");
+            }
+            recordVersions("poi_bank", "bank", banks, BANK_COLUMNS);
             int[] bankResult = upsertBanks(banks);
             for (int rows : bankResult) {
                 if (rows == 1) {
@@ -145,6 +174,11 @@ public class IngestService {
                     });
                 }
                 fetched += communities.size();
+                int communitySkipped = dropHumanEdited("community", communities);
+                if (communitySkipped > 0) {
+                    notes.add("跳过 " + communitySkipped + " 条近期人工修改的小区");
+                }
+                recordVersions("poi_community", "community", communities, COMMUNITY_COLUMNS);
                 int[] communityResult = upsertCommunities(communities);
                 for (int rows : communityResult) {
                     if (rows == 1) {
@@ -172,6 +206,124 @@ public class IngestService {
                     """, shortMessage(ex), jobId);
             log.warn("[ingest] job {} 失败：{}", jobId, ex.getMessage());
         }
+    }
+
+    /**
+     * 采集侧也写版本：先对比库中旧值，只把真正变化的字段记成一条 poi_version。
+     * 这样"这条数据哪天被谁改的"在抓取链路上也成立，而不只是审核链路。
+     */
+    private void recordVersions(String table, String poiType, List<Object[]> rows, List<String> columns) {
+        if (rows.isEmpty()) {
+            return;
+        }
+        if (!TABLES.contains(table)) {
+            throw new IllegalArgumentException("非法表名：" + table);
+        }
+        List<String> ids = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            ids.add(String.valueOf(row[0]));
+        }
+        Map<String, Map<String, Object>> existing = loadExisting(table, ids);
+        if (existing.isEmpty()) {
+            return;
+        }
+
+        List<Object[]> versions = new ArrayList<>();
+        for (Object[] row : rows) {
+            String id = String.valueOf(row[0]);
+            Map<String, Object> before = existing.get(id);
+            if (before == null) {
+                continue;
+            }
+            Map<String, Object> after = new LinkedHashMap<>();
+            List<String> changed = new ArrayList<>();
+            for (int i = 0; i < columns.size(); i++) {
+                String column = columns.get(i);
+                Object newValue = row[i + 1];
+                after.put(column, newValue);
+                if (differs(before.get(column), newValue)) {
+                    changed.add(column);
+                }
+            }
+            if (changed.isEmpty()) {
+                continue;
+            }
+            versions.add(new Object[]{
+                    poiType, id, "update",
+                    toJson(before), toJson(after),
+                    String.join(",", changed), "system:ingest"
+            });
+        }
+
+        if (!versions.isEmpty()) {
+            jdbcTemplate.batchUpdate("""
+                    INSERT INTO poi_version
+                        (poi_type, poi_id, change_type, before_json, after_json, changed_fields, operator)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, versions);
+            log.info("[ingest] 记录 {} 条采集变更版本", versions.size());
+        }
+    }
+
+    private Map<String, Map<String, Object>> loadExisting(String table, List<String> ids) {
+        Map<String, Map<String, Object>> result = new HashMap<>();
+        int chunkSize = 400;
+        for (int i = 0; i < ids.size(); i += chunkSize) {
+            List<String> chunk = ids.subList(i, Math.min(ids.size(), i + chunkSize));
+            String placeholders = String.join(",", Collections.nCopies(chunk.size(), "?"));
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT * FROM " + table + " WHERE id IN (" + placeholders + ")", chunk.toArray());
+            for (Map<String, Object> row : rows) {
+                result.put(String.valueOf(row.get("id")), row);
+            }
+        }
+        return result;
+    }
+
+    private boolean differs(Object oldValue, Object newValue) {
+        if (oldValue == null && newValue == null) {
+            return false;
+        }
+        if (oldValue == null || newValue == null) {
+            return true;
+        }
+        if (oldValue instanceof Number || newValue instanceof Number) {
+            try {
+                double a = ((Number) oldValue).doubleValue();
+                double b = newValue instanceof Number n ? n.doubleValue() : Double.parseDouble(String.valueOf(newValue));
+                return Math.abs(a - b) > 1e-6;
+            } catch (NumberFormatException ex) {
+                return true;
+            }
+        }
+        return !String.valueOf(oldValue).trim().equals(String.valueOf(newValue).trim());
+    }
+
+    private String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (Exception ex) {
+            return "{}";
+        }
+    }
+
+    /**
+     * 近期被人工审核改过的 POI 不参与本次覆盖（评审 P0-2）。
+     * 否则刚审核通过的电话/营业时间会在下一轮抓取里被 OSM 空值冲掉，反馈闭环就白做了。
+     * 30 天窗口是折中：人工修正优先，但不至于永久冻结数据。
+     */
+    private int dropHumanEdited(String poiType, List<Object[]> rows) {
+        Set<String> locked = new HashSet<>(jdbcTemplate.queryForList("""
+                SELECT DISTINCT poi_id FROM poi_version
+                WHERE poi_type = ? AND operator NOT LIKE 'system:ingest'
+                  AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                """, String.class, poiType));
+        if (locked.isEmpty() || rows.isEmpty()) {
+            return 0;
+        }
+        int before = rows.size();
+        rows.removeIf(row -> locked.contains(String.valueOf(row[0])));
+        return before - rows.size();
     }
 
     private int[] upsertBanks(List<Object[]> rows) {

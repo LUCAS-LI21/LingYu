@@ -2,11 +2,16 @@ package com.poiintel.feedback;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
 import com.poiintel.admin.AdminService;
@@ -26,25 +31,36 @@ public class FeedbackService {
     private static final Set<String> LOW_RISK_FIELDS = Set.of("电话", "营业时间", "均价", "物业费", "建成年份");
 
     public Map<String, Object> submit(FeedbackRequest request) {
-        int next = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(id), 0) + 1 FROM feedback", Integer.class);
-        String code = "FB" + LocalDate.now().format(DAY) + "-" + String.format("%04d", next);
         String status = "pending";
+        // lambda 内只能引用 effectively-final 变量
+        final String initialStatus = status;
+        // 临时码仅用于占位，长度必须 <= code 列宽（VARCHAR(32)）
+        String tempCode = "TMP-" + UUID.randomUUID().toString().replace("-", "").substring(0, 20);
 
-        jdbcTemplate.update("""
-                INSERT INTO feedback
-                    (code, poi_type, poi_id, poi_name, type, field_name, new_value, description, contact, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                code,
-                request.poiType(),
-                request.poiId(),
-                request.poiName() == null ? "" : request.poiName(),
-                request.type(),
-                request.field() == null ? "" : request.field(),
-                request.newValue() == null ? "" : request.newValue(),
-                request.description(),
-                request.contact() == null ? "" : request.contact(),
-                status);
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement("""
+                    INSERT INTO feedback
+                        (code, poi_type, poi_id, poi_name, type, field_name, new_value, description, contact, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, tempCode);
+            ps.setString(2, request.poiType());
+            ps.setString(3, request.poiId());
+            ps.setString(4, request.poiName() == null ? "" : request.poiName());
+            ps.setString(5, request.type());
+            ps.setString(6, request.field() == null ? "" : request.field());
+            ps.setString(7, request.newValue() == null ? "" : request.newValue());
+            ps.setString(8, request.description());
+            ps.setString(9, request.contact() == null ? "" : request.contact());
+            ps.setString(10, initialStatus);
+            return ps;
+        }, keyHolder);
+
+        // 用自增 id 生成对外编号，避免 MAX(id)+1 在并发下撞唯一键
+        long id = keyHolder.getKey() == null ? 0L : keyHolder.getKey().longValue();
+        String code = "FB" + LocalDate.now().format(DAY) + "-" + String.format("%04d", id);
+        jdbcTemplate.update("UPDATE feedback SET code = ? WHERE id = ?", code, id);
 
         // 低风险字段走「系统自动审核」：复用同一套生效逻辑，保证版本留痕一致
         boolean autoApply = !"add".equals(request.type())

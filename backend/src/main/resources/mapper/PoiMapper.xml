@@ -67,6 +67,10 @@
         <if test="branchType != null and branchType != '' and branchType != 'all'">
             AND branch_type = #{branchType}
         </if>
+          <!-- 先用经纬度矩形粗筛走 (lat,lng) 索引，避免对全表逐行算球面距离（评审 P1-11） -->
+          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
+          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
           AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
         ORDER BY distance
         LIMIT #{limit}

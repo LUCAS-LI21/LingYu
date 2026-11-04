@@ -261,7 +261,9 @@ onMounted(async () => {
       class="mx-auto max-w-sm rounded-card border border-line bg-surface p-6 shadow-float"
     >
       <h2 class="text-sm font-semibold text-ink-900">运营登录</h2>
-      <p class="mt-1 text-[11px] text-ink-400">后台接口需要鉴权，默认账号 operator / operator123</p>
+      <p class="mt-1 text-[11px] text-ink-400">
+        后台接口需要鉴权，请使用运营账号登录（口令由部署方提供）
+      </p>
 
       <div class="mt-4 space-y-3">
         <label class="block">

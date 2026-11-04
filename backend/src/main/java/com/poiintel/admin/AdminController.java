@@ -7,10 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.poiintel.auth.AuthService;
 import com.poiintel.common.ApiResult;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,15 @@ public class AdminController {
 
     private final AdminService adminService;
     private final IngestService ingestService;
+    private final AuthService authService;
+
+    /** 审核人必须来自 token 主体，不能信请求体（否则可伪造审核记录） */
+    private String reviewerOf(String authorization) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authService.verify(authorization.substring(7)).orElse("unknown");
+        }
+        return "unknown";
+    }
 
     @GetMapping("/overview")
     public ApiResult<Map<String, Object>> overview() {
@@ -39,18 +50,25 @@ public class AdminController {
     @PostMapping("/feedback/{code}/approve")
     public ApiResult<Map<String, Object>> approve(
             @PathVariable String code,
-            @RequestBody(required = false) Map<String, String> body) {
-        String reviewer = body == null ? "operator" : body.getOrDefault("reviewer", "operator");
-        return ApiResult.ok(adminService.approve(code, reviewer));
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return ApiResult.ok(adminService.approve(code, reviewerOf(authorization)));
     }
 
     @PostMapping("/feedback/{code}/reject")
     public ApiResult<Map<String, Object>> reject(
             @PathVariable String code,
+            @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestBody(required = false) Map<String, String> body) {
-        String reviewer = body == null ? "operator" : body.getOrDefault("reviewer", "operator");
         String note = body == null ? "" : body.getOrDefault("note", "");
-        return ApiResult.ok(adminService.reject(code, reviewer, note));
+        return ApiResult.ok(adminService.reject(code, reviewerOf(authorization), note));
+    }
+
+    /** 关闭是单向操作，这里提供恢复入口（评审 P1-10） */
+    @PostMapping("/pois/{id}/reopen")
+    public ApiResult<Map<String, Object>> reopen(
+            @PathVariable String id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return ApiResult.ok(adminService.reopen(id, reviewerOf(authorization)));
     }
 
     @GetMapping("/jobs")
