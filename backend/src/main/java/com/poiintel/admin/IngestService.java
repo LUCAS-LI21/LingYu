@@ -24,12 +24,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.poiintel.poi.DemoData;
 import com.poiintel.poi.Districts;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -56,6 +59,15 @@ public class IngestService {
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final PlatformTransactionManager transactionManager;
+
+    /** 每段写库单独一个短事务：网络抓取在事务外，避免长事务锁表 */
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    void initTransactionTemplate() {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
     @Value("${app.ingest.proxy:}")
     private String proxy;
@@ -129,12 +141,17 @@ public class IngestService {
                 });
             }
             fetched += banks.size();
-            int bankSkipped = dropHumanEdited("bank", banks);
-            if (bankSkipped > 0) {
-                notes.add("跳过 " + bankSkipped + " 条近期人工修改的网点");
+            int[] bankResult = transactionTemplate.execute(state -> {
+                int skipped = dropHumanEdited("bank", banks);
+                if (skipped > 0) {
+                    notes.add("跳过 " + skipped + " 条近期人工修改的网点");
+                }
+                recordVersions("poi_bank", "bank", banks, BANK_COLUMNS);
+                return upsertBanks(banks);
+            });
+            if (bankResult == null) {
+                bankResult = new int[0];
             }
-            recordVersions("poi_bank", "bank", banks, BANK_COLUMNS);
-            int[] bankResult = upsertBanks(banks);
             for (int rows : bankResult) {
                 if (rows == 1) {
                     inserted++;
@@ -174,12 +191,17 @@ public class IngestService {
                     });
                 }
                 fetched += communities.size();
-                int communitySkipped = dropHumanEdited("community", communities);
-                if (communitySkipped > 0) {
-                    notes.add("跳过 " + communitySkipped + " 条近期人工修改的小区");
+                int[] communityResult = transactionTemplate.execute(state -> {
+                    int skipped = dropHumanEdited("community", communities);
+                    if (skipped > 0) {
+                        notes.add("跳过 " + skipped + " 条近期人工修改的小区");
+                    }
+                    recordVersions("poi_community", "community", communities, COMMUNITY_COLUMNS);
+                    return upsertCommunities(communities);
+                });
+                if (communityResult == null) {
+                    communityResult = new int[0];
                 }
-                recordVersions("poi_community", "community", communities, COMMUNITY_COLUMNS);
-                int[] communityResult = upsertCommunities(communities);
                 for (int rows : communityResult) {
                     if (rows == 1) {
                         inserted++;
@@ -201,9 +223,13 @@ public class IngestService {
                     """, status, fetched, inserted, updated, failed, joinNotes(notes), jobId);
             log.info("[ingest] job {} {}：抓取 {}，新增 {}，更新 {}", jobId, status, fetched, inserted, updated);
         } catch (Exception ex) {
+            // 失败也要回写已完成的计数，否则任务显示 0 条、实际已写入部分数据（评审 P1-8）
             jdbcTemplate.update("""
-                    UPDATE ingest_job SET status = 'failed', error_summary = ?, finished_at = NOW() WHERE id = ?
-                    """, shortMessage(ex), jobId);
+                    UPDATE ingest_job
+                    SET status = 'failed', fetched_count = ?, inserted_count = ?, updated_count = ?,
+                        failed_count = ?, error_summary = ?, finished_at = NOW()
+                    WHERE id = ?
+                    """, fetched, inserted, updated, failed, shortMessage(ex), jobId);
             log.warn("[ingest] job {} 失败：{}", jobId, ex.getMessage());
         }
     }

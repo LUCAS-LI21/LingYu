@@ -9,11 +9,16 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: '总览', link: '/' },
+      { text: '技术文档', link: '/tech/技术文档' },
       { text: '项目需求', link: '/requirements/01-SRS' },
       { text: '六阶段方法', link: '/01-需求分析' },
       { text: '命令速查', link: '/07-命令速查' },
     ],
     sidebar: [
+      {
+        text: '技术文档',
+        items: [{ text: '技术栈 / 功能 / 账号 / 使用', link: '/tech/技术文档' }],
+      },
       {
         text: '项目需求（M0）',
         items: [

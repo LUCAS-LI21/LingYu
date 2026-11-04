@@ -51,7 +51,22 @@ public class AdminController {
     public ApiResult<Map<String, Object>> approve(
             @PathVariable String code,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return ApiResult.ok(adminService.approve(code, reviewerOf(authorization)));
+        Map<String, Object> result = adminService.approve(code, reviewerOf(authorization));
+
+        // 「新增点位」类反馈：审核通过后自动围绕锚点建一个定向抓取任务（闭环 B）
+        if ("need_refetch".equals(result.get("status")) && result.get("anchorLng") != null) {
+            double lng = ((Number) result.get("anchorLng")).doubleValue();
+            double lat = ((Number) result.get("anchorLat")).doubleValue();
+            double span = 0.012; // 约 1.3km
+            try {
+                long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span);
+                ingestService.runJob(jobId, lat - span, lng - span, lat + span, lng + span);
+                result.put("jobId", jobId);
+            } catch (IllegalStateException busy) {
+                result.put("jobError", busy.getMessage());
+            }
+        }
+        return ApiResult.ok(result);
     }
 
     @PostMapping("/feedback/{code}/reject")

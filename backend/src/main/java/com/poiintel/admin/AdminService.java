@@ -124,8 +124,13 @@ public class AdminService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("code", code);
 
+        String table = TABLE_BY_TYPE.get(poiType);
+        if (table == null) {
+            throw new IllegalArgumentException("未知 POI 类型：" + poiType);
+        }
+
         if ("add".equals(type)) {
-            // 新增点位不能凭空造，转成定向抓取任务，由采集侧核实
+            // 新增点位不能凭空造：置为待重抓，并把锚点坐标回传，由控制器创建定向抓取任务
             int updated = jdbcTemplate.update("""
                     UPDATE feedback SET status = 'need_refetch', reviewer = ?, reviewed_at = NOW(),
                         review_note = '新增点位需重新采集核实' WHERE code = ? AND status = 'pending'
@@ -135,13 +140,17 @@ public class AdminService {
             }
             result.put("status", "need_refetch");
             result.put("applied", List.of());
+            try {
+                Map<String, Object> anchor = jdbcTemplate.queryForMap(
+                        "SELECT lng, lat FROM " + table + " WHERE id = ?", poiId);
+                result.put("anchorLng", ((Number) anchor.get("lng")).doubleValue());
+                result.put("anchorLat", ((Number) anchor.get("lat")).doubleValue());
+            } catch (Exception ignored) {
+                // 锚点查不到就不建任务，只保留 need_refetch 状态
+            }
             return result;
         }
 
-        String table = TABLE_BY_TYPE.get(poiType);
-        if (table == null) {
-            throw new IllegalArgumentException("未知 POI 类型：" + poiType);
-        }
         Map<String, Object> before = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId);
 
         List<String> applied = new ArrayList<>();
