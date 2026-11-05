@@ -29,4 +29,16 @@ public class LiveController {
                 .cacheControl(CacheControl.noStore())
                 .body(ApiResult.ok(liveService.reverseGeocode(lng, lat)));
     }
+
+    /** 实时周边 POI（L2）：本地库缺数据时临时补一眼，同样不落库 */
+    @GetMapping("/pois")
+    public ResponseEntity<ApiResult<Map<String, Object>>> around(
+            @RequestParam double lng,
+            @RequestParam double lat,
+            @RequestParam(defaultValue = "1000") int radius,
+            @RequestParam(required = false) String keywords) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(ApiResult.ok(liveService.searchAround(lng, lat, radius, keywords)));
+    }
 }

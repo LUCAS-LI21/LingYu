@@ -32,6 +32,13 @@ export default defineConfig({
         ],
       },
       {
+        text: '设计',
+        items: [
+          { text: '数据源矩阵（能否入库）', link: '/design/数据源矩阵' },
+          { text: 'ER 与索引', link: '/design/ER' },
+        ],
+      },
+      {
         text: '调研与核查',
         items: [
           { text: '开源选型调研', link: '/research/poi-开源选型调研' },

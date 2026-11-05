@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import type { NearbyItem } from '@/api/pois'
-import { fetchLiveAddress } from '@/api/live'
+import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
 import type { BankPoi, Poi } from '@/types/poi'
 
 const props = defineProps<{
@@ -26,6 +26,35 @@ const queried = ref(false)
 const liveAddress = ref('')
 const liveMessage = ref('')
 const liveLoading = ref(false)
+
+// L2 实时周边（高德）：同样只在内存
+const livePois = ref<LivePoiItem[]>([])
+const livePoiMessage = ref('')
+const livePoiLoading = ref(false)
+
+async function loadLivePois(): Promise<void> {
+  livePoiLoading.value = true
+  livePoiMessage.value = ''
+  try {
+    const result = await fetchLiveAround(props.poi.lng, props.poi.lat, 1000)
+    if (!result.enabled) {
+      livePoiMessage.value = result.reason ?? '实时周边不可用'
+      return
+    }
+    if (result.error) {
+      livePoiMessage.value = result.error
+      return
+    }
+    livePois.value = result.items ?? []
+    if (livePois.value.length === 0) {
+      livePoiMessage.value = '1km 内没有查到 POI'
+    }
+  } catch {
+    livePoiMessage.value = '实时周边查询失败'
+  } finally {
+    livePoiLoading.value = false
+  }
+}
 
 async function loadLiveAddress(): Promise<void> {
   liveLoading.value = true
@@ -57,6 +86,8 @@ watch(
     queried.value = false
     liveAddress.value = ''
     liveMessage.value = ''
+    livePois.value = []
+    livePoiMessage.value = ''
   },
 )
 
@@ -206,6 +237,37 @@ function queryNearby(type: 'all' | 'atm'): void {
           OSM 在中国区的网点多只记录名称与坐标，地址缺失属源头问题，不是系统故障。
         </p>
       </div>
+
+      <section class="space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium text-ink-700">实时周边（高德）</p>
+          <button
+            class="text-[11px] text-brand-600 transition hover:underline disabled:opacity-50"
+            :disabled="livePoiLoading"
+            @click="loadLivePois"
+          >
+            {{ livePoiLoading ? '查询中…' : '查 1km 内' }}
+          </button>
+        </div>
+        <p v-if="livePoiMessage" class="text-[11px] leading-relaxed text-ink-400">
+          {{ livePoiMessage }}
+        </p>
+        <ul v-if="livePois.length" class="space-y-1">
+          <li
+            v-for="(item, index) in livePois.slice(0, 5)"
+            :key="`${item.name}-${index}`"
+            class="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5"
+          >
+            <span class="min-w-0 flex-1 truncate text-[11px] text-ink-700">{{ item.name }}</span>
+            <span class="shrink-0 text-[10px] text-ink-400">
+              {{ item.distance !== undefined ? `${item.distance}m` : '' }}
+            </span>
+          </li>
+        </ul>
+        <p v-if="livePois.length" class="text-[10px] text-ink-400">
+          实时数据来自高德 · 未存储 · 关闭页面即消失
+        </p>
+      </section>
 
       <section v-if="poi.type === 'community'" class="space-y-2.5">
         <div class="flex items-center justify-between">

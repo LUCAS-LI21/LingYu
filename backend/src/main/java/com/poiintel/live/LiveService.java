@@ -1,11 +1,15 @@
 package com.poiintel.live;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -78,6 +82,80 @@ public class LiveService {
             log.warn("[live] 高德逆地理编码失败：{}", ex.getClass().getSimpleName());
             result.put("enabled", true);
             result.put("error", "实时地址查询超时或失败");
+            return result;
+        }
+    }
+
+    /**
+     * L2 实时周边 POI：用高德 around 搜索补齐"本地库这里没数据"的体验。
+     * 同样不落库、不缓存，只回给当前请求。
+     */
+    public Map<String, Object> searchAround(double lng, double lat, int radius, String keywords) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        if (amapKey == null || amapKey.isBlank()) {
+            result.put("enabled", false);
+            result.put("reason", "未配置 AMAP_KEY：实时周边查询不可用");
+            return result;
+        }
+
+        StringBuilder url = new StringBuilder(String.format(
+                "https://restapi.amap.com/v3/place/around?location=%.6f,%.6f&radius=%d&offset=10&page=1&key=%s",
+                lng, lat, Math.min(Math.max(radius, 100), 5000), amapKey));
+        if (keywords != null && !keywords.isBlank()) {
+            url.append("&keywords=").append(URLEncoder.encode(keywords, StandardCharsets.UTF_8));
+        }
+
+        try {
+            HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+            HttpRequest request = HttpRequest.newBuilder(URI.create(url.toString()))
+                    .timeout(Duration.ofSeconds(6))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client
+                    .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .orTimeout(10, TimeUnit.SECONDS)
+                    .join();
+
+            JsonNode root = objectMapper.readTree(response.body());
+            if (!"1".equals(root.path("status").asText())) {
+                result.put("enabled", true);
+                result.put("error", root.path("info").asText("高德返回异常"));
+                return result;
+            }
+
+            List<Map<String, Object>> items = new ArrayList<>();
+            for (JsonNode poi : root.path("pois")) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("name", poi.path("name").asText(""));
+                item.put("address", poi.path("address").asText(""));
+                item.put("type", poi.path("type").asText(""));
+                item.put("phone", poi.path("tel").asText(""));
+                String distance = poi.path("distance").asText("");
+                if (!distance.isBlank()) {
+                    try {
+                        item.put("distance", (int) Double.parseDouble(distance));
+                    } catch (NumberFormatException ignored) {
+                        // 高德偶发返回空串，忽略即可
+                    }
+                }
+                String location = poi.path("location").asText("");
+                String[] parts = location.split(",");
+                if (parts.length == 2) {
+                    item.put("lng", Double.parseDouble(parts[0]));
+                    item.put("lat", Double.parseDouble(parts[1]));
+                }
+                items.add(item);
+            }
+
+            result.put("enabled", true);
+            result.put("source", "amap");
+            result.put("stored", false);
+            result.put("items", items);
+            return result;
+        } catch (Exception ex) {
+            log.warn("[live] 高德周边查询失败：{}", ex.getClass().getSimpleName());
+            result.put("enabled", true);
+            result.put("error", "实时周边查询超时或失败");
             return result;
         }
     }
