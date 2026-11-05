@@ -89,3 +89,4 @@ skills/         六阶段工程作业规程
 | `AUTH_SECRET`             | token 签名密钥；**留空则每次启动生成随机值**（重启后 token 失效） |
 | `OPERATOR_PASSWORD`       | 运营默认口令                                                      |
 | `HTTP_PROXY`              | Overpass 抓取代理（Java 直连常被 502）                            |
+| `AMAP_KEY`                | 高德 Key，仅用于 L2 实时地址查询（不落库）；留空则该入口降级      |

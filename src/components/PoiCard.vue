@@ -93,7 +93,7 @@ const subtitle = computed(() => {
         class="mt-1 block truncate text-xs"
         :class="poi.address ? 'text-ink-500' : 'text-ink-400/70'"
       >
-        {{ poi.address || '详细地址待补充' }}
+        {{ poi.address || '地址待补充' }}
       </span>
 
       <span class="mt-1 flex items-center gap-2 text-[11px] text-ink-400">

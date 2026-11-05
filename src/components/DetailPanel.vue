@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import type { NearbyItem } from '@/api/pois'
+import { fetchLiveAddress } from '@/api/live'
 import type { BankPoi, Poi } from '@/types/poi'
 
 const props = defineProps<{
@@ -13,7 +14,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'locate', poi: Poi): void
-  (e: 'feedback', poi: Poi): void
+  (e: 'feedback', payload: { poi: Poi; field?: string }): void
   (e: 'nearby', payload: { poi: Poi; radius: number; branchType: 'all' | 'atm' }): void
 }>()
 
@@ -21,10 +22,41 @@ const radius = ref(1000)
 const branchType = ref<'all' | 'atm'>('all')
 const queried = ref(false)
 
+// L2 实时地址：只在本次会话内存里，页面关闭即消失
+const liveAddress = ref('')
+const liveMessage = ref('')
+const liveLoading = ref(false)
+
+async function loadLiveAddress(): Promise<void> {
+  liveLoading.value = true
+  liveMessage.value = ''
+  try {
+    const result = await fetchLiveAddress(props.poi.lng, props.poi.lat)
+    if (!result.enabled) {
+      liveMessage.value = result.reason ?? '实时地址不可用'
+      return
+    }
+    if (result.error) {
+      liveMessage.value = result.error
+      return
+    }
+    liveAddress.value = result.address ?? ''
+    if (!liveAddress.value) {
+      liveMessage.value = '高德未返回地址'
+    }
+  } catch {
+    liveMessage.value = '实时地址查询失败'
+  } finally {
+    liveLoading.value = false
+  }
+}
+
 watch(
   () => props.poi.id,
   () => {
     queried.value = false
+    liveAddress.value = ''
+    liveMessage.value = ''
   },
 )
 
@@ -121,10 +153,42 @@ function queryNearby(type: 'all' | 'atm'): void {
             class="min-w-0 flex-1 text-ink-700"
             :class="{ 'text-ink-400': row.value === '暂无' || row.value === '待核实' }"
           >
-            {{ row.value }}
+            <template v-if="row.label === '地址'">
+              <span v-if="row.value !== '暂无'">{{ row.value }}</span>
+              <span v-else class="text-ink-400">暂无</span>
+              <template v-if="row.value === '暂无'">
+                <button
+                  class="ml-1.5 text-brand-600 transition hover:underline disabled:opacity-50"
+                  :disabled="liveLoading"
+                  @click="loadLiveAddress"
+                >
+                  {{ liveLoading ? '查询中…' : '查实时地址' }}
+                </button>
+                <button
+                  class="ml-1.5 text-ink-500 transition hover:text-brand-600 hover:underline"
+                  @click="emit('feedback', { poi, field: '地址' })"
+                >
+                  补充地址
+                </button>
+              </template>
+            </template>
+            <template v-else>{{ row.value }}</template>
           </dd>
         </div>
       </dl>
+
+      <div
+        v-if="liveAddress"
+        class="rounded-soft border border-brand-500/25 bg-brand-50/60 px-3 py-2.5"
+      >
+        <p class="text-[10px] font-medium text-brand-600">
+          实时数据来自高德 · 未存储 · 关闭页面即消失
+        </p>
+        <p class="mt-1 text-xs leading-relaxed text-ink-700">{{ liveAddress }}</p>
+      </div>
+      <p v-else-if="liveMessage" class="text-[11px] leading-relaxed text-ink-400">
+        {{ liveMessage }}
+      </p>
 
       <div class="rounded-soft border border-line bg-surface-soft px-3 py-2.5">
         <p class="text-[11px] font-medium text-ink-700">数据来源</p>
@@ -134,6 +198,12 @@ function queryNearby(type: 'all' | 'atm'): void {
             <br />
             <span class="text-amber-600">均价/年份为演示数据，不构成投资建议</span>
           </template>
+        </p>
+        <p
+          v-if="!poi.address"
+          class="mt-1.5 border-t border-line pt-1.5 text-[11px] leading-relaxed text-ink-400"
+        >
+          OSM 在中国区的网点多只记录名称与坐标，地址缺失属源头问题，不是系统故障。
         </p>
       </div>
 
@@ -186,7 +256,7 @@ function queryNearby(type: 'all' | 'atm'): void {
             <p class="text-[11px] text-ink-500">该区域本地库暂无数据</p>
             <button
               class="mt-2 text-[11px] font-medium text-brand-600 hover:underline"
-              @click="emit('feedback', poi)"
+              @click="emit('feedback', { poi })"
             >
               请求补充采集
             </button>
@@ -215,7 +285,7 @@ function queryNearby(type: 'all' | 'atm'): void {
     <footer class="flex gap-2 border-t border-line px-4 py-3">
       <button
         class="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-line bg-surface py-2 text-xs text-ink-600 transition hover:border-brand-500/50 hover:text-brand-600"
-        @click="emit('feedback', poi)"
+        @click="emit('feedback', { poi })"
       >
         <svg
           class="h-3.5 w-3.5"

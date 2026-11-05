@@ -31,7 +31,7 @@ const boxActive = ref(false)
 const selected = ref<Poi | null>(null)
 const nearbyItems = ref<NearbyItem[]>([])
 const nearbyLoading = ref(false)
-const feedbackTarget = ref<Poi | null>(null)
+const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
 const mapRef = ref<InstanceType<typeof MapCanvas> | null>(null)
 
 const visiblePois = computed(() =>
@@ -235,7 +235,7 @@ function closeDetail(): void {
           :loading="nearbyLoading"
           @close="closeDetail"
           @locate="locate"
-          @feedback="(poi) => (feedbackTarget = poi)"
+          @feedback="(payload) => (feedbackTarget = payload)"
           @nearby="handleNearby"
         />
 
@@ -323,7 +323,8 @@ function closeDetail(): void {
 
     <FeedbackDialog
       v-if="feedbackTarget"
-      :poi="feedbackTarget"
+      :poi="feedbackTarget.poi"
+      :initial-field="feedbackTarget.field"
       @close="feedbackTarget = null"
       @submitted="feedbackTarget = null"
     />

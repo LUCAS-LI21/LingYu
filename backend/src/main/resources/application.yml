@@ -49,3 +49,7 @@ app:
     enabled: true
     schedule-ms: 1800000
     initial-delay-ms: 120000
+  live:
+    # L2 实时层：只用于「查地址」等即时展示，绝不落库（高德协议 3.5）
+    # 留空则前端显示不可用，但保留「补充地址」的反馈入口
+    amap-key: ${AMAP_KEY:}

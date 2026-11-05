@@ -5,11 +5,12 @@ import { submitFeedback, type FeedbackPayload } from '@/api/pois'
 import { toast } from '@/lib/toast'
 import type { Poi } from '@/types/poi'
 
-const props = defineProps<{ poi: Poi }>()
+const props = defineProps<{ poi: Poi; initialField?: string }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'submitted', code: string): void }>()
 
 const type = ref<FeedbackPayload['type']>('error')
-const field = ref('')
+// 从「地址待补充」入口进来时预选字段，少点一次
+const field = ref(props.initialField ?? '')
 const newValue = ref('')
 const description = ref('')
 const contact = ref('')

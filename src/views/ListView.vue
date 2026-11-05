@@ -16,7 +16,7 @@ const page = ref(1)
 const pageSize = 12
 const selected = ref<Poi | null>(null)
 const nearbyItems = ref<NearbyItem[]>([])
-const feedbackTarget = ref<Poi | null>(null)
+const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
 
 const filtered = computed(() =>
   filterPois(pois.value, { filters: filters.value, sort: sort.value }),
@@ -140,7 +140,7 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
             :nearby="nearbyItems"
             @close="selected = null"
             @locate="selected = null"
-            @feedback="(poi) => (feedbackTarget = poi)"
+            @feedback="(payload) => (feedbackTarget = payload)"
             @nearby="handleNearby"
           />
         </div>
@@ -149,7 +149,8 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
 
     <FeedbackDialog
       v-if="feedbackTarget"
-      :poi="feedbackTarget"
+      :poi="feedbackTarget.poi"
+      :initial-field="feedbackTarget.field"
       @close="feedbackTarget = null"
       @submitted="feedbackTarget = null"
     />
