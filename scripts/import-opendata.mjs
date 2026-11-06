@@ -12,7 +12,7 @@
  *   node scripts/import-opendata.mjs --file 小区物业.csv --type community \
  *        --map "小区名称=name,地址=address,经度=lng,纬度=lat"
  *
- * 可选：--source / --license / --batch / --dry-run
+ * 可选：--source / --license / --batch / --overwrite / --dry-run
  */
 import { readFileSync } from 'node:fs'
 
@@ -30,6 +30,7 @@ const license = flag('license', '政府公开信息（署名）')
 const batchSize = Number(flag('batch', '200'))
 const mappingArg = flag('map')
 const apiBase = flag('api', 'http://127.0.0.1:8080')
+const overwrite = hasFlag('overwrite')
 const dryRun = hasFlag('dry-run')
 
 if (!file || !mappingArg) {
@@ -41,7 +42,7 @@ if (!file || !mappingArg) {
 
 const mapping = mappingArg.split(',').map((pair) => {
   const [column, field] = pair.split('=')
-  return { column: column.trim(), field: field.trim() }
+  return { column: (column ?? '').trim(), field: (field ?? '').trim() }
 })
 
 function parseCsv(text) {
@@ -82,6 +83,12 @@ function parseCsv(text) {
 
 const text = readFileSync(file, 'utf8').replace(/^\uFEFF/, '')
 const table = parseCsv(text).filter((r) => r.some((c) => c.trim() !== ''))
+
+if (table.length === 0) {
+  console.error('CSV 是空的，没有表头')
+  process.exit(1)
+}
+
 const header = table[0].map((h) => h.trim())
 console.log(`表头：${header.join(' | ')}`)
 
@@ -97,16 +104,28 @@ for (const { column, field } of mapping) {
 
 const numeric = new Set(['lng', 'lat', 'builtYear', 'avgPrice', 'propertyFee'])
 const rows = []
+let badNumbers = 0
+
 for (const raw of table.slice(1)) {
   const item = {}
-  for (const [field, idx] of Object.entries(index)) {
-    const value = (raw[idx] ?? '').trim()
+  for (const [field, position] of Object.entries(index)) {
+    const value = (raw[position] ?? '').trim()
     if (!value) continue
-    item[field] = numeric.has(field) ? Number(value) : value
+    if (numeric.has(field)) {
+      const parsed = Number(value)
+      if (!Number.isFinite(parsed)) {
+        badNumbers++
+        continue
+      }
+      item[field] = parsed
+    } else {
+      item[field] = value
+    }
   }
   if (Object.keys(item).length) rows.push(item)
 }
-console.log(`解析出 ${rows.length} 行`)
+
+console.log(`解析出 ${rows.length} 行${badNumbers ? `（${badNumbers} 个数值无法解析已忽略）` : ''}`)
 
 if (dryRun) {
   console.log('前 3 行预览：', JSON.stringify(rows.slice(0, 3), null, 2))
@@ -130,12 +149,14 @@ if (!token) {
 let inserted = 0
 let updated = 0
 let skipped = 0
+let unchanged = 0
+
 for (let i = 0; i < rows.length; i += batchSize) {
   const chunk = rows.slice(i, i + batchSize)
   const response = await fetch(`${apiBase}/api/v1/admin/import`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ source, license, type, rows: chunk }),
+    body: JSON.stringify({ source, license, type, overwrite, rows: chunk }),
   })
   const body = await response.json()
   if (body.code !== 0) {
@@ -145,11 +166,12 @@ for (let i = 0; i < rows.length; i += batchSize) {
   inserted += body.data.inserted
   updated += body.data.updated
   skipped += body.data.skipped
+  unchanged += body.data.unchanged ?? 0
   console.log(
-    `第 ${i / batchSize + 1} 批：新增 ${body.data.inserted} / 更新 ${body.data.updated} / 跳过 ${body.data.skipped}`,
+    `第 ${i / batchSize + 1} 批：新增 ${body.data.inserted} / 更新 ${body.data.updated} / 未变 ${body.data.unchanged ?? 0} / 跳过 ${body.data.skipped}`,
   )
   if (body.data.errors?.length) console.log('  样例错误：', body.data.errors.slice(0, 3).join('；'))
 }
 
-console.log(`\n完成：新增 ${inserted}，更新 ${updated}，跳过 ${skipped}`)
+console.log(`\n完成：新增 ${inserted}，更新 ${updated}，未变 ${unchanged}，跳过 ${skipped}`)
 console.log('提醒：对外展示时须注明「数据来源：深圳市政府数据开放平台」，且不得转让数据。')
