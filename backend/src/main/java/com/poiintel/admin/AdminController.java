@@ -24,6 +24,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final IngestService ingestService;
+    private final ImportService importService;
     private final AuthService authService;
 
     /** 审核人必须来自 token 主体，不能信请求体（否则可伪造审核记录） */
@@ -84,6 +85,15 @@ public class AdminController {
             @PathVariable String id,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         return ApiResult.ok(adminService.reopen(id, reviewerOf(authorization)));
+    }
+
+    /**
+     * 导入政府开放数据（L1）：官方数据集人工下载后，按列映射成 JSON 行提交。
+     * 与抓取不同，这里的数据来自官方发布的文件，来源可追溯、允许入库。
+     */
+    @PostMapping("/import")
+    public ApiResult<Map<String, Object>> importPois(@RequestBody ImportService.Request request) {
+        return ApiResult.ok(importService.importRows(request));
     }
 
     @GetMapping("/jobs")
