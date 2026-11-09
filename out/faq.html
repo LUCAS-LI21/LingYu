@@ -1,0 +1,2171 @@
+<head>
+  <!-- 网站标签 -->
+  <meta name="SiteName" content="深圳市政府数据开放平台"/>
+  <meta name="SiteDomain" content="opendata.sz.gov.cn/"/>
+  <meta name="SiteIDCode" content="4403000084"/>
+  <!-- 栏目标签 -->
+  <meta name="columnName" content="互动、常见问题"/>
+  <meta name="columnDescription" content="深圳市政府数据开放平台互动栏目"/>
+  <meta name="columnKeywords" content="互动"/>
+  <meta name="columnType" content="互动"/>
+
+</head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>深圳市政府数据开放平台</title>
+    <meta charset="UTF-8">
+    <!--<meta http-equiv="X-UA-jqueryCompatible" content="IE=edge, chrome=1">-->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=0,user-scalable=yes,maximum-scale=1.0">
+    <meta property="og:image" content="http://opendata.sz.gov.cn/static/opendata1.0/images/aaa.jpg">
+    <link rel="shortcut icon" href="/static/opendata1.0/images/titleIcon.png" type="image/x-icon">
+    <link href="/static/opendata1.0/css/2018-10-18-PC.css" rel="stylesheet">
+    <!--<link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">-->
+    <link href="/static/opendata1.0/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/opendata1.0/css/bootstrap-table.css" rel="stylesheet">
+    <link href="/static/opendata1.0/layui/css/layui.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/opendata1.0/css/t4_css.css?v1.0" rel="stylesheet">
+    <link href="/static/opendata1.0/css/t2_css.css" rel="stylesheet">
+    <link href="/static/opendata1.0/css/adjust.css?V4.0-10302135" rel="stylesheet">
+    <link href="/static/jquery-validation/1.16/jquery.validate.css" rel="stylesheet" type="text/css" />
+    <link href="/static/jquery-toastr/2.0/toastr.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="/static/select2/4.0/select2.css?V4.0-10302135">
+    <link href="/static/opendata1.0/css/useOldFixed.css" rel="stylesheet">
+    <script type="text/javascript" src="/static/opendata1.0/js/jquery-3.6.4.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/opendata1.0/js/bootstrap-table.js"></script>
+    <script src="/static/opendata1.0/js/bootstrap-table-zh-CN.min.js"></script>
+    <script src="/static/opendata1.0/js/jquery.pagination.js"></script>
+    <script src="/static/jquery-validation/1.16/jquery.validate.js"></script>
+    <script src="/static/jquery-validation/1.16/localization/messages_zh_CN.js"></script>
+    <script src="/static/jquery-validation/1.16/jquery.validate.extend.js?v=0.3"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/layui.all.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/lay/modules/rate.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/lay/modules/layer.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/lay/modules/upload.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/lay/modules/layim.js"></script>
+    <script language="javascript" type="text/javascript" src="/static/opendata1.0/layui/lay/modules/element.js"></script>
+
+    <script src="/static/common/jeesite.js"></script>
+    <script src="/static/common/i18n/jeesite_zh_CN.js"></script>
+    <script src="/static/common/jquery.dateformat.js"></script>
+    <script src="/static/opendata1.0/js/jquery.qrcode.min.js"></script>
+    <script src="/static/opendata1.0/js/aes.js"></script>
+    <script src="/static/opendata1.0/js/base32.min.js"></script>
+
+
+
+</head>
+<!--<div style="width: 0px;height: 0px"><img width="0" height="0" src="/static/opendata1.0/images/aaa.jpg"/></div>-->
+<body ontouchstart="" onmouseover="">
+<script defer async type="text/javascript" src="/szslh/dist/aria.js?appid=69b91e8581a1d2aad01ad584f1415c82" charset="utf-8"></script>
+
+<style>
+    .t4_footer_menus ul li i {
+        margin: 0 45px;
+    }
+    .footA {
+        text-decoration: none;
+        color: #8394a3 !important;
+    }
+
+    .layui-layim-min .layui-layer-content {
+        height: 52px !important;
+    }
+
+    .layui-layim-min {
+        z-index: 19990985 !important;
+        width: 40px !important;
+        height: 40px !important;
+        top: auto !important;
+        left: auto !important;
+        border: none !important;
+        display: inline-block !important;
+        outline: none !important;
+        right: 21px !important;
+        bottom: 52px !important;
+    }
+
+    .layui-layim-min .layui-layer-content {
+        margin: 0;
+        padding: 0;
+    }
+
+    .layim-chat-list li, .layui-layim-min .layui-layer-content {
+        margin: 0;
+        padding: 0;
+    }
+
+    .layui-layim-min img {
+        display: none !important;
+    }
+
+    .layui-layim-chat {
+        width: 800px !important;
+        height: 690px !important;
+        left: 500px;
+    }
+
+    .layim-chat-text img {
+        cursor: pointer;
+        margin-right: 20px;
+    }
+
+    .layui-layim-min .layui-layer-content span {
+        width: 40px !important;
+        height: 40px !important;
+        padding-left: 0;
+        background: url('/static/opendata1.0/images/jiqiren.jpg') no-repeat;
+    }
+
+    .layim-chat-main {
+        height: 430px;
+    }
+
+    .layui-layer-setwin .layui-layer-max {
+        display: none;
+    }
+
+    .layim-chat-list li, .layui-layim-min .layui-layer-content {
+        border-radius: 0;
+    }
+    .comment_content  {
+        font-size: 16px;
+        line-height: 26px;
+        padding-bottom: 6px;
+    }
+    .layui-layim-chat  a{
+        color: blue;
+    }
+
+    .toolDiv a:nth-child(1) {color: #fff; background-color: #47a5f9; padding: 4px 7px; border-radius: 5px;}
+    .toolDiv a:nth-child(2) {color: #fff; background-color: #dd0900; padding: 4px 7px; border-radius: 5px;}
+
+    /*.bind_phone_table {width: 90%;margin: 0 auto;}*/
+    /*.bind_phone_table td{padding: 15px 0}*/
+    /*.bind_phone_table .input_style{height: 44px;line-height: 44px;border: 1px #cbcbcb solid;text-indent:10px;}*/
+    /*.bind_phone_table #wxPhone {width: calc(100% - 51px);}*/
+    /*.bind_phone_table .wx_input {width: calc(100% - 138px);}*/
+    /*.bind_phone_table .getSmsValidCode{width: 131px;height: 45px;}*/
+</style>
+<div class="modal fade" id="toOtherWeb" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="" style="padding:6px;">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+            </div>
+            <div style="margin-left: 240px ;margin-top: 15px;color: #428bca;font-weight: bold;font-size: 20px">温馨提示</div>
+<!--            <div class="fs16 tc" style="margin-left: 220px ;margin-top: 23px;">您将要链接的地址</div>-->
+<!--            <div id="jumpTipUrl" class="fs16 tipUrl"></div>-->
+<!--            <div class="fs16 tc" style="margin-left: 170px ;margin-top: 31px;">已离开深圳市政府数据开放平台网站</div>-->
+            <div style="padding: 28px 24px 30px 24px;">您访问的链接即将离开“深圳市政府数据开放平台”门户网站，是否继续？</div>
+            <div class="modal-footer" style="padding:5px;">
+                <button type="button" class="btn btn-default" data-dismiss="modal">放弃
+                </button>
+                <button type="button" class="btn btn-primary" onclick="openUrl() ">
+                    继续访问
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+<div id="barrierfree_container">
+<div id="gov-p-pc">
+    <div id="topMenu">
+        <!-- 头部 -->
+        <div class="t4_top">
+            <!--<div class="t4_w">-->
+            <!--<div class="t4_w" style="width: 1377px;margin: 0 0 0 172px;">-->
+            <!--<div class="t4_w" style="width: 1175px;margin: 0 auto;">-->
+            <!--<div class="t4_w">-->
+            <div class="t4_top_w">
+                <div class="t4_l t4_logo" style="display: inline;">
+                    <a href="/"><img src="/static/opendata1.0/images/a.png" alt="" style="width: 310px"></a>
+                    <!--<a class="" href="http://www.sz.gov.cn/cn/" target="_blank" rel="noopener noreferrer">-->
+                        <!--<img src="/static/opendata1.0/images/b.png" alt="">-->
+                    <!--</a>-->
+                    <a href="http://www.sz.gov.cn/cn/" target="_blank" rel="noopener noreferrer">
+                        <img src="/static/opendata1.0/images/b_big.png" alt="" style="width: 120px">
+                    </a>
+                </div>
+                <!--&lt;!&ndash; 6.14添加 &ndash;&gt;-->
+                <!--<a href="javascript:void(0)" class="cxds">-->
+                <!--<img src="/static/opendata1.0/images/cxds.png" alt="" onclick="toSodic()">-->
+                <!--<span></span>-->
+                <!--</a>-->
+                <!-- 6.14添加 -->
+                <!--<div class="t4_l t4_menus" style="display: inline;padding-left:90px">-->
+                <div class="t4_l t4_menus" style="display: inline;padding-left:10px">
+                <!--<div class="t4_l t4_menus" style="display: inline;padding-left:130px">-->
+                <!--<div class="t4_l t4_menus" style="display: inline;padding-left:50px">-->
+                    <ul>
+                        <li class="index_css"><a href="/">首页</a>
+                        </li>
+                        <li><a href="javascript:void(0);">数据<i></i></a>
+                            <ul class="t4_sub_menus">
+                                <li class="shl_menu"><a  href="/data/catalog/toDataCatalog" target="">数据目录</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/data/dataSet/toDataSet" target="">数据集</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/data/api/toApi" target="">数据接口</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><a href="javascript:void(0);">应用<i></i></a>
+                            <ul class="t4_sub_menus">
+                                <li class="shl_menu"><a  href="/application/application/showApplication" target="">成果展示</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/application/develop/toDevelopperCenter" target="">开发者中心</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><a href="javascript:void(0);">画像<i></i></a>
+                            <ul class="t4_sub_menus">
+                                <li class="shl_menu"><a  href="/maintenance/openCount/toDataFigure" target="">开放统计</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/maintenance/openCount/toGlobalMap" target="">全局图谱</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/maintenance/hotData/toHotData" target="">热点数据</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><a href="javascript:void(0);">资讯<i></i></a>
+                            <ul class="t4_sub_menus">
+                                <li class="shl_menu"><a  href="/article/article/toArticleList/digital" target="">新闻动态</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/article/article/toArticleList/policy" target="">政策法规</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="current t4_hover"><a href="javascript:void(0);">互动<i></i></a>
+                            <ul class="t4_sub_menus">
+                                <li class="shl_menu"><a  href="/interaction/question/toQAA" target="">常见问题</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/interaction/publicDataDemnd/toPublicDataDemnd" target="">需求征集</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/interaction/survey/toSurvey" target="">调查问卷</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/interaction/demand/toDemand" target="">数据申请</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/interaction/suggest/toSuggest" target="">提交建议</a>
+                                </li>
+                                <li class="no_slh_menu"><a href="/interaction/rightAppeal/toRightAppeal" target="">权益申诉</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/interaction/dataApply/toGrantApplyPublic" target="">数据申请公开</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/interaction/suggest/toEmailSuggest" target="">建议公开</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/interaction/correction/toCorrection" target="">纠错公开</a>
+                                </li>
+                                <li class="shl_menu"><a  href="/interaction/feedback/toFeedbackStat" target="">受理反馈统计</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                &nbsp;&nbsp;&nbsp;
+                <div class="login-box" style="display: inline;position:absolute;margin-left:18px">
+
+                    <span style="font-size: 15px;overflow: hidden;text-overflow:ellipsis;white-space: nowrap;">
+                        <i class="icon-login" style="display:inline-block;">
+
+                    </i>&nbsp;&nbsp;&nbsp;&nbsp;<b id="loginUserRealName"></b></span>
+                    <div class="btn-box" style="width: 93px">
+                        <div id="noLoginBoxDiv" style="display: none">
+                            <!--<a href="javascript:void(0)" onclick="showLogin()">旧版登录</a>-->
+                            <a style="border-bottom: 1px solid #e3e4e6; display: block;" target="_blank" rel="noopener noreferrer" href="/maintenance/authentication/toRegister">注册</a>
+                            <a href="javascript:void(0)" onclick="showLogin()">登录</a>
+                            <input id="certUrl" type="hidden" value="https://tyrz.gd.gov.cn/pscp/sso/static/?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt">
+                            <input id="logoutUrl" type="hidden" value="https://tyrz.gd.gov.cn/_tif_sso_logout_/?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback">
+                        </div>
+                        <div id="loginBoxDiv" style="display: none">
+                            <a style="border-bottom: 1px solid #e3e4e6; display: block;" href="/maintenance/personal/toPersonal">
+                                个人中心
+                            </a>
+                            <a href="javascript:void(0)" onclick="logout()">退出</a>
+                        </div>
+                    </div>
+                </div>
+                <!--<div></div>-->
+
+                <!--<div style="float:right">-->
+                <!--<div style="display: inline;margin-left: 56px">-->
+                <div class="toolDiv" style="display: inline-block;margin-left: 83px;float: right">
+                <!--<div class="toolDiv" style="display: inline-block;margin-right: 15px;float: right">-->
+                    <!--<a href="javascript:void(0)" onclick="toggleToolBar()" class="tit"-->
+                    <!--style="text-decoration:none!important;font-size: 16px;color: #428bca">无障碍浏览</a>-->
+                    <a href="javascript:void(0)" onclick="aria.start()" class="tit"
+                       style="text-decoration:none!important;font-size: 13px;color: #fff;display: block;line-height: 15px;margin:10px 0px 8px 0px">无障碍阅读</a>
+
+                    <a href="javascript:void(0);" onclick="aria.oldFixedStart()"
+                       style="text-decoration:none!important;font-size: 13px;color: #fff;display: block ;line-height: 15px;"
+                       openText="进入关怀版" closeText="退出关怀版">进入关怀版</a>
+                </div>
+                <!--<div style="float:right;display: inline;color: white;opacity: 0.5">-->
+                    <!--网站支持IPv6-->
+                <!--</div>-->
+            </div>
+
+        </div>
+<!--登录界面-->
+<div class="t2_login" id="tanchu"> <a href="#" class="t2_login_gb" title="关闭" onclick="closeLogin()" ></a>
+    <div id="loginUsernameDiv" style="padding:0px 40px;">
+        <form id="loginForm" action="/maintenance/authentication/login" method="post" class="form-horizontal">
+
+            <table  class="table_fix" style="width: 350px!important;">
+                <tr>
+                    <td style="text-align:center"><img src="/static/opendata1.0/images/t2_login_logo.png" alt="" style="display:inline-block; margin-bottom:20px;"/></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group" required id="loginUsername" name="username"  type="text" placeholder="请输入用户名"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:14px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group enterEvent" id="loginPassword" name="password" required type="password" autocomplete="off" placeholder="请输入密码" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:14px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="input-group">
+                            <input class="login_input_style enterEvent" id="loginValidCode" name="loginValidCode" style="width: 60% !important;" required type="text" placeholder="请输入验证码"  />
+                            <!--                        <button type="button"  class="layui-btn layui-btn-primary getLoginSmsCode">获取验证码<span style="display: none">60s</span></button>-->
+                            <img style="height:35px" src="/util/getValidCode?key=loginValidCode&id=loginValidCodeImg" id="loginValidCodeImg" width="109" height="44" alt="" onclick="getValidCode('loginValidCodeImg','loginValidCode')"/>
+                        </div>
+                        </td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td style="height:20px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td><a href="javascript:;" id="loginBtn" class="t2_common_btn5">登 录</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td >
+                        <a href="javascript:;"  class=" t2_sjyzdl swapPhone">手机验证码登录</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tyrz.gd.gov.cn/tif/sso/connect/page/oauth2/authorize?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt&service=initService&scope=all&response_type=code"  class=" t2_sjyzdl" >广东省统一认证平台登录</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:;" class=" t2_wjmm swapUpdatePw">忘记密码</a></td>
+                </tr>
+
+                <tr>
+                    <td style="height:30px;font-size:0px;" id="loginError"></td>
+                </tr>
+                <tr>
+                    <td style="height:35px;font-size:0px;"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="loginPhoneDiv" style="padding:0px 40px; display: none">
+        <form id="loginFormPhone" action="/maintenance/authentication/loginPhone" method="post" class="form-horizontal">
+
+            <table  class="table_fix" width="100%">
+                <tr>
+                    <td style="text-align:center"><img src="/static/opendata1.0/images/t2_login_logo.png" alt="" style="display:inline-block; margin-bottom:20px;"/></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group loginPhone"  name="phone" required type="text" placeholder="请输入手机号"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:14px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td >
+                        <div class="input-group">
+                            <input class="login_input_style  enterEvent" id="loginSmsCode" name="smsValidCode" style="width: 60% !important;" required type="text" placeholder="请输入短信验证码"  />
+                            <button type="button"  class="layui-btn layui-btn-primary getLoginSmsCode">获取验证码<span style="display: none">60s</span></button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:30px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td><a href="javascript:;" id="loginBtnPhone" class="t2_common_btn5">登 录</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="javascript:;"  class="t2_sjyzdl swapUsername">用户名/密码登录</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tyrz.gd.gov.cn/tif/sso/connect/page/oauth2/authorize?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt&service=initService&scope=all&response_type=code"  class=" t2_sjyzdl" >广东省统一认证平台登录</a>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="height:30px;font-size:0px;" id="loginErrorPhone"></td>
+                </tr>
+                <tr>
+                    <td style="height:95px;font-size:0px;" ></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="updatePasswordDiv" style="padding:0px 40px; display: none">
+        <form id="updatePasswordForm" action="/maintenance/authentication/updatePasswordByPhone" method="post" class="form-horizontal">
+
+            <table  class="table_fix" width="100%">
+                <tr>
+                    <td style="text-align:center"><img src="/static/opendata1.0/images/t2_login_logo.png" alt="" style="display:inline-block; margin-bottom:20px;"/></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group loginPhone"  name="phone" required type="text" placeholder="请输入手机号"  />
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:14px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <div class="input-group">
+                            <input class="login_input_style" id="updatePwCode" name="smsValidCode" style="width: 60% !important;" required type="text" placeholder="请输入短信验证码"  />
+                            <button type="button"  class="layui-btn layui-btn-primary getLoginSmsCode a">获取验证码<span style="display: none">60s</span></button>
+                        </div>
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:25px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group" id="updatePasswordPassword" name="password" required type="password" autocomplete="off" placeholder="请输入新密码"  />
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:25px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group enterEvent" id="repassword" name="repassword" equalTo="#updatePasswordPassword" required type="password" autocomplete="off" placeholder="请输入确认密码"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:30px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td><a href="javascript:;" id="updatePasswordCommit" class="t2_common_btn5">重置密码</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="javascript:;"  class="t2_sjyzdl swapUsername">用户名/密码登录</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tyrz.gd.gov.cn/tif/sso/connect/page/oauth2/authorize?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt&service=initService&scope=all&response_type=code"  class=" t2_sjyzdl" >广东省统一认证平台登录</a>
+                        &nbsp;&nbsp;<a href="javascript:;" class="t2_wjmm swapUpdatePwByEmail">通过邮箱找回密码</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td style="height:15px;font-size:0px;"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="updatePasswordByEmailDiv" style="padding:0px 40px; display: none">
+        <form id="updatePasswordByEmailForm" action="/maintenance/authentication/updatePasswordByEmail" method="post" class="form-horizontal">
+
+            <table  class="table_fix" width="100%">
+                <tr>
+                    <td style="text-align:center"><img src="/static/opendata1.0/images/t2_login_logo.png" alt="" style="display:inline-block; margin-bottom:20px;"/></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style loginAdress input-group"  name="email" required type="text" placeholder="请输入邮箱地址"  />
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:14px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <input class="login_input_style input-group" id="updatePwEmailCode" name="emailValidCode" style="width: 60% !important;" required type="text" placeholder="请输入邮箱验证码"  />
+                        <button type="button"  class="layui-btn layui-btn-primary getLoginEmailCode b">获取验证码<span style="display: none">60s</span></button>
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:25px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <input class="login_input_style" id="updatePasswordEmail" name="password" required type="password" autocomplete="off" placeholder="请输入密码"  />
+                    </td>
+                </tr>
+                <!--<tr>-->
+                    <!--<td style="height:25px;font-size:0px;"></td>-->
+                <!--</tr>-->
+                <tr>
+                    <td>
+                        <input class="login_input_style enterEvent" id="repasswordEmail" name="repassword" equalTo="#updatePasswordEmail" required type="password" autocomplete="off" placeholder="请输入确认密码"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:30px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td><a href="javascript:;" id="updatePasswordByEmailCommit" class="t2_common_btn5">重置密码</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href="javascript:;"  class=" t2_sjyzdl swapUsername">用户名/密码登录</a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tyrz.gd.gov.cn/tif/sso/connect/page/oauth2/authorize?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt&service=initService&scope=all&response_type=code"  class=" t2_sjyzdl" >广东省统一认证平台登录</a>
+                        &nbsp;&nbsp;<a href="javascript:;" class=" t2_wjmm swapUpdatePw">通过手机找回密码</a></td>
+                </tr>
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td style="height:15px;font-size:0px;"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="passwordDiv" style="padding:0px 40px; display: none">
+        <form id="passwordForm" action="/maintenance/authentication/updatePasswordByPassword" method="post" class="form-horizontal">
+            <input id="resetPwdUsername" name="username" style="display: none" />
+            <table  class="table_fix" width="100%">
+                <tr>
+                    <td style="text-align:center"><img src="/static/opendata1.0/images/t2_login_logo.png" alt="" style="display:inline-block; margin-bottom:20px;"/></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style" id="oldPassword" name="password" type="password" autocomplete="off" required placeholder="请输入原登录密码"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:14px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style" name="newPassword" id="password10" type="password" autocomplete="off" required placeholder="新密码，请输入6-18位字母、数字组合"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:25px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input class="login_input_style"name="newPassword2" equalTo="#password10" id="repassword10" type="password" autocomplete="off" required placeholder="请确认密码"  />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:25px;font-size:0px;"></td>
+                </tr>
+<!--                <tr>-->
+<!--                    <td>-->
+<!--                        <a href="javascript:;"  class="pull_left t2_sjyzdl swapUsername">用户名/密码登录</a>-->
+<!--                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://tyrz.gd.gov.cn/tif/sso/connect/page/oauth2/authorize?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt&service=initService&scope=all&response_type=code"  class=" t2_sjyzdl" >广东省统一认证平台登录</a>-->
+<!--                        <a href="javascript:;" class="pull_right t2_wjmm swapUpdatePw">通过手机找回密码</a></td>-->
+<!--                </tr>-->
+                <tr>
+                    <td style="height:10px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td><a href="javascript:;" id="passwordCommit" class="t2_common_btn5">修改密码</a></td>
+                </tr>
+                <tr>
+                    <td style="height:30px;font-size:0px;"></td>
+                </tr>
+                <tr>
+                    <td style="height:85px;font-size:0px;"></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <p><a target="_blank" rel="noopener noreferrer" href="/maintenance/authentication/toRegister?type=person" class="t2_grzhuce" style="border-right:1px #edeef0 solid">个人注册</a><a target="_blank" rel="noopener noreferrer" href="/maintenance/authentication/toRegister?type=company" class="t2_qyzhuce">机构注册</a></p>
+</div>
+<div class="mask" id="mask"><!--弹出框遮罩层--></div>
+<div class="modal fade" tabindex="-1" role="dialog" id="wx_login_containerModal"
+     data-backdrop="static">
+    <div class="modal-dialog login" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" style="text-align: left" id="myModalLabel">
+                    微信登录
+                </h4>
+            </div>
+            <div id="wx_login_container" style="text-align: center"></div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div>
+<!--<script src="https://res.wx.qq.com/connect/zh_CN/htmledition/js/wxLogin.js"></script>-->
+<script>
+    let userinfoEdit = "https://tyrz.gd.gov.cn/pscp/sso/static/manage/info?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt";
+    let userinfoRegister = "https://tyrz.gd.gov.cn/pscp/sso/static/register?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt";
+    let certLogin = "https://tyrz.gd.gov.cn/pscp/sso/static/?redirect_uri=https://opendata.sz.gov.cn/intf/auth/callback&client_id=gdrz_szszfsjkfpt";
+    function toCertifi(){
+        layer.open({
+            // title: "提示",
+            title:['温馨提醒', 'text-align: center;'],
+            type: 1,
+        resize:false,
+        area:["800px","240px"],
+            content: "<div style='padding: 10px 50px;line-height: 30px'>&nbsp;&nbsp;&nbsp;&nbsp;即将跳转到“广东省统一认证平台” 进行实名认证，您在“广东省统一认证平台” 进行实名认证时填写的手机号应与您在本平台留存的手机号一致。<br>&nbsp;&nbsp;&nbsp;&nbsp;如果手机号不一致，请先点击<a style='color: #428bca;text-decoration: none' href='/maintenance/personal/toUserInformation' target='_blank'>账号信息</a>进行修改后，再去进行实名认证。<br></div>",
+            btn: ["现在就去“广东省统一认证平台”进行实名认证", "取消"],
+            btnAlign: 'c',
+            success:function(layero,index){
+                $("a.layui-layer-btn0").css("margin","-15px 5px 0");
+                $("a.layui-layer-btn1").css("margin","-15px 5px 0");
+            },
+            yes: function (index) {
+                if (Global.UID){
+                    $("#toOtherWeb").modal('show');
+                    URL = userinfoEdit;
+                    layer.closeAll();
+                }else{
+                    $("#toOtherWeb").modal('show');
+                    URL = userinfoRegister;
+                    layer.closeAll();
+                }
+            },
+            btn2: function (index) {
+                layer.close(index)
+            }
+        });
+    }
+    //微信登录
+    $(".weixinLogin").click(function () {
+        closeLogin();
+        var state = saveRedirectUrl();
+        console.info(state);
+        var obj = new WxLogin({
+            id: "wx_login_container",
+            appid: "wx3e375ef035b576a1",
+            scope: "snsapi_login",
+            redirect_uri: "http://opendata.sz.gov.cn/maintenance/authentication/wxLogin",
+            state: state,
+        });
+        $("#wx_login_containerModal").modal('show');
+    })
+</script>
+<style>
+    .input-group {
+        position: relative;
+        display: inline !important;
+        border-collapse: separate;
+    }
+    #loginValidCodeImg{
+        position: unset;
+        top: -37px;
+        left: 209px;
+    }
+    .getLoginSmsCode{
+        position: unset;
+        top: -49px;
+        left: 213px;
+        height: 43px;
+    }
+    .a{
+        position: initial;
+        top: 167px;
+        left: 249px;
+        height: 43px;
+    }
+    .b{
+        position: absolute;
+        top: 181px;
+        left: 250px;
+        height: 46px;
+    }
+</style>
+        <!-- 头部 end-->
+    </div>
+    <style>
+    .search{
+        color:#198F11!important;
+    }
+    #searchDeptName{
+        left: 0 !important;
+        right: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        margin: auto;
+        height: 48px !important;
+        line-height: 28px !important;
+        font-family: "楷体", KaiTi, "Kaiti SC", serif !important ;
+        width: max-content !important;
+        font-size: 28px !important;
+        font-weight: 400;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.35);
+        padding: 10px 20px;
+        border-radius: 4px;
+        background: rgba(51, 51, 51, 0.35);
+        letter-spacing: 14%;
+    }
+</style>
+
+    <!-- banner Start -->
+    <div class="t4_banner" id="deptImgForDateSet">
+        <form action="/data/search/toSearchPost" method="post" id="form1" name="form1">
+            <input id="searchParam" type="hidden" name="searchParam" value="">
+            <div id="searchDiv" class="t4_search t4_sub_search">
+                <p id="" style="
+        padding: 0px;
+        color:  #FFF;
+        font-weight: bold;
+        font-size: 36px;
+        text-align:  center;
+        display: none;
+    ">
+                </p>
+                <p id="searchEleP">
+                    <!--<input type="text" onkeyup="this.value = transSpecialStr(this.value)" onFocus="keyupToSearch()" name="keywords" id="keywords" placeholder="多个关键字以空格区分，未用空格区分将视为单个词汇进行搜索">-->
+                    <input type="text" onFocus="keyupToSearch()" name="keywords" id="keywords" placeholder="多个关键字以空格区分，未用空格区分将视为单个词汇进行搜索">
+                    <span id="searchSpan" onclick="search()"><img src="/static/opendata1.0/images/icon-search-P.png" alt="">搜索</span>
+                    <button type="button" onclick="newsearch()">字段搜索</button>
+                </p>
+                <ul id="searchEleUl">
+                    <li  class="current" ><a href="javascript:void(0);">民生</a></li>
+                    <li><a  href="javascript:void(0);">税务</a></li>
+                    <li><a  href="javascript:void(0);">医疗</a></li>
+                    <li><a  href="javascript:void(0);">教育</a></li>
+                    <li><a  href="javascript:void(0);">旅游</a></li>
+                    <li><a  href="javascript:void(0);">房地产</a></li>
+                </ul>
+            </div>
+        </form>
+        <span id="searchDeptName" style="color: white;font-size: 44px;width:90%; height:12px; line-height:12px; position:absolute; top:50%; left:4%;">
+        </span>
+    </div>
+    <!-- banner End -->
+    <style>
+</style>
+    <!-- main Start -->
+    <main>
+        <div class="t4_content">
+            <div class="t4_contents_top">
+                <div class="t4_w" style="position:relative;">
+                    <div class="t4_local"><span class="local-tag"><img src="/static/opendata1.0/images/sub_ts.png" alt=""></span> <a
+                            href="/">首页</a> &gt; 互动 &gt;
+                      <span id="childTitle"></span>
+                    </div>
+                    <div class="t2_content">
+                        <div class="t2_sjxq_web2">
+                            <div class="t2_qiehuan">
+                                <table class="table_fixed" width="100%">
+                                    <tbody>
+                                    <tr>
+                                        <td style="vertical-align: top" valign="top" class="t2_tree"><h1 class="t2_tree_title">互动交流</h1>
+                                            <!--<div class="vtitle" id="suggestVtitle"><em class="v"></em><img-->
+                                                    <!--src="/static/opendata1.0/images/tree_sanjiao.png" alt=""/>&nbsp;&nbsp;建议反馈-->
+                                            <!--</div>-->
+                                            <!--<div class="vcon"  style="display: none;" id="suggestVcon">-->
+                                                <!--<ul class="vconlist clearfix">-->
+                                                    <!--<li  id="suggestFormDiv"><a href="/interaction/suggest/toSuggest?type=formDiv"  class="tabqh_1" >提交反馈</a></li>-->
+                                                    <!--<li id="suggestListDiv"><a href="/interaction/suggest/toSuggest?type=listDiv" class="tabqh_2">留言反馈</a></li>-->
+                                                <!--</ul>-->
+                                            <!--</div>-->
+                                            <!--<div class="vtitle" id="surveyVtitle"><em class="v"></em><img src="/static/opendata1.0/images/tree_sanjiao.png"-->
+                                                                                        <!--alt=""/>&nbsp;&nbsp;调查问卷-->
+                                            <!--</div>-->
+                                            <!--<div class="vcon" style="display: none;" id="surveyVcon">-->
+                                                <!--<ul class="vconlist clearfix">-->
+                                                    <!--<li  id="surveyFormDiv"><a href="/interaction/survey/toSurvey?type=formDiv"  class="tabqh_3" >正在进行的问卷调查</a></li>-->
+                                                    <!--<li id="surveyListDiv"><a href="/interaction/survey/toSurvey?type=listDiv"  class="tabqh_4">已结束的问卷调查</a></li>-->
+                                                <!--</ul>-->
+                                            <!--</div>-->
+                                            <!--<div class="vtitle" id="demandVtitle"><em class="v"></em><img src="/static/opendata1.0/images/tree_sanjiao.png"-->
+                                                                                        <!--alt=""/>&nbsp;&nbsp;数据需求-->
+                                            <!--</div>-->
+                                            <!--<div class="vcon" style="display: none;" id="demandVcon">-->
+                                                <!--<ul class="vconlist clearfix">-->
+                                                    <!--<li id="listDiv"><a href="/interaction/demand/toDemand?type=formDiv"-->
+                                                           <!--class="tabqh_5">需求列表</a></li>-->
+                                                    <!--<li id="formDiv"><a href="/interaction/demand/toDemand?type=listDiv"-->
+                                                           <!--class="tabqh_6">需求申请</a></li>-->
+                                                    <!--</li>-->
+                                                <!--</ul>-->
+                                            <!--</div>-->
+                                            <div class="vtitleWeb" id="questionVtitle">&nbsp;&nbsp;
+                                                <a href="/interaction/question/toQAA">常见问题</a>
+                                            </div>
+                                            <div class="vtitleWeb no_slh_menu" id="publicDemandVtitle">&nbsp;&nbsp;
+                                                <a href="/interaction/publicDataDemnd/toPublicDataDemnd">需求征集</a>
+                                            </div>
+                                            <div class="vtitleWeb" id="surveyVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/survey/toSurvey" >调查问卷</a>
+                                            </div>
+                                            <div class="vtitleWeb no_slh_menu" id="demandVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/demand/toDemand" >数据申请</a>
+                                            </div>
+                                            <div class="vtitleWeb no_slh_menu" id="suggestVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/suggest/toSuggest" >提交建议</a>
+                                            </div>
+                                            <div class="vtitleWeb no_slh_menu" id="rightAppealVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/rightAppeal/toRightAppeal" >权益申诉</a>
+                                            </div>
+                                            <div class="vtitleWeb" id="grantApplyPublicVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/dataApply/toGrantApplyPublic" >数据申请公开</a>
+                                            </div>
+                                            <div class="vtitleWeb" id="emailVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/suggest/toEmailSuggest" >建议公开</a>
+                                            </div>
+                                            <div class="vtitleWeb" id="correctVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/correction/toCorrection" >纠错公开</a>
+                                            </div>
+                                            <div class="vtitleWeb " id="acceptFeedbackStatVtitle" style="">&nbsp;&nbsp;
+                                                <a href="/interaction/feedback/toFeedbackStat" >受理反馈统计</a>
+                                            </div>
+                                        </td>
+                                        <td style="width:15px;"></td>
+                                        <td valign="top" class="t2_neirong">
+                                            <style>
+                                                th {
+                                                    text-align: center;
+                                                }
+                                                h2 {
+                                                    font-size: 20px;
+                                                    text-align: center;
+                                                    line-height: 35px;
+                                                    margin-bottom: 5px;
+                                                }
+                                                .common_input_style {
+                                                    width: 78%;
+                                                    height: 42px;
+                                                    line-height: 42px;
+                                                    border: 1px #d5d9dc solid;
+                                                    padding: 0px 5px;
+                                                }
+                                            </style>
+                                            <style>
+  #questionData .t2_question h2{
+    font-size: 16px;
+    font-weight: 800;
+    margin: 10px 0 10px 0;
+    color: #00a0e9
+  }
+</style>
+<div id="dvRi" style="display: block;">
+  <h2><img src="/static/opendata1.0/images/wjdcimgl1.jpg" width="228" height="14" alt=""/><span>常见问题</span><img src="/static/opendata1.0/images/wjdcimgl2.jpg" width="228" height="14" alt=""/></h2>
+  <div class="t2_contentweb_white" id="questionData">
+  </div>
+  <div class="t2_fanye t2_pad feedback" style="margin-top:3px;"></div>
+</div>
+
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- footer -->
+    <div class="t4_footer">
+        <div class="t4_footer_menus">
+            <ul class="t4_w">
+                <li><a href="/maintenance/forward/toYearWork">政府网站年度工作报表</a></li>
+                <li><i></i></li>
+                <li><a href="http://www.gd.gov.cn/xxts/" rel="noopener noreferrer" target="_blank">政声传递</a></li>
+                <li><i></i></li>
+                <li><a href="/maintenance/forward/toFriendlyLink">友情链接</a></li>
+                <li><i></i></li>
+                <li><a href="/maintenance/forward/toAboutUs">关于我们</a></li>
+                <li><i></i></li>
+                <li><a href="/maintenance/forward/toWebsiteMap">网站地图</a></li>
+                <li><i></i></li>
+                <li><a href="/static/opendata1.0/doc/userbook.pdf" rel="noopener noreferrer"  target="_blank">操作指南</a></li>
+                <li><i></i></li>
+                <li><a href="/maintenance/forward/toTermOfService">服务条款 </a></li>
+                <!--<li><i></i></li>-->
+                <!--<li id="manageAdress"></li>-->
+            </ul>
+        </div>
+        <div class="t4_footer_cons">
+            <!--<div class="t4_w" style="width: 1610px">-->
+            <div class="t4_w">
+                <!--<div style="float:left;display: inline;color: white;opacity: 0.5;margin-right: 90px;margin-top: 38px;background-color: gray;border-radius: 5.5px;padding: 10px">-->
+                    <!--<span>网站支持IPv6</span>-->
+                <!--</div>-->
+                <div class="t4_l">
+                    <p style="margin:0 0 10px">
+
+                        <span>主办单位：深圳市政务服务和数据管理局</span>
+                        <span>运维单位：深圳市大数据资源管理中心</span>
+                    </p>
+                    <p class="t4_f_m">
+                        <span><a href="javascript:wwzfzc();"><img
+                                src="/static/opendata1.0/images/img_footer_004.png" alt=""></a></span>
+                        <span class="footer-img-box1" style="margin-left: 50px;">
+                            <a class='footA' href="javascript:DZJG();">
+                                <img src="/static/opendata1.0/images/img_footer_006.png" alt="">
+                            </a>
+                        </span>
+                        <span style="margin-left: 61px;">联系邮箱：opendata@sz.gov.cn</span>
+                    </p>
+                    <p style="margin: 0px">
+                        <span>网站标识码：4403000084</span>
+                        <span><a class='footA' href="javascript:BAXH();">备案序号：粤ICP备11069154号-30</a></span>
+                        <span><img src="/static/opendata1.0/images/img_footer_005.png" alt=""
+                                   style="padding-right:5px"><a class='footA' href="javascript:YGAWB()">粤公网安备 44030402001167号</a> </span>
+                    </p>
+                </div>
+                <!--<div class="t4_r" style="margin-right: 203px">-->
+                <div class="t4_r t4_r_pic">
+                    <div><a href="http://www.sz.gov.cn/cn/" target="_blank" rel="noopener noreferrer"><img alt=""
+                                                                                 src="/static/opendata1.0/images/img_footer_001.png" height="100px"></a>
+                    </div>
+                    <div style="background-color: rgba(255,255,255,0.8 ); margin-left: 50px;    border-radius: 4px;"><img alt=""
+                                                                                                                          src="/static/opendata1.0/images/index_footer_01.png"
+                                                                                                                          height="100px">
+                    </div>
+                    <div class="erweima">
+                        <div class="Ipv6"
+                             style="display: inline-block;    background-color: rgba(255,255,255,0.5);   border-radius: 5px;    height: 18px;    line-height: 18px;    padding: 0px 10px;    margin-bottom: 10px;    color: #333;    font-size: 13px;">
+                            网站支持IPv6
+                        </div>
+                        <img alt="" src="/static/opendata1.0/images/smsj.png" height="100px">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- footer end-->
+    <a href="/interaction/demand/toDemand" title="数据申请">
+        <div class="sjsq"
+             style="position:fixed;bottom:142px;right:21px;width:40px;height:40px;z-index:9999;background: url('/static/opendata1.0/images/sjsq.png') no-repeat;"></div>
+    </a>
+    <a href="/interaction/publicDataDemnd/toPublicDataDemnd" title="需求征集">
+        <div class="xqzj"
+             style="position:fixed;bottom:97px;right:21px;width:40px;height:40px;z-index:9999;background: url('/static/opendata1.0/images/xqzj.png') no-repeat;"></div>
+    </a>
+<!--    <a href="/interaction/rightAppeal/toRightAppeal" title="权益申诉">-->
+<!--        <div class="qyss"-->
+<!--             style="position:fixed;bottom:97px;right:21px;width:40px;height:40px;z-index:9999;background: url('/static/opendata1.0/images/qyss.png') no-repeat;"></div>-->
+<!--    </a>-->
+    <div class="actGotop"><a href="javascript:;" title="Top"></a></div>
+</div>
+<!--</div>-->
+<!-- 绑定手机弹框 -->
+<!--<div class="modal fade" id="wxBindPhoneModal" tabindex="-1" role="dialog" aria-labelledby="wxBindPhoneLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">手机号绑定</h4>
+            </div>
+            <form action="/maintenance/authentication/wxBindPhone" method="post">
+                <div class="modal-body">
+                    <table class="bind_phone_table">
+                        <tr>
+                            <td><input type="hidden" name="id"></td>
+                        </tr>
+                        <tr>
+                            <td>手机号码：</td>
+                            <td>
+                                <small class="t2_j86">+86</small>
+                                <input class="input_style" style="margin-left: -4px" type="text" id="wxPhone" name="phone" placeholder="请输入手机号码">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>图形验证码：</td>
+                            <td>
+                                <input id="msgValidCodeValue" type="text" class="t4_inp wx_input required input_style">
+                                <img id="msgValidCodeImg" src="" alt="" onclick="changeValidCode('smsValidCode')" height="40px">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>短信验证码：</td>
+                            <td>
+                                <input class="input_style wx_input" type="text" id="wxMessage" name="smsValidCode" placeholder="请输入短信验证码">
+                                <button type="button"  class="layui-btn layui-btn-primary getSmsValidCode">获取验证码<span style="display: none">60s</span></button>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">确定修改</button>
+                </div>
+            </form>
+        </div>&lt;!&ndash; /.modal-content &ndash;&gt;
+    </div>&lt;!&ndash; /.modal &ndash;&gt;
+</div>-->
+<!-- 绑定手机弹框 -->
+<script>
+    let logouturl = "https://tyrz.gd.gov.cn/_tif_sso_logout_/";
+    let callback = "https://opendata.sz.gov.cn/intf/auth/callback";
+    var userPhone="";
+    $(function () {
+        $("#plList .t6_toggle_row").click(function () {
+            if($(this).hasClass("actived")){
+                $(this).removeClass("actived");
+                $(this).prev(".t6_hidePingl").slideUp();
+            }else{
+                $("#plList .t6_toggle_row").removeClass("actived");
+                $("#plList .t6_hidePingl").slideUp();
+                $(this).addClass("actived");
+                $(this).prev(".t6_hidePingl").slideDown();
+            }
+        });
+        $(".layui-layim-chat").css("margin-top","-300px");//机器人客服位置调整
+        $("#manageAdress").html('<a target="_blank" rel="noopener noreferrer" href="http://opendata.sz.gov.cn/manage">后台管理 </a>');
+        //校验添加手机号校验
+        $.validator.addMethod("isPhone", function (value, element, param) {
+            return this.optional(element) || isPhoneNo(value)
+        }, "请输入正确的手机号码");
+        $.validator.addMethod("isEmail", function (value, element, param) {
+            return this.optional(element) || isEmailNo(value)
+        }, "请输入正确的邮件地址");
+        //注册校验参数
+        var validate = {
+            rules: {
+                phone: {
+                    isPhone: true,
+                    required: true,
+                },
+                email: {
+                    isEmail: true,
+                    required: true
+                }
+            },
+            messages: {
+                suggestType: {
+                    required: "请选择建议类别"
+                },
+                title: {
+                    required: "请输入建议标题"
+                },
+                content: {
+                    required: "请输入建议内容"
+                },
+                phone: {
+                    required: "请输入手机号",
+                    isPhone: "手机号码格式不正确"
+                },
+                email: {
+                    required: "请输入邮箱地址",
+                    isEmail: "请输入正确邮件地址"
+                },
+                realName: {
+                    required: "请输入联系人姓名",
+                }
+            },
+            submitHandler: function (form) {
+                js.ajaxSubmitForm($(form), function (data) {
+                    if (data.result == "true") {
+                        js.alert(data.message);
+                        location.reload();
+                    } else {
+                        js.alert(data.message);
+                    }
+                }, "json");
+            }
+
+        };
+
+        $("#suggestForm").validate(validate);
+        $("#apiSuggestForm").validate(validate);
+        /** 建议反馈END */
+
+        /** *********** 登录相关BEGIN *************/
+        // 登录状态
+        console.log("是否登录："+Global.IS_LOGIN);
+        if (Global.IS_LOGIN) {
+            $('#loginBoxDiv').show();
+            $('#noLoginBoxDiv').hide();
+            js.ajaxSubmit(
+                "/maintenance/authentication/getCurrentUser",
+                {},
+                function (data) {
+                    if (!data.realName) {
+                        data.realName = data.username;
+                    }
+                    userPhone = data.phone;
+                    if(data.realName != null && data.realName != ""){
+                        $("#loginUserRealName").html("**"+data.realName.substring(data.realName.length-1,data.realName.length));
+                    }
+                    // $("#loginUserRealName").html(js.abbr(data.realName, 9));
+                    // $("#loginUserRealName").prop("title", data.realName);
+                    if(data.phone != null && data.phone != ""){
+                        $("#tmPhone").val(data.phone.substring(0,3)+"****"+data.phone.substring(7,11));
+                        // $("#phone").val(data.phone.substring(0,3)+"****"+data.phone.substring(7,11));
+                    }
+                    $("#changePasswordPhone").val(data.phone);
+                    $("#email").val(data.email);
+                    $("#realName").val(data.realName);
+                    //如果是微信登录，且手机号为空
+                    // if (data["thirdType"] === "2" && !data["phone"]){
+                    //     //弹出弹框校验手机号
+                    //     $("#id").val(data.id);
+                    //     changeValidCode('smsValidCode');
+                    //     $('#wxBindPhoneModal').modal('show');
+                    // }
+                }, "json");
+
+        } else {
+            $('#noLoginBoxDiv').show();
+            $('#loginBoxDiv').hide();
+        }
+
+
+
+
+
+
+        /**
+         * 登录校验
+         */
+        var loginValidate = {
+            submitHandler: function (form) {
+                var enpassword = encrypt($("#loginPassword").val());
+                //未加密前的密码
+                var oldPassword=$("#loginPassword").val();
+                $("#loginPassword").val(enpassword);
+                js.ajaxSubmitForm($(form), function (data) {
+                    if (data.result == Global.TRUE) {
+                        // js.alert(data.message);
+                        console.log(JSON.stringify(data.data));
+                        //登录成功后, 不刷新页面
+                        if(data.data.userLevel==1){
+                            // layer.open({
+                            //     title:"提示",
+                            //     area:["850px","190px"],
+                            //     closeBtn:false,
+                            //     type:1,
+                            //     content:'<div style="padding: 10px 50px;line-height: 30px">由于系统实名认证机制升级,您当前的实名认证未来将不再支持,为了不影响您的正常使用,请及时前往<a href="javascript:void(0);" onclick="toCertifi()" style="color: #198ef8!important;text-decoration: underline !important;">广东省统一认证平台</a>进行实名认证<br></div>',
+                            //     btn:"关闭",
+                            //     btnAlign:'c',
+                            //     yes:function(index){
+                            //         layer.close(index)
+                            //     }
+                            // })
+
+
+                            layer.open({
+                                // title: "提示",
+                                title:['温馨提醒', 'text-align: center;'],
+                                type: 1,
+                                area:["850px","190px"],
+                                // content:'<div style="padding: 10px 50px;line-height: 30px">由于系统实名认证机制升级,您当前的实名认证未来将不再支持,为了不影响您的正常使用,请及时前往<a href="javascript:void(0);" onclick="toCertifi()" style="color: #198ef8!important;text-decoration: underline !important;">广东省统一认证平台</a>进行实名认证<br></div>',
+                                content:'<div style="padding: 10px 50px;line-height: 30px">由于系统实名认证机制升级，您当前的实名认证已不再有效，为了不影响您正常使用本平台，请前往“广东省统一认证平台”进行实名认证。<br></div>',
+                                // btn: ["确定", "取消"],
+                                btn: ["现在就去“广东省统一认证平台”进行实名认证"],
+                                btnAlign: 'c'
+                                ,success:function(layero,index){
+                                   $("a.layui-layer-btn0").css("margin","-15px 5px 0");
+                                },
+                                yes: function (index) {
+                                    toCertifi();
+                                    layer.close(index);
+                                },
+                                // btn2: function (index) {
+                                //     layer.close(index);
+                                // }
+                            });
+
+
+
+                        }
+                        userPhone = data.data.phone;
+                        if(data.data.phone != null && data.data.phone != ""){
+                            $("#phone").val(data.data.phone.substring(0,3)+"****"+data.data.phone.substring(7,11));
+                        }
+                        $("#email").val(data.data.email);
+                        $("#realName").val(data.data.realName);
+                        $(form).resetForm();
+                        closeLogin();
+                        if (!data.data.realName) {
+                            data.data.realName = data.data.username;
+                        }
+                        // $("#loginUserRealName").html(js.abbr(data.data.realName, 9));
+                        $("#loginUserRealName").html("**"+data.data.realName.substring(data.data.realName.length-1,data.data.realName.length));
+                        // $("#loginUserRealName").prop("title", data.data.realName);
+                        $("#loginUserRealName").prop("title", "**"+data.data.realName.substring(data.data.realName.length-1,data.data.realName.length));
+                        $("#noLoginBoxDiv").hide();
+                        $("#loginBoxDiv").show();
+                        Global.IS_LOGIN = true;
+                        if (typeof loginCallback != "undefined" && $.isFunction(loginCallback)) {
+                            loginCallback();
+                        }
+                    } else {
+                        $("#loginPassword").val(oldPassword);
+                        getValidCode('loginValidCodeImg','loginValidCode');
+                        js.alert(data.message);
+                        if (data.data && data.data == "lowerPassword") {
+                            //跳转到修改密码块
+                            $("#loginUsernameDiv").hide();
+                            $("#passwordDiv").show();
+                            $("#resetPwdUsername").val($("#loginUsername").val());
+                        }
+                    }
+                }, "json");
+            }
+        };
+
+        function toCertifi(){
+            layer.open({
+                // title: "提示",
+                title:['温馨提醒', 'text-align: center;'],
+                type: 1,
+                resize:false,
+                area:["800px","240px"],
+                content: "<div style='padding: 10px 50px;line-height: 30px'>&nbsp;&nbsp;&nbsp;&nbsp;即将跳转到“广东省统一认证平台” 进行实名认证，您在“广东省统一认证平台” 进行实名认证时填写的手机号应与您在本平台留存的手机号一致。<br>&nbsp;&nbsp;&nbsp;&nbsp;如果手机号不一致，请先点击<a style='color: #428bca;text-decoration: none' href='/maintenance/personal/toUserInformation' target='_blank'>账号信息</a>进行修改后，再去进行实名认证。<br></div>",
+                btn: ["现在就去“广东省统一认证平台”进行实名认证", "取消"],
+                btnAlign: 'c',
+                success:function(layero,index){
+                    $("a.layui-layer-btn0").css("margin","-15px 5px 0");
+                    $("a.layui-layer-btn1").css("margin","-15px 5px 0");
+                },
+                yes: function (index) {
+                    if (Global.UID){
+                        $("#toOtherWeb").modal('show');
+                        URL = userinfoEdit;
+                        layer.closeAll();
+                    }else{
+                        $("#toOtherWeb").modal('show');
+                        URL = userinfoRegister;
+                        layer.closeAll();
+                    }
+                },
+                btn2: function (index) {
+                    layer.close(index)
+                }
+            });
+        }
+
+
+        $.validator.addMethod("isDiffPsw",function (value, element, param) {
+            return this.optional(element) || isDiffPsw(value)
+        },"长度不小于8位，必须包含大小写字母、数字、特殊字符");
+        /**
+         * 修改密码
+         *
+         */
+        var userPasswordValidate = {
+            rules: {
+                newPassword: {
+                    isDiffPsw:true
+                }
+            },
+            messages: {
+                newPassword: {
+                    required: "请输入新密码",
+                    isDiffPsw:"长度不小于8位，必须包含大小写字母、数字、特殊字符"
+                },
+            },
+            submitHandler: function (form) {
+
+                var oldPassword = encrypt($("#oldPassword").val());
+                $("#oldPassword").val(oldPassword);
+
+                var enpassword10 = encrypt($("#password10").val());
+                $("#password10").val(enpassword10);
+
+                var repassword10 = encrypt($("#repassword10").val());
+                $("#repassword10").val(repassword10);
+
+                js.ajaxSubmitForm($(form), function (data) {
+                    js.alert(data.message);
+                    $(form).resetForm();
+                    if (data.result == Global.TRUE) {
+                        //修改密码成功后, 不刷新页面
+                        closeLogin();
+                        $("#passwordDiv").hide();
+                    }
+                }, "json");
+            }
+        }
+        $("#loginForm").validate(loginValidate);
+        $("#loginFormPhone").validate(loginValidate);
+        $("#passwordForm").validate(userPasswordValidate);
+    });
+
+    function changeValidCode(key) {
+        var url = ctx + "/util/getValidCode?";
+        if (key && key !== '') {
+            url += "key=" + key + "&"
+        }
+        url += Math.random();
+        $("#msgValidCodeImg").attr("src", url);
+    }
+    //获取手机验证码的按钮事件
+    $(".getSmsValidCode").click(function () {
+        var btn = $(this);
+        var phoneNo = $("#wxPhone").val();
+        var imgCode = $("#msgValidCodeValue").val();
+        if (!isPhoneNo(phoneNo)) {
+            js.alert("请输入正确的手机号码");
+            return false;
+        }
+        if (!imgCode){
+            js.alert("请输入图形验证码");
+            return false;
+        }
+        //验证  图形验证码是否正确
+        js.ajaxSubmit(ctx + "/maintenance/authentication/validatePhoneByCode",{phone:phoneNo,validCode: imgCode},function (validData) {
+            if(validData.result === "true") {
+                var span = $(btn[0].lastElementChild);
+                btn.addClass("layui-btn-disabled");
+                btn.attr("disabled", true);
+                span.show();
+                countDown(60, btn, span);
+                js.ajaxSubmit(ctx + "/util/sendSmsValidCode",{mobile:phoneNo,validCodeSms: imgCode},function (data) {
+                    js.alert(data.message);
+                },"json");
+            } else if(!validData.message) {
+                js.alert("手机号已存在");
+                getValidCode('smsValidCodeImg','smsValidCode');
+            } else {
+                getValidCode('smsValidCodeImg','smsValidCode');
+                js.alert(validData.message);
+            }
+        }, "json");
+
+    });
+
+    var URL;
+
+    function openUrl() {
+        window.open(URL);
+        $("#toOtherWeb").modal('hide');
+    }
+
+    function ZSCD() {
+        $("#toOtherWeb").modal('show');
+        URL = "http://www.gd.gov.cn/xxts/";
+    }
+
+    function wwzfzc() {
+        $("#toOtherWeb").modal('show');
+        URL = "http://121.43.68.40/exposure/jiucuo.html?site_code=4403000084&url=http%3A%2F%2Fopendata.sz.gov.cn%2Fappshow%2FtoAppShow";
+    }
+
+    function DZJG() {
+        $("#toOtherWeb").modal('show');
+        URL = "https://bszs.conac.cn/sitename?method=show&id=36A52E6C5793362EE06310291AAC2AAC";
+    }
+
+    function BAXH() {
+        $("#toOtherWeb").modal('show');
+        URL = "https://beian.miit.gov.cn/";
+    }
+
+    function YGAWB() {
+        $("#toOtherWeb").modal('show');
+        URL = "http://www.beian.gov.cn/portal/registerSystemInfo?COLLCC=2510364818&recordcode=44030402001167";
+    }
+
+    function SZZFZX() {
+        $("#toOtherWeb").modal('show');
+        URL = "http://www.sz.gov.cn/cn/";
+    }
+
+    function search() {
+        var keywords = $("#keywords").val();
+        //检索条件赋值
+        $("#searchParam").val(keywords);
+        $("#form1").submit();
+    }
+
+    function newsearch() {
+        window.location.href="/newsearch";
+    }
+
+
+    //跳转到其他网站，并弹出确认是否跳转框
+    function toOtherWeb(val) {
+        $("#toOtherWeb").modal('show');
+        URL = val;
+    }
+
+    function toSodic() {
+        if (Global.IS_LOGIN) {
+            js.ajaxSubmit(
+                '/maintenance/forward/opendataToSodic',
+                {},
+                function (data) {
+                    if (data.result == "toSodc") {
+                        //带着信息跳转到sodc指定的网站
+                        window.location.href = "https://opendata.sz.gov.cn/sodic2019/OpenLogin?info=" + data.message;
+                    } else {
+                        js.alert(data.message);
+                    }
+                }, 'json'
+            )
+        } else {
+            window.location.href = 'https://opendata.sz.gov.cn/sodic2019';
+        }
+    }
+</script>
+<script>
+    layui.use('layim', function (layim) {
+        var layim = layui.layim;
+        layim.config({
+            init: {
+                //配置客户信息
+                mine: {
+                    "username": "访客" //我的昵称
+                    , "id": "100000123" //我的ID
+                    , "status": "online" //在线状态 online：在线、hide：隐身
+                    , "remark": "" //我的签名
+                    , "avatar": "/static/opendata1.0/images/fangke.png" //我的头像
+                }
+            }
+            //开启客服模式
+            , brief: true
+            , voice: false,
+            right:'200px'
+
+
+        });
+
+
+        //打开一个客服面板
+        layim.chat({
+            name: '' //名称
+            , type: 'kefu' //聊天类型
+            , avatar: '/static/opendata1.0/images/jiqiren.jpg' //头像
+            , id: 1111111 //定义唯一的id方便你处理信息
+        });
+        layim.setChatMin(); //收缩聊天面板
+        $(".layim-chat-username").html("深圳市政府数据开放平台|智能机器人");
+        layim.getMessage({
+            username: "智能问答机器人" //消息来源用户名
+
+
+            , avatar: "/static/opendata1.0/images/jiqiren.jpg" //消息来源用户头像
+            , id: "1111111" //消息的来源ID（如果是私聊，则是用户id，如果是群聊，则是群组id）
+            , type: "kefu" //聊天窗口来源类型，从发送消息传递的to里面获取
+            , content: "您好，我是智能机器人，欢迎来到深圳市政府数据开放平台。您可通过下方链接查阅本平台目前正在开放的热门数据，也可通过向我提供关键字的方式进行查询。如需其他帮助，可通过电话（0755-88125143）或邮箱（opendata @ sz.gov.cn）进行反馈。" //消息内容
+            , cid: 0 //消息id，可不传。除非你要对消息进行一些操作（如撤回）
+            , mine: false //是否我发送的消息，如果为true，则会显示在右方
+            , fromid: "100000" //消息的发送者id（比如群组中的某个消息发送者），可用于自动解决浏览器多窗口时的一些问题
+            , timestamp: Date.parse(new Date()) //服务端时间戳毫秒数。注意：如果你返回的是标准的 unix 时间戳，记得要 *1000
+        });
+        layim.getMessage({
+            username: "智能问答机器人" //消息来源用户名
+            , avatar: "/static/opendata1.0/images/jiqiren.jpg" //消息来源用户头像
+            , id: "1111111" //消息的来源ID（如果是私聊，则是用户id，如果是群聊，则是群组id）
+            , type: "kefu" //聊天窗口来源类型，从发送消息传递的to里面获取
+            , content: getHotApi()
+            , cid: 0 //消息id，可不传。除非你要对消息进行一些操作（如撤回）
+            , mine: false //是否我发送的消息，如果为true，则会显示在右方
+            , fromid: "100000" //消息的发送者id（比如群组中的某个消息发送者），可用于自动解决浏览器多窗口时的一些问题
+            , timestamp: Date.parse(new Date()) //服务端时间戳毫秒数。注意：如果你返回的是标准的 unix 时间戳，记得要 *1000
+        });
+        layim.getMessage({
+            username: "智能问答机器人" //消息来源用户名
+            , avatar: "/static/opendata1.0/images/jiqiren.jpg" //消息来源用户头像
+            , id: "1111111" //消息的来源ID（如果是私聊，则是用户id，如果是群聊，则是群组id）
+            , type: "kefu" //聊天窗口来源类型，从发送消息传递的to里面获取
+            , content: getHotData() //消息内容
+            , cid: 0 //消息id，可不传。除非你要对消息进行一些操作（如撤回）
+            , mine: false //是否我发送的消息，如果为true，则会显示在右方
+            , fromid: "100000" //消息的发送者id（比如群组中的某个消息发送者），可用于自动解决浏览器多窗口时的一些问题
+            , timestamp: Date.parse(new Date()) //服务端时间戳毫秒数。注意：如果你返回的是标准的 unix 时间戳，记得要 *1000
+        });
+        layim.on('sendMessage', function (res) {
+            var mine = res.mine;
+            var to = res.to;
+            console.info(mine);
+            console.info(to);
+            // var replyMessage = getReply(mine.content);
+            // js.ajaxSubmit(
+            //     '/data/dataSet/getReplyByMessage',
+            //     {
+            //         message:mine.content
+            //     },
+            //     function (data) {
+            //         $.each(data, function (index, dataSet) {
+            //             layim.getMessage({
+            //                 username: "智能问答机器人" //消息来源用户名
+            //                 ,avatar: "/static/opendata1.0/images/default_avatar_male_180.gif" //消息来源用户头像
+            //                 ,id: "1111111" //消息的来源ID（如果是私聊，则是用户id，如果是群聊，则是群组id）
+            //                 ,type: "kefu" //聊天窗口来源类型，从发送消息传递的to里面获取
+            //                 ,content: dataSet.resTitle //消息内容
+            //                 ,cid: 0 //消息id，可不传。除非你要对消息进行一些操作（如撤回）
+            //                 ,mine: false //是否我发送的消息，如果为true，则会显示在右方
+            //                 ,fromid: "100000" //消息的发送者id（比如群组中的某个消息发送者），可用于自动解决浏览器多窗口时的一些问题
+            //                 ,timestamp: 14674754433 //服务端时间戳毫秒数。注意：如果你返回的是标准的 unix 时间戳，记得要 *1000
+            //             });
+            //         })
+            //     },"json");
+            layim.getMessage({
+                username: "智能问答机器人" //消息来源用户名
+                , avatar: "/static/opendata1.0/images/jiqiren.jpg" //消息来源用户头像
+                , id: "1111111" //消息的来源ID（如果是私聊，则是用户id，如果是群聊，则是群组id）
+                , type: "kefu" //聊天窗口来源类型，从发送消息传递的to里面获取
+                , content: getReply(mine.content) //消息内容
+                , cid: 0 //消息id，可不传。除非你要对消息进行一些操作（如撤回）
+                , mine: false //是否我发送的消息，如果为true，则会显示在右方
+                , fromid: "100000" //消息的发送者id（比如群组中的某个消息发送者），可用于自动解决浏览器多窗口时的一些问题
+                , timestamp: Date.parse(new Date()) //服务端时间戳毫秒数。注意：如果你返回的是标准的 unix 时间戳，记得要 *1000
+            });
+            $(".layim-chat-username").html("深圳市政府数据开放平台|智能机器人");
+        });
+
+        var cache = layui.layim.cache();
+        var local = layui.data('layim')[cache.mine.id]; //获取当前用户本地数据
+
+//这里以删除本地聊天记录为例
+        delete local.chatlog;
+
+//向localStorage同步数据
+        layui.data('layim', {
+            key: cache.mine.id
+            , value: local
+        });
+    });
+
+    // layui.use(['code'], function(){
+    //     layui.code({
+    //         elem: 'pre'
+    //     })
+    // });
+
+    function getReply(message) {
+        js.ajaxSubmit(
+            '/data/dataSet/getReplyByMessage',
+            {
+                message: message
+            },
+            function (opendata) {
+                if (opendata.length > 0) {
+                    replyInfo = "根据您所提供的关键字，本平台检索到的相关信息有：\n";
+                    $.each(opendata, function (index, dataSet) {
+                        if (dataSet.type =='数据集') {
+                            replyInfo +="\n"+ "目前正在开放的数据："+ "\n";
+                            $.each(dataSet.data, function (index, data) {
+                                var no = Number(index) + Number(1);
+                                replyInfo += "a(/data/dataSet/toDataDetails/" + data.resId + ")[" + no + "、" + data.resTitle + "]" + "\n";
+                            })
+                        } else if (dataSet.type =='新闻动态') {
+                            replyInfo +="\n"+ "相关新闻动态："+ "\n";
+                            $.each(dataSet.data, function (index, data) {
+                                var no = Number(index) + Number(1);
+                                replyInfo += "a(/article/article/toArticleDetails/" + data.id + ")[" + no + "、" + data.title + "]" + "\n";
+                            })
+                        } else if (dataSet.type =='政策法规') {
+                            replyInfo +="\n"+ "相关政策法规："+ "\n";
+                            $.each(dataSet.data, function (index, data) {
+                                var no = Number(index) + Number(1);
+                                replyInfo += "a(/article/article/toArticleDetails/" + data.id + ")[" + no + "、" + data.title + "]" + "\n";
+                            })
+                        } else if (dataSet.type =='开放计划') {
+                            replyInfo +="\n"+ "相关开放计划："+ "\n";
+                            $.each(dataSet.data, function (index, data) {
+                                var no = Number(index) + Number(1);
+                                replyInfo += "a(/article/article/toArticleDetails/" + data.id + ")[" + no + "、" + data.title + "]" + "\n";
+                            })
+                        } else if (dataSet.type =='年度工作报表') {
+                            replyInfo +="\n"+ "相关年度工作报表："+ "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2023年度工作报表.pdf" + ")[" + 1 + "、" + '政府网站2023年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2022年度工作报表.pdf" + ")[" + 2 + "、" + '政府网站2022年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2021年度工作报表.pdf" + ")[" + 3 + "、" + '政府网站2021年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2020年度工作报表.pdf" + ")[" + 4 + "、" + '政府网站2020年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2019年度工作报表.pdf" + ")[" + 5 + "、" + '政府网站2019年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2018年度工作报表.pdf" + ")[" + 6 + "、" + '政府网站2018年度工作报表' + "]" + "\n";
+                            replyInfo += "a(https://opendata.sz.gov.cn/files/app-research-report/政府网站2017年度工作报表.pdf" + ")[" + 7 + "、" + '政府网站2017年度工作报表' + "]" + "\n";
+
+                        }
+                    })
+                    replyInfo +="\n"+ "a(/data/search/toSearchPostByPara?message=" + message + ")["  + '点击此处可查看更多信息' + "]" + "\n";
+
+                } else {
+                    // replyInfo = "您所咨询的数据还在努力收录中，敬请期待~";
+                    replyInfo = "很抱歉，根据您所提供的关键字，暂未查询到相关信息。请您更换其他关键字进行查询，如须申请未开放的数据，可通过平台“互动->数据申请”功能提出您的数据需求。";
+                }
+            }, "json", false);
+        return replyInfo;
+    }
+
+    function getHotData() {
+        var replyInfo = "";
+        js.ajaxSubmit(
+            '/maintenance/hotData/getHotDataSet',
+            {},
+            function (hotdata) {
+                replyInfo = "热门数据集：\n";
+                $.each(hotdata, function (index, dataSet) {
+                    var no = Number(index) + Number(1);
+                    replyInfo += "a(/data/dataSet/toDataDetails/" + dataSet.resId + ")[" + no + "、" + dataSet.resTitle + "]" + "\n";
+                })
+            }, "json", false);
+        return replyInfo;
+    }
+
+    function getHotApi() {
+        var replyInfo = "";
+        js.ajaxSubmit(
+            '/maintenance/hotData/getHotApi',
+            {},
+            function (hotApi) {
+                replyInfo = "热门数据接口：\n";
+                $.each(hotApi, function (index, hotApi) {
+                    var no = Number(index) + Number(1);
+                    replyInfo += "a(/data/api/toApiDetails/" + hotApi.resId + ")[" + no + "、" + hotApi.resTitle + "]" + "\n";
+                })
+            }, "json", false);
+        return replyInfo;
+    }
+
+    function reportEpidemicComment(){
+        //适老化无登录
+        if($('body').hasClass('useOldFixed')){
+            return false;
+        }
+        if (!Global.IS_LOGIN) {
+            js.alert("请登录后再进行操作!");
+            showLogin();
+            return false;
+        }
+        //发送短信之前验证图形验证码
+        var content = '<div style="padding: 20px 50px;"><td class="t4_yytj_word"><span class="t4_red">*</span>验证码：</td>' +
+            '<td class="t4_yzm"><input id="EpiCommentValidCodeValue" type="text" class="t4_inp t4_yInp required">' +
+            '<img id="EpiCommentValidCodeImg" src="'+ctx+'/util/getValidCode?key=EpiCommentValidCode&id=EpiCommentValidCodeImg" alt=""\n' +
+            '                    onclick="getValidCode(\'EpiCommentValidCodeImg\',\'EpiCommentValidCode\')"><span><a onclick="getValidCode(\'EpiCommentValidCodeImg\',\'EpiCommentValidCode\')">看不清？换一张</a></span></td>'
+        '</div>';
+        layer.open({
+            title: "提示",
+            type: 1,
+            content: content,
+            btn: ["确定", "取消"],
+            btnAlign: 'c',
+            yes: function (index) {
+                var content = $("#epidemicComment").val();
+                //var star = js.formatNumber((("$.light").length)/3,2,false)
+                var epiCommentValidCode = $("#EpiCommentValidCodeValue").val();
+                if(epiCommentValidCode === "" || !epiCommentValidCode || epiCommentValidCode==="undefined") {
+                    getValidCode('EpiCommentValidCodeImg','EpiCommentValidCode');
+                    js.alert("请输入验证码");
+                    return;
+                }
+                js.ajaxSubmit(ctx + "/data/epidemicComment/saveEpidemicComment",
+                    {
+                        content: content,
+                        epiCommentValidCode:epiCommentValidCode,
+                    },
+                    function (data) {
+                        getValidCode('EpiCommentValidCodeImg','EpiCommentValidCode');
+                        js.alert(data.message);
+                        loadEpiCommentData();
+                    }, "json", false)
+                layer.close(index);
+            },
+            btn2: function (index) {
+                layer.close(index)
+            }
+        });
+
+    }
+
+    function loadEpiCommentData() {
+        $("#plList").html("");
+        js.ajaxSubmit(ctx+"/data/epidemicComment/listEpiCommentData",{},function(data){
+            var str = "";
+            for(var i in data){
+                // var name = data[i].realName;
+                // if(name == "") {
+                //     name = "游客";
+                // }
+                // str += "<div class='t2_pinglun_info' name='commentName'><img src='"+ctxStatic+"/opendata1.0/images/renxiang.png' alt=''/>" +
+                //     "<h1><a href='#'>"+name+"</a> <small>- "+data[i].createDate+"</small></h1>" +
+                //     "<p>"+data[i].content+"</p>" +
+                //     "</div>";
+                var secondCommentJson;
+                if(data[i].childrenComments==""){
+                    secondCommentJson="{}";
+                }else{
+                    secondCommentJson =data[i].childrenComments;
+                }
+                var username = data[i].websiteUser.username;
+                if(username === "" || username === "undefined") {
+                    username = "微信登陆用户";
+                }
+                str += '<li>';
+                str += '<div class="t6_plCont">';
+                str += '<a href="javascript:void(0)" class="t6_blue">' + username + '</a>';
+                str += '<span>:' + data[i].content + '</span>';
+                str += '</div>';
+                str += '<div class="t6_plMs">';
+                str += '<div class="ms_left">' + data[i].createDate + '</div>';
+                str += '<div class="ms_right">';
+                str += '<a href="javascript:void(0)" class="hf" onclick="replyComment(\'' + data[i].id + '\',\'' + username + '\')">回复</a><span class="t6_sx">|</span><a href="#" class="t6_zan" onclick="agreeComment(\'' + data[i].id +'\')">' + data[i].agreeCount + '</a>';
+                str += '</div></div>';
+                if(secondCommentJson) {
+                    str += '<div class="t6_hidePingl">';
+                    str += '<ul class="plList_n">';
+                    for(var j in secondCommentJson) {
+                        var secUsername = secondCommentJson[j].websiteUser.username;
+                        var content = secondCommentJson[j].content;
+                        if(secUsername === "" || secUsername === "undefined") {
+                            secUsername = "微信登陆用户";
+                        }
+                        str += '<li><div class="t6_plCont">';
+                        str += '<a href="javascript:void(0);" class="t6_blue">' + secUsername + '</a>';
+                        str += '<span>回复</span>';
+                        str += '<a href="javascript:void(0);" class="t6_blue">' + username +'</a>';
+                        str += '<span>：' + content + '</span>';
+                        str += '</div>';
+                        str += '<div class="t6_plMs">';
+                        str += '<div class="ms_left">' + data[i].createDate + '</div>';
+                        str += '<div class="ms_right">';
+                        str += '<a href="javascript:void(0)" class="t6_zan" onclick="agreeComment(\'' + secondCommentJson[j].id + '\')">' + secondCommentJson[j].agreeCount +'</a>';
+                        str += '</div></div>';
+                        str += '</li>';
+                    }
+                    str += '</ul></div>';
+                    str += '<div class="t6_toggle_row" onclick="showHidePing(this)"><a href="#"><span class="hf_num">共有' + secondCommentJson.length + '条回复>></span><span class="hf_sq">收起回复</span></a>';
+                }
+            // <li>
+            //     <div class="t6_plCont">
+            //         <a href="javascript:;" class="t6_blue">大猪蹄子</a>
+            //         <span>：公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！</span>
+            //     </div>
+            //     <div class="t6_plMs">
+            //         <div class="ms_left">2020年02月12日  21:59:00 </div>
+            //     <div class="ms_right">
+            //         <a href="javascript:;" class="hf">回复</a>
+            //         <span class="t6_sx">|</span>
+            //         <a href="#" class="t6_zan">1001</a>
+            //         </div>
+            //         </div>
+            //         <div class="t6_hidePingl">
+            //         <ul class="plList_n">
+            //         <li>
+            //         <div class="t6_plCont">
+            //         <a href="javascript:;" class="t6_blue">张益达</a>
+            //         <span>回复</span>
+            //         <a href="javascript:;" class="t6_blue">大猪蹄子</a>
+            //         <span>：公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！</span>
+            //     </div>
+            //     <div class="t6_plMs">
+            //         <div class="ms_left">2020年02月12日  21:59:00 </div>
+            //     <div class="ms_right">
+            //         <a href="#" class="t6_zan">1001</a>
+            //         </div>
+            //         </div>
+            //         </li>
+            //         <li>
+            //         <div class="t6_plCont">
+            //         <a href="javascript:;" class="t6_blue">张益达</a>
+            //         <span>回复</span>
+            //         <a href="javascript:;" class="t6_blue">大猪蹄子</a>
+            //         <span>：公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！</span>
+            //     </div>
+            //     <div class="t6_plMs">
+            //         <div class="ms_left">2020年02月12日  21:59:00 </div>
+            //     <div class="ms_right">
+            //         <a href="#" class="t6_zan">1001</a>
+            //         </div>
+            //         </div>
+            //         </li>
+            //         <li>
+            //         <div class="t6_plCont">
+            //         <a href="javascript:;" class="t6_blue">张益达</a>
+            //         <span>回复</span>
+            //         <a href="javascript:;" class="t6_blue">大猪蹄子</a>
+            //         <span>：公布过的小区就不公布了，是不是应该某小区几例这样来公示呢？也好让大家提高警惕！</span>
+            //     </div>
+            //     <div class="t6_plMs">
+            //         <div class="ms_left">2020年02月12日  21:59:00 </div>
+            //     <div class="ms_right">
+            //         <a href="#" class="t6_zan">1001</a>
+            //         </div>
+            //         </div>
+            //         </li>
+            //         </ul>
+            //         </div>
+                    str += '</div></li>';
+            }
+            $("#plList").append(str);
+        },"json");
+    }
+
+    function showHidePing(obj) {
+        if ($(obj).hasClass("actived")) {
+            $(obj).removeClass("actived");
+            $(obj).prev(".t6_hidePingl").slideUp();
+        } else {
+            $("#plList .t6_toggle_row").removeClass("actived");
+            $("#plList .t6_hidePingl").slideUp();
+            $(obj).addClass("actived");
+            $(obj).prev(".t6_hidePingl").slideDown();
+        }
+    }
+
+    function replyComment(id,username) {
+        //适老化无登录
+        if($('body').hasClass('useOldFixed')){
+            return false;
+        }
+            if (!Global.IS_LOGIN) {
+                js.alert("请登录后再进行操作!");
+                showLogin();
+                return false;
+            }
+            //发送短信之前验证图形验证码
+            var content = '<textarea name="replyCommentContent" id="replyCommentContent"  style="width: 499px;height: 90px"  required="" aria-required="true"></textarea>';
+            layer.open({
+                title: "回复<span style='color:blue'>"+username+"</span>",
+                type: 1,
+                area:["500px","200px"],
+                content: content,
+                btn: ["确定", "取消"],
+                btnAlign: 'c',
+                yes: function (index) {
+                    var replyContent = $("#replyCommentContent").val();
+                    js.ajaxSubmit(ctx + "/data/epidemicComment/replyComment",
+                        {
+                            content: replyContent,
+                            parentCode:id,
+                        },
+                        function (data) {
+                            js.alert(data.message);
+                            loadEpiCommentData();
+                        }, "json", false)
+                    layer.close(index);
+                },
+                btn2: function (index) {
+                    layer.close(index)
+                }
+            });
+    }
+
+    function agreeComment(id) {
+        js.ajaxSubmit(ctx + "/data/epidemicComment/agreeComment",
+            {
+                id: id,
+            },
+            function (data) {
+                js.alert(data.message);
+                loadEpiCommentData();
+            }, "json", false)
+    }
+</script>
+
+<!--移动端调用js-->
+<!--<script type="text/javascript" src="https://cdn.bootcss.com/jquery/1.9.1/jquery.min.js"></script>-->
+
+<!--<script>-->
+    <!--if(!window.jQuery)-->
+        <!--document.write('<script type="text/javascript" src="/static/opendata1.0/js/jquery-3.6.4.js"><'+'/script>');-->
+<!--</script>-->
+<script src="/static/opendata1.0/js/main.js"></script>
+<script type="application/javascript" src="/static/opendata1.0/js/tab.js"></script>
+
+<!--电脑端调用js-->
+<script src="/static/opendata1.0/js/t4_index.js?V4.0-10302135"></script>
+<script type="text/javascript" src="/static/opendata1.0/js/t2tab.js"></script>
+<script type="text/javascript" src="/static/opendata1.0/js/jquery.nicescroll.min.js"></script>
+<script id="barrierfree" type="text/javascript" src="/static/opendata1.0/js/load.js?v=V4.0-10302135"></script>
+<!---切换pc端和移动端的js-->
+<script>
+    $(function () {
+        // if (isPC()) {
+            $('#gov-p-pc').show();
+            $('#gov-p-mobile').hide();
+        // } else {
+        //     $('#appDiv').css("display","block");
+        //     $('#gov-p-pc').hide();
+        //     $('#gov-p-mobile').show();
+        // }
+        layui.use('laydate', function(){
+            var laydate = layui.laydate;
+            //常规用法
+            laydate.render({
+                elem: '#test1'
+            });
+            //国际版
+            laydate.render({
+                elem: '#test1-1'
+            });
+        });
+    });
+    function isPC() {
+        var userAgentInfo = navigator.userAgent;
+        var Agents = new Array("Android", "iPhone", "SymbianOS", "Windows Phone", "iPad", "iPod");
+        var flag = true;
+        for (var v = 0; v < Agents.length; v++) {
+            if (userAgentInfo.indexOf(Agents[v]) > 0) {
+                flag = false;
+                break;
+            }
+        }
+        return flag;
+    }
+    /*自适应功能*/
+    // (function (doc, win, undefined) {
+    //     var docEl = doc.documentElement,
+    //         resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
+    //         recalc = function () {
+    //             var clientWidth = docEl.clientWidth;
+    //             if (!clientWidth) return;
+    //             //这里是假设在1080px宽度设计稿的情况下，1rem = 50px；
+    //             //可以根据实际需要修改
+    //             docEl.style.fontSize = 50 * (clientWidth / 720) + 'px';
+    //         };
+    //     if (!doc.addEventListener) return;
+    //     win.addEventListener(resizeEvt, recalc, false);
+    //     doc.addEventListener('DOMContentLoaded', recalc, false);
+    // })(document, window);
+</script>
+
+</body>
+<script>
+    var ctx, lang, ctxPath, ctxAdmin, ctxFront, ctxStatic, Global;
+    // $.cookie("jeesite.session.id", $.cookie("jeesite.session.id"), {secure: true});
+    // alert($.cookie("jeesite.session.id"));
+    js.ajaxSubmit("/util/getGlobal", {}, function (data) {
+        console.info(data);
+        ctx = data.ctx;
+        lang = data.lang;
+        ctxPath = data.ctxPath;
+        ctxAdmin = data.ctxAdmin;
+        ctxFront = data.ctxFront;
+        ctxStatic = data.ctxStatic;
+        Global = data.Global;
+    }, "JSON", false)
+    /**
+     * 增加网站点击次数
+     */
+    js.ajaxSubmit("/clickCount", {}, function (data) {
+    }, "JSON")
+
+    /**
+     * 手动添加meta标签
+     */
+    function addMeta(ele,name,content) {
+        const meta = document.createElement('meta');
+        meta.name = name;
+        meta.content = content;
+
+        let parent = ele.parentNode;
+        if (parent.lastChild === ele) {
+            parent.appendChild(meta);
+        } else {
+            parent.insertBefore(meta, ele.nextSibling)
+        }
+    }
+
+
+    let ele = document.getElementsByTagName('meta')[2];
+    /*内容标签*/
+    // 来源
+    // addMeta(ele,'ContentSource','');
+    // // 标题
+    // addMeta(ele,'ArticleTitle','');
+    //
+    // /*栏目标签*/
+    // // 栏目类别
+    // addMeta(ele,'columnType','');
+    // // 栏目关键词
+    // addMeta(ele,'columnKeywords','');
+    // // 栏目描述
+    // addMeta(ele,'columnDescription','');
+    // // 栏目名称
+    // addMeta(ele,'columnName','');
+
+
+</script>
+<script type="text/javascript" src="/static/opendata1.0/js/jquery.pagination.js"></script>
+<script src="/static/jquery-toastr/2.0/toastr.min.js"></script>
+<script src="/static/select2/4.0/select2.js?V4.0-10302135"></script>
+<script src="/static/common/common.js"></script>
+<script src="/static/opendata1.0/js/register.js"></script>
+<script src="/static/opendata1.0/js/interaction.js"></script>
+<script src="/static/opendata1.0/js/application.js"></script>
+<script src="/static/opendata1.0/js/search.js"></script>
+</html>
+
+
+<script src="/static/opendata1.0/js/search.js"></script>
+<script type="text/javascript">
+    $(function(){
+        $(".t4_search ul li").click(function () {
+            $("#keywords").val($(this).text());
+            search();
+        });
+        configTheme();
+        var currentUrl = window.location.href;
+        if (currentUrl !=="" && currentUrl.includes('article/article/toArticleList')) {
+            $(".layui-layim-chat").css("margin-top","0px");//机器人客服位置调整
+        }
+    });
+    //通过后台网站配置的主题风格来修改前台门户页面的主题风格
+    function configTheme() {
+        $.ajax({
+            url: "/maintenance/theme/getStyle",
+            type: "get",
+            dataType: "json",
+            async: false,
+            data: {
+                themeStyle: "theme_style"
+            },
+            success: function (result) {
+                if (result != null && result.configValue == '2') {
+                    // $(".t4_top").css("background-color","grey");
+                    $(".t4_banner").css("background-image","url('/static/opendata1.0/images/sub_banner_grey.png')");
+                    // $(".t4_search span").css("background-color","grey");
+                    // $(".t4_search button").css("background-color","grey");
+                    // $(".t4_footer_menus").css("background-color","grey");
+                    // $(".t4_footer_cons").css("background-color","grey");
+                    $("html").css({
+                        "-webkit-filter": "grayscale(100%)",
+                        "-moz-filter": "grayscale(100%)",
+                        "-ms-filter": "grayscale(100%)",
+                        "-o-filter": "grayscale(100%)",
+                        "filter":"progid:DXImageTransform.Microsoft.BasicImage(grayscale=1)",
+                        "_filter":"none"
+                    })
+                } else if (result != null && result.configValue == '3') {
+                    $(".t4_banner").css("background-image","url('/static/opendata1.0/images/sub_banner.png')");
+                    // $(".t4_top").css("background-color", "#BC0000");
+                    // $(".tit").css("background-color", "#dd0900");
+                    // $(".t4_search span").css("background-color", "#fac05e");
+                    // $(".t4_search button").css("background-color", "#fac05e");
+                    // $(".sjsq").css("background", "url('/static/opendata1.0/images/sjsq_red.png') no-repeat");
+                    // $(".actGotop a").css("background","url('/static/opendata1.0/images/top_red.png') no-repeat");
+                    // $(".layui-layim-min .layui-layer-content span").css("background","url('/static/opendata1.0/images/jiqiren_red.jpg')");
+                    // $(".t4_l_nav ul.t4_ulsb li, .t4_qb, .t4_uls li, .map-title, .t2_tree_title").css("background-color", "#dd0900");//包含块区域的全部变红
+                    // $(".t4_footer_menus").css("background-color", "#ED1C1F");
+                    // $(".t4_footer_cons").css("background-color", "#BC0000");
+                } else {
+                    $(".t4_top").css("background-color","#145085");
+                    $(".t4_banner").css("background-image","url('/static/opendata1.0/images/sub_banner.png')");
+                    $(".t4_search span").css("background-color","#198ef8");
+                    $(".t4_search button").css("background-color","#198ef8");
+                    $(".t4_footer_menus").css("background-color","#24649d");
+                    $(".t4_footer_cons").css("background-color","#145085");
+                }
+            }
+        })
+    }
+    function search(){
+        var keywords = $("#keywords").val();
+        //检索条件赋值
+        $("#searchParam").val(keywords);
+        $("#form1").submit();
+    }
+    function transSpecialStr(value){
+        if(value == null || ""===value){
+            return value;
+        }
+        var xssStr = "and|alert|select|delete|drop|truncate|%20|--|<|>|%|#|+|\\|!=|(|)|;";
+        var xssArr = xssStr.split("|");
+        for(var i=0;i<xssArr.length;i++){
+            if(value.indexOf(xssArr[i])>-1){
+                return value.replaceAll(xssArr[i]," ");
+            }
+        }
+        return value;
+    }
+</script>
+<script>
+  $(function() {
+    document.title="深圳市政府数据开放平台常见问题";
+    // $('meta[name="columnName"]').attr('content',"互动");
+    // $('meta[name="columnDescription"]').attr('content',"深圳市政府数据开放平台互动栏目");
+    // $('meta[name="columnKeywords"]').attr('content',"互动、常见问题");
+    // $('meta[name="columnType"]').attr('content',"互动、常见问题");
+    // $('meta[name="ArticleTitle"]').attr('content',"深圳市政府数据开放平台常见问题");
+    // $('meta[name="ContentSource"]').attr('content',"深圳市政府数据开放平台");
+    $("#childTitle").html("常见问题");
+    $(".t4_jyfk").remove();
+    // $("#questionVtitle").prop("class", "vtitle v02");
+    $("#questionVtitle a").removeClass('clicked');
+    // 给当前点击的 <a> 标签添加 'clicked' 类
+    $("#questionVtitle a").addClass('clicked');
+    getData("1");
+    <!-- 分页初始化 -->
+    js.ajaxSubmit(
+            '/interaction/question/getCount',
+            { dataSource:"1"},
+            function (data) {
+              if(data === 0) {
+                $('.question').prop("hide","true");
+              } else {
+                <!-- 纠错公开列表分页 -->
+                $('.question').pagination({
+                  coping: true,
+                  totalData: data,
+                  showData: 6,
+                  mode: 'unfixed',count: 5,
+                  isHide: true,
+                  homePage: '首页',
+                  endPage: '末页',
+                  prevContent: '上一页',
+                  nextContent: '下一页',
+                  callback: function (api) {
+                    getData(api.getCurrent());
+                  }
+                });
+                if($('.feedback').length > 0){
+                   $('.feedback').pagination({
+                    coping: true,
+                    totalData: data,
+                    showData: 10,
+                    mode: 'unfixed',count: 5,
+                    isHide: true,
+                    homePage: '首页',
+                    endPage: '末页',
+                    prevContent: '上一页',
+                    nextContent: '下一页',
+                    callback: function (api) {
+                      getData(api.getCurrent());
+                    }
+                  });
+                }
+
+              }
+            },"json"
+    );
+  })
+</script>
+<script>
+  <!-- 常见问题分页数据查询 -->
+  function getData(pageNo) {
+    js.ajaxSubmit(
+            '/interaction/question/getQuestionListPage',
+            {
+              pageNo: pageNo
+            },
+            function(data) {
+              $("#questionData").empty();
+              var str = "";
+              $.each(data, function (index, questionData) {
+                str = str + "<div class='t2_question_m'>" +
+                        " <h2>"+questionData.indexId+"、"+questionData.question+"</h2>" +
+                        " <p>"+questionData.answer+"</p>" +
+                        " </div>"
+              })
+              $('#questionData').append(str)
+            }
+    )
+  }
+</script>
+
+
+
+

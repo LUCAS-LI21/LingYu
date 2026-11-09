@@ -318,6 +318,24 @@ Docker 守护进程当前未启动，本轮只准备与静态校验，**没有�
 
 ### ② 官方小区名录（子代理调研 + 我亲自复验）
 
+**最大发现：接口目录 `/data/api/toApi` 有 2824 个 API（市级 1780 / 区级 1044）**，
+其中 130 个与小区/物业/银行/地名相关。列表接口是 `POST /data/api/findPageByParams`，
+参数 `pageNo` + **`pageSize`**（不是 rows）+ `sortType`；返回 `apiList` 是 JSON **字符串**，
+需要再 `JSON.parse` 后取 `.list`（这个坑踩过一次，第一次扫出来 0 条）。
+
+字段级核实（`selectDataApiByResId` → `sourceTableName` → `getPreviewApiItem`）：
+
+| API                                       | 表                    | 条数    | 关键字段                                                                | 开放           |
+| ----------------------------------------- | --------------------- | ------- | ----------------------------------------------------------------------- | -------------- |
+| **物业管理区域基础信息** `29200/01903550` | `PM_BASE_VILLAGE`     | 1931 万 | `VILLAGE_NAME` + **`ADDRESS`** + `STREET_NAME`/`SECTION_NAME`/`WYQYCYM` | **有条件开放** |
+| 保障房-小区基本信息 `29200/01900914`      | `V_QUARTS_INFO121793` | 339     | `QUARTERS` + `ADDRESS` + `ZONE`                                         | 无条件         |
+| 保障房-房屋基本信息 `29200/01900911`      | `V_FLATS_INFO129881`  | 20 万   | `QUART`、面积、价格                                                     | 无条件         |
+| 商事主体房屋编码 `29200/01303584`         | `sjj_ssztfwbmxx`      | 452 万  | `QYMC`、`FWBM`、`TYSHXYDM`                                              | 无条件         |
+| 社区警务工作室 `29200/00203373`           | `SQMJJJWGZS104087`    | 627     | `DZ`（地址）、`JWGZSMC`                                                 | 无条件         |
+
+→ **`PM_BASE_VILLAGE` 是唯一同时含「小区名 + 地址」的官方表**，但属有条件开放，需申请审批。
+→ 保底方案：先跑 339 条保障房小区（无条件），验证"接口→导入"链路。
+
 - **国家地名信息库** `https://dmfw.mca.gov.cn/9095/stname/listPub?code={9位街道码}` 匿名可用：
   实测 `code=440304011` → 200、`total=197`，字段含 `standard_name`、`place_type_code`、
   `area_name`、`gdm`（坐标几何）。`place_type_code=22100` 为城镇居民点（住宅区）。

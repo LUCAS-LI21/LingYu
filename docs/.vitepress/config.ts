@@ -42,6 +42,7 @@ export default defineConfig({
         text: '调研与核查',
         items: [
           { text: '开源选型调研', link: '/research/poi-开源选型调研' },
+          { text: 'appKey 申请入口核查', link: '/research/深圳开放平台-appKey-核查' },
           { text: '核查记录', link: '/research/verification-log' },
         ],
       },
