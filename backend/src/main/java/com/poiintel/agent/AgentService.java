@@ -238,8 +238,14 @@ public class AgentService {
             throw new IllegalStateException("建议内容为空，无法采纳");
         }
 
-        Map<String, Object> before = jdbcTemplate.queryForMap(
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT * FROM " + table + " WHERE id = ? FOR UPDATE", entityId);
+        if (rows.isEmpty()) {
+            // 实体已不存在（多半是被去重合并删掉了），把建议标成 stale，避免反复重试
+            jdbcTemplate.update("UPDATE agent_run SET status = 'stale' WHERE id = ?", runId);
+            throw new IllegalStateException("实体已不存在（可能被去重合并），建议作废");
+        }
+        Map<String, Object> before = rows.get(0);
         Object current = before.get(column);
         String currentText = current == null ? "" : String.valueOf(current).trim();
         if (!currentText.isEmpty()) {
@@ -298,10 +304,14 @@ public class AgentService {
         };
         int size = Math.min(Math.max(limit, 1), 20);
 
-        String sql = "SELECT id FROM " + table + " WHERE " + column + " = ''"
+        String sql = "SELECT id FROM " + table + " p WHERE " + column + " = ''"
                 + (branchOnly ? " AND name REGEXP '支行|分行|营业部|分理处|储蓄所|ATM'" : "")
+                // 跳过已有待处理建议、或最近 7 天已被判定无结果的点位，避免重复烧钱
+                + " AND NOT EXISTS (SELECT 1 FROM agent_run r WHERE r.entity_type = ? AND r.entity_id = p.id"
+                + "   AND r.field = ? AND (r.status IN ('running','ready')"
+                + "   OR (r.status = 'rejected' AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY))))"
                 + " ORDER BY id LIMIT " + size;
-        List<String> ids = jdbcTemplate.queryForList(sql, String.class);
+        List<String> ids = jdbcTemplate.queryForList(sql, String.class, entityType, field);
 
         List<Map<String, Object>> items = new ArrayList<>();
         Map<String, Integer> tally = new LinkedHashMap<>();
