@@ -58,7 +58,8 @@ public class ImportService {
             Double propertyFee) {
     }
 
-    public record Request(String source, String license, String type, Boolean overwrite, List<Row> rows) {
+    public record Request(String source, String license, String type, Boolean overwrite, Boolean enrich,
+            List<Row> rows) {
     }
 
     /**
@@ -78,17 +79,63 @@ public class ImportService {
         String source = blankTo(request.source(), "政府开放数据");
         String license = blankTo(request.license(), "政府公开信息");
         boolean overwrite = Boolean.TRUE.equals(request.overwrite());
+        // 补全模式：数据集只有名称+数值（如二手房参考价），没有坐标，
+        // 只能按名称匹配已有 POI 补字段，绝不新建无坐标的记录。
+        boolean enrich = Boolean.TRUE.equals(request.enrich());
 
         int inserted = 0, updated = 0, skipped = 0, conflicts = 0;
         List<String> errors = new ArrayList<>();
 
         for (Row raw : request.rows()) {
             Row row = normalize(raw);
-            String invalid = validate(row);
+            String invalid = enrich ? validateEnrich(row) : validate(row);
             if (invalid != null) {
                 skipped++;
                 if (errors.size() < 10) {
                     errors.add(invalid + "：" + blankTo(row == null ? "" : row.name(), "(无名称)"));
+                }
+                continue;
+            }
+
+            if (enrich) {
+                List<Map<String, Object>> matches = matchByName(table, row);
+                if (matches.isEmpty()) {
+                    skipped++;
+                    if (errors.size() < 10) {
+                        errors.add("名称无法匹配：" + blankTo(row.name(), "(无名称)"));
+                    }
+                    continue;
+                }
+                if (matches.size() > 1) {
+                    skipped++;
+                    if (errors.size() < 10) {
+                        errors.add("同名多条，拒绝猜测：" + row.name() + "（命中 " + matches.size() + " 条）");
+                    }
+                    continue;
+                }
+                String matchedId = String.valueOf(matches.get(0).get("id"));
+                try {
+                    Map<String, Object> before = jdbcTemplate.queryForMap(
+                            "SELECT * FROM " + table + " WHERE id = ?", matchedId);
+                    int changed = updateRow(table, matchedId, row, source, license, overwrite);
+                    if (changed == 0) {
+                        conflicts++;
+                    } else {
+                        Map<String, Object> after = jdbcTemplate.queryForMap(
+                                "SELECT * FROM " + table + " WHERE id = ?", matchedId);
+                        jdbcTemplate.update("""
+                                INSERT INTO poi_version (poi_type, poi_id, change_type, before_json, after_json,
+                                                         changed_fields, operator)
+                                VALUES (?, ?, 'update', ?, ?, ?, ?)
+                                """, type, matchedId, toJson(before), toJson(after),
+                                String.join(",", changedFields(before, after)), "import:" + source);
+                        updated++;
+                    }
+                } catch (Exception ex) {
+                    skipped++;
+                    if (errors.size() < 10) {
+                        errors.add(row.name() + "：" + shortMessage(ex));
+                    }
                 }
                 continue;
             }
@@ -130,6 +177,7 @@ public class ImportService {
         result.put("type", type);
         result.put("source", source);
         result.put("overwrite", overwrite);
+        result.put("enrich", enrich);
         result.put("inserted", inserted);
         result.put("updated", updated);
         result.put("skipped", skipped);
@@ -154,6 +202,21 @@ public class ImportService {
                 trim(row.id()), trim(row.name()), trim(row.address()), trim(row.district()),
                 row.lng(), row.lat(), trim(row.phone()), trim(row.openingHours()), trim(row.brand()),
                 trim(row.branchType()), row.builtYear(), row.avgPrice(), row.propertyFee());
+    }
+
+    private String validateEnrich(Row row) {
+        if (row == null) return "空行";
+        if (blankTo(row.name(), "").isBlank()) return "缺少名称";
+        return null;
+    }
+
+    private List<Map<String, Object>> matchByName(String table, Row row) {
+        if (row.district() != null && !row.district().isBlank()) {
+            return jdbcTemplate.queryForList(
+                    "SELECT id FROM " + table + " WHERE name = ? AND district = ?",
+                    row.name(), row.district());
+        }
+        return jdbcTemplate.queryForList("SELECT id FROM " + table + " WHERE name = ?", row.name());
     }
 
     private String validate(Row row) {
