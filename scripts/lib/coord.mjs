@@ -1,0 +1,68 @@
+/**
+ * 坐标系转换（GCJ-02 ↔ WGS-84）。
+ *
+ * 背景：国内地图/网点查询接口返回的多是 GCJ-02（火星坐标），
+ * 而我们的底库来自 OSM，是 WGS-84。直接入库会整体偏移约 300–600 米。
+ *
+ * 算法为公开的标准实现（各语言广泛使用），误差 < 1 米。
+ */
+
+const PI = Math.PI
+const A = 6378245.0
+const EE = 0.00669342162296594323
+
+function outOfChina(lng, lat) {
+  return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271
+}
+
+function transformLat(x, y) {
+  let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x))
+  ret += ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) / 3.0
+  ret += ((20.0 * Math.sin(y * PI) + 40.0 * Math.sin((y / 3.0) * PI)) * 2.0) / 3.0
+  ret += ((160.0 * Math.sin((y / 12.0) * PI) + 320 * Math.sin((y * PI) / 30.0)) * 2.0) / 3.0
+  return ret
+}
+
+function transformLng(x, y) {
+  let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x))
+  ret += ((20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0) / 3.0
+  ret += ((20.0 * Math.sin(x * PI) + 40.0 * Math.sin((x / 3.0) * PI)) * 2.0) / 3.0
+  ret += ((150.0 * Math.sin((x / 12.0) * PI) + 300.0 * Math.sin((x / 30.0) * PI)) * 2.0) / 3.0
+  return ret
+}
+
+/** WGS-84 → GCJ-02 */
+export function wgs84ToGcj02(lng, lat) {
+  if (outOfChina(lng, lat)) return [lng, lat]
+  let dLat = transformLat(lng - 105.0, lat - 35.0)
+  let dLng = transformLng(lng - 105.0, lat - 35.0)
+  const radLat = (lat / 180.0) * PI
+  let magic = Math.sin(radLat)
+  magic = 1 - EE * magic * magic
+  const sqrtMagic = Math.sqrt(magic)
+  dLat = (dLat * 180.0) / (((A * (1 - EE)) / (magic * sqrtMagic)) * PI)
+  dLng = (dLng * 180.0) / ((A / sqrtMagic) * Math.cos(radLat) * PI)
+  return [lng + dLng, lat + dLat]
+}
+
+/** GCJ-02 → WGS-84（迭代逼近，精度 < 1 米） */
+export function gcj02ToWgs84(lng, lat) {
+  if (outOfChina(lng, lat)) return [lng, lat]
+  let wgsLng = lng
+  let wgsLat = lat
+  for (let i = 0; i < 6; i++) {
+    const [gcjLng, gcjLat] = wgs84ToGcj02(wgsLng, wgsLat)
+    wgsLng += lng - gcjLng
+    wgsLat += lat - gcjLat
+  }
+  return [wgsLng, wgsLat]
+}
+
+/**
+ * 按来源坐标系转换到 WGS-84。
+ * @param {'wgs84'|'gcj02'} source
+ */
+export function toWgs84(lng, lat, source = 'gcj02') {
+  if (source === 'wgs84') return [lng, lat]
+  return gcj02ToWgs84(lng, lat)
+}

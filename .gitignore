@@ -40,3 +40,8 @@ crawl-*.mjs
 crawl-*.cjs
 nf*.cjs
 probe-nfra.cjs
+
+# 侦察产物
+scripts/_recon-out/
+data/ccb-probe/
+*.token
