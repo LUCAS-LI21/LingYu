@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import {
   approveFeedback,
@@ -32,9 +32,34 @@ const loading = ref(false)
 const overview = ref<AdminOverview | null>(null)
 const feedback = ref<FeedbackRow[]>([])
 const feedbackStatus = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending')
+const feedbackPage = ref(1)
+const feedbackSize = ref(10)
+const feedbackTotal = ref(0)
 const jobs = ref<JobRow[]>([])
+const jobsAutoRefresh = ref(true)
+const jobsRefreshing = ref(false)
+const jobsUpdatedAt = ref('')
 const hotspots = ref<HotspotRow[]>([])
 const busy = ref('')
+
+/** 自动刷新间隔：任务从 pending/running 到终态应在 5s 内可见（FR-D-03） */
+const JOBS_POLL_MS = 5000
+const ACTIVE_JOB_STATUSES = ['pending', 'pending_job', 'running'] as const
+
+const feedbackPages = computed(() =>
+  Math.max(1, Math.ceil(feedbackTotal.value / feedbackSize.value)),
+)
+const feedbackFrom = computed(() =>
+  feedbackTotal.value === 0 ? 0 : (feedbackPage.value - 1) * feedbackSize.value + 1,
+)
+const feedbackTo = computed(() =>
+  Math.min(feedbackPage.value * feedbackSize.value, feedbackTotal.value),
+)
+const jobsActive = computed(() =>
+  jobs.value.some((job) => (ACTIVE_JOB_STATUSES as readonly string[]).includes(job.status)),
+)
+
+let jobsTimer: number | null = null
 
 async function onLogin(): Promise<void> {
   loggingIn.value = true
@@ -114,32 +139,124 @@ const statusLabel: Record<string, string> = {
   partial: '部分成功',
   failed: '失败',
   running: '执行中',
+  pending_job: '排队中',
+}
+
+function handleLoadError(error: unknown): void {
+  const message = error instanceof Error ? error.message : '加载失败'
+  if (message.includes('登录')) {
+    authed.value = false
+  }
+  toast(message, 'error')
+}
+
+async function loadFeedbackPage(): Promise<void> {
+  const data = await fetchFeedback(feedbackStatus.value, feedbackPage.value, feedbackSize.value)
+  const total = data.total ?? data.items.length
+  const lastPage = Math.max(1, Math.ceil(total / feedbackSize.value))
+  if (feedbackPage.value > lastPage) {
+    // 审核后当前页可能被抽空，退回最后一页而不是停在空列表
+    feedbackPage.value = lastPage
+    const retry = await fetchFeedback(feedbackStatus.value, lastPage, feedbackSize.value)
+    feedback.value = retry.items
+    feedbackTotal.value = retry.total ?? retry.items.length
+    return
+  }
+  feedback.value = data.items
+  feedbackTotal.value = total
+}
+
+function clockNow(): string {
+  return new Date().toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+async function loadJobsPage(): Promise<void> {
+  const data = await fetchJobs()
+  jobs.value = data.items
+  jobsUpdatedAt.value = clockNow()
 }
 
 async function refresh(): Promise<void> {
-  if (!online.value) return
+  if (!online.value || !authed.value) return
   loading.value = true
   try {
     if (tab.value === 'overview') {
       overview.value = await fetchOverview()
     } else if (tab.value === 'feedback') {
-      const data = await fetchFeedback(feedbackStatus.value)
-      feedback.value = data.items
+      await loadFeedbackPage()
     } else if (tab.value === 'jobs') {
-      jobs.value = (await fetchJobs()).items
+      await loadJobsPage()
     } else {
       hotspots.value = await fetchHotspots()
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '加载失败'
-    if (message.includes('登录')) {
-      authed.value = false
-    }
-    toast(message, 'error')
+    handleLoadError(error)
   } finally {
     loading.value = false
   }
 }
+
+function canAutoRefreshJobs(): boolean {
+  if (tab.value !== 'jobs' || !jobsAutoRefresh.value || !online.value || !authed.value) return false
+  return document.visibilityState !== 'hidden'
+}
+
+function stopJobsPolling(): void {
+  if (jobsTimer !== null) {
+    window.clearInterval(jobsTimer)
+    jobsTimer = null
+  }
+}
+
+async function pollJobs(): Promise<void> {
+  if (!canAutoRefreshJobs() || jobsRefreshing.value || loading.value) return
+  jobsRefreshing.value = true
+  try {
+    await loadJobsPage()
+  } catch (error) {
+    // 网络抖动留给下一轮；仅在登录失效时打断用户
+    if (error instanceof Error && error.message.includes('登录')) {
+      authed.value = false
+      toast(error.message, 'error')
+    }
+  } finally {
+    jobsRefreshing.value = false
+  }
+}
+
+function startJobsPolling(): void {
+  stopJobsPolling()
+  if (!canAutoRefreshJobs()) return
+  jobsTimer = window.setInterval(() => {
+    void pollJobs()
+  }, JOBS_POLL_MS)
+}
+
+async function refreshJobsNow(): Promise<void> {
+  if (jobsRefreshing.value || loading.value) return
+  jobsRefreshing.value = true
+  try {
+    await loadJobsPage()
+  } catch (error) {
+    handleLoadError(error)
+  } finally {
+    jobsRefreshing.value = false
+  }
+}
+
+function onVisibilityChange(): void {
+  if (document.visibilityState === 'visible' && canAutoRefreshJobs()) {
+    void pollJobs()
+  }
+}
+
+watch([tab, online, authed, jobsAutoRefresh], () => {
+  if (canAutoRefreshJobs()) {
+    startJobsPolling()
+  } else {
+    stopJobsPolling()
+  }
+})
 
 async function switchTab(next: Tab): Promise<void> {
   tab.value = next
@@ -148,6 +265,19 @@ async function switchTab(next: Tab): Promise<void> {
 
 async function setFeedbackStatus(next: string): Promise<void> {
   feedbackStatus.value = next as typeof feedbackStatus.value
+  feedbackPage.value = 1
+  await refresh()
+}
+
+async function goFeedbackPage(next: number): Promise<void> {
+  const target = Math.min(Math.max(1, next), feedbackPages.value)
+  if (target === feedbackPage.value) return
+  feedbackPage.value = target
+  await refresh()
+}
+
+async function onFeedbackSizeChange(): Promise<void> {
+  feedbackPage.value = 1
   await refresh()
 }
 
@@ -205,11 +335,17 @@ async function onRecompute(): Promise<void> {
 }
 
 onMounted(async () => {
+  document.addEventListener('visibilitychange', onVisibilityChange)
   online.value = await isServerMode()
   // 未登录时不打运营接口，避免一进来就弹 401
   if (online.value && authed.value) {
     await refresh()
   }
+})
+
+onBeforeUnmount(() => {
+  stopJobsPolling()
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 
@@ -343,32 +479,44 @@ onMounted(async () => {
         v-else-if="tab === 'feedback'"
         class="rounded-card border border-line bg-surface shadow-card"
       >
-        <div class="flex items-center gap-2 border-b border-line px-4 py-3">
-          <button
-            v-for="option in [
-              { key: 'pending', label: '待审核' },
-              { key: 'approved', label: '已采纳' },
-              { key: 'rejected', label: '已驳回' },
-              { key: 'all', label: '全部' },
-            ]"
-            :key="option.key"
-            class="rounded-lg px-2.5 py-1 text-[11px] transition"
-            :class="
-              feedbackStatus === option.key
-                ? 'bg-brand-50 font-medium text-brand-600'
-                : 'text-ink-500 hover:bg-surface-soft'
-            "
-            @click="setFeedbackStatus(option.key)"
-          >
-            {{ option.label }}
-          </button>
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-for="option in [
+                { key: 'pending', label: '待审核' },
+                { key: 'approved', label: '已采纳' },
+                { key: 'rejected', label: '已驳回' },
+                { key: 'all', label: '全部' },
+              ]"
+              :key="option.key"
+              class="rounded-lg px-2.5 py-1 text-[11px] transition"
+              :class="
+                feedbackStatus === option.key
+                  ? 'bg-brand-50 font-medium text-brand-600'
+                  : 'text-ink-500 hover:bg-surface-soft'
+              "
+              @click="setFeedbackStatus(option.key)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+          <span class="text-[11px] text-ink-400">
+            <template v-if="loading">加载中…</template>
+            <template v-else>共 {{ feedbackTotal }} 条</template>
+          </span>
         </div>
 
-        <div v-if="feedback.length === 0" class="px-4 py-12 text-center text-xs text-ink-400">
+        <div v-if="loading && feedback.length === 0" class="space-y-2 px-4 py-4">
+          <div v-for="i in 3" :key="i" class="h-16 animate-pulse rounded-soft bg-surface-soft" />
+        </div>
+
+        <div v-else-if="feedback.length === 0" class="px-4 py-12 text-center text-xs text-ink-400">
           暂无反馈
         </div>
 
-        <ul v-else class="divide-y divide-line">
+        <ul v-else class="divide-y divide-line" :class="{ 'opacity-60': loading }">
           <li v-for="row in feedback" :key="row.code" class="px-4 py-3">
             <div class="flex flex-wrap items-start gap-3">
               <div class="min-w-0 flex-1">
@@ -409,6 +557,46 @@ onMounted(async () => {
             </div>
           </li>
         </ul>
+
+        <div
+          v-if="feedbackTotal > 0"
+          class="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 rounded-b-card border-t border-line bg-surface/95 px-4 py-3 backdrop-blur"
+        >
+          <p class="text-[11px] text-ink-400">
+            第 {{ feedbackFrom }}–{{ feedbackTo }} 条 · 共 {{ feedbackTotal }} 条
+          </p>
+          <div class="flex items-center gap-1.5">
+            <select
+              v-model.number="feedbackSize"
+              data-testid="feedback-page-size"
+              class="h-7 rounded-lg border border-line bg-surface px-1.5 text-[11px] text-ink-600 outline-none focus:border-brand-500"
+              @change="onFeedbackSizeChange"
+            >
+              <option :value="10">10 条/页</option>
+              <option :value="20">20 条/页</option>
+              <option :value="50">50 条/页</option>
+            </select>
+            <button
+              data-testid="feedback-prev"
+              class="h-7 rounded-lg border border-line bg-surface px-2.5 text-[11px] text-ink-600 transition hover:border-line-strong disabled:opacity-40"
+              :disabled="feedbackPage === 1 || loading"
+              @click="goFeedbackPage(feedbackPage - 1)"
+            >
+              上一页
+            </button>
+            <span class="min-w-16 text-center text-[11px] tabular-nums text-ink-500">
+              {{ feedbackPage }} / {{ feedbackPages }}
+            </span>
+            <button
+              data-testid="feedback-next"
+              class="h-7 rounded-lg border border-line bg-surface px-2.5 text-[11px] text-ink-600 transition hover:border-line-strong disabled:opacity-40"
+              :disabled="feedbackPage >= feedbackPages || loading"
+              @click="goFeedbackPage(feedbackPage + 1)"
+            >
+              下一页
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- 任务 -->
@@ -416,11 +604,54 @@ onMounted(async () => {
         v-else-if="tab === 'jobs'"
         class="rounded-card border border-line bg-surface shadow-card"
       >
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3"
+        >
+          <div class="flex items-center gap-2 text-[11px] text-ink-500">
+            <span class="relative flex h-2 w-2">
+              <span
+                v-if="jobsActive"
+                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-60"
+              />
+              <span
+                class="relative inline-flex h-2 w-2 rounded-full"
+                :class="jobsActive ? 'bg-brand-500' : 'bg-ink-400/50'"
+              />
+            </span>
+            <span>{{ jobsActive ? '任务执行中，状态自动刷新' : '当前无进行中的任务' }}</span>
+            <span v-if="jobsUpdatedAt" class="text-ink-400">· 更新于 {{ jobsUpdatedAt }}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="flex cursor-pointer items-center gap-1.5 text-[11px] text-ink-500">
+              <input
+                v-model="jobsAutoRefresh"
+                data-testid="jobs-auto-refresh"
+                type="checkbox"
+                class="h-3.5 w-3.5 rounded border-line accent-brand-500"
+              />
+              每 5 秒自动刷新
+            </label>
+            <button
+              data-testid="jobs-refresh"
+              class="rounded-lg border border-line px-2.5 py-1 text-[11px] text-ink-600 transition hover:border-brand-500/50 hover:text-brand-600 disabled:opacity-50"
+              :disabled="jobsRefreshing || loading"
+              @click="refreshJobsNow"
+            >
+              {{ jobsRefreshing ? '刷新中…' : '立即刷新' }}
+            </button>
+          </div>
+        </div>
+
         <div v-if="jobs.length === 0" class="px-4 py-12 text-center text-xs text-ink-400">
           暂无任务
         </div>
         <ul v-else class="divide-y divide-line">
-          <li v-for="job in jobs" :key="job.id" class="flex flex-wrap items-center gap-3 px-4 py-3">
+          <li
+            v-for="job in jobs"
+            :key="job.id"
+            class="flex flex-wrap items-center gap-3 px-4 py-3"
+            :class="{ 'bg-brand-50/40': job.status === 'running' }"
+          >
             <span class="text-xs font-medium text-ink-900">#{{ job.id }}</span>
             <span
               class="rounded-full border px-1.5 py-0.5 text-[10px]"
@@ -431,7 +662,13 @@ onMounted(async () => {
             <span class="text-[11px] text-ink-500">抓取 {{ job.fetchedCount }}</span>
             <span class="text-[11px] text-mint-600">新增 {{ job.insertedCount }}</span>
             <span class="text-[11px] text-brand-600">更新 {{ job.updatedCount }}</span>
+            <span v-if="job.failedCount > 0" class="text-[11px] text-red-500">
+              失败 {{ job.failedCount }}
+            </span>
             <span class="text-[11px] text-ink-400">{{ job.createdAt }}</span>
+            <span v-if="job.finishedAt" class="text-[11px] text-ink-400">
+              完成于 {{ job.finishedAt }}
+            </span>
             <span v-if="job.errorSummary" class="w-full truncate text-[11px] text-red-500">
               {{ job.errorSummary }}
             </span>
