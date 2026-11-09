@@ -38,14 +38,49 @@ public class AgentService {
             "phone", "联系电话",
             "openingHours", "营业时间");
 
+    /** 白名单：表名与列名只能从这里取，绝不拼接外部字符串 */
+    private static final Map<String, String> TABLE_BY_TYPE = Map.of(
+            "bank", "poi_bank",
+            "community", "poi_community");
+    private static final Map<String, String> COLUMN_BY_FIELD = Map.of(
+            "address", "address",
+            "phone", "phone",
+            "openingHours", "opening_hours");
+
+    /** 简易节流：两次 propose 至少间隔 1.2 秒，避免被刷爆额度 */
+    private static final long MIN_INTERVAL_MS = 1200;
+    private static long lastProposeAt = 0;
+
+    private static String normalize(String text) {
+        if (text == null) return "";
+        String nfkc;
+        try {
+            nfkc = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFKC);
+        } catch (Exception ex) {
+            nfkc = text;
+        }
+        return nfkc.replaceAll("[\\s\\u00a0\\u3000]", "");
+    }
+
     public Map<String, Object> propose(String entityType, String entityId, String field) {
-        String table = "bank".equals(entityType) ? "poi_bank" : "poi_community";
-        String column = switch (field) {
-            case "address" -> "address";
-            case "phone" -> "phone";
-            case "openingHours" -> "opening_hours";
-            default -> throw new IllegalArgumentException("不支持的字段：" + field);
-        };
+        String table = TABLE_BY_TYPE.get(entityType);
+        String column = COLUMN_BY_FIELD.get(field);
+        if (table == null || column == null) {
+            throw new IllegalArgumentException("非法实体类型或字段：" + entityType + "/" + field);
+        }
+        throttle();
+        // 同一实体同一字段若已有进行中的运行，直接返回，避免重复烧钱
+        Integer running = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM agent_run
+                WHERE entity_type = ? AND entity_id = ? AND field = ? AND status = 'running'
+                  AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+                """, Integer.class, entityType, entityId, field);
+        if (running != null && running > 0) {
+            Map<String, Object> busy = new LinkedHashMap<>();
+            busy.put("status", "busy");
+            busy.put("reason", "该实体字段已有进行中的补全，请稍后再试");
+            return busy;
+        }
 
         Map<String, Object> entity;
         try {
@@ -118,9 +153,18 @@ public class AgentService {
             // ④ 规则校验（代码，不依赖模型）
             List<String> problems = new ArrayList<>();
             if (!supported) problems.add("复核未通过：" + verdict.path("reason").asText("证据不足"));
-            if (!evidence.contains(value)) problems.add("证据中找不到该值（疑似幻觉）");
+            // 关键：不信任模型给的 evidence，回到原始搜索结果里复现
+            if (!normalize(evidence).contains(normalize(value))) {
+                problems.add("证据中找不到该值（疑似幻觉）");
+            }
+            if (!evidenceInHits(hits, sourceUrl, value)) {
+                problems.add("证据未能在原始搜索结果中复现（来源 URL 或正文不匹配）");
+            }
             if (value.length() < 4 || value.length() > 120) problems.add("值长度异常：" + value.length());
-            if (sourceUrl.isEmpty() || !sourceUrl.startsWith("http")) problems.add("缺少有效来源 URL");
+            if (sourceUrl.isEmpty() || !sourceUrl.startsWith("https://")) problems.add("来源 URL 非法（必须是 https）");
+            if ("phone".equals(field) && !value.matches("^[0-9+()\\-\\s]{5,32}$")) {
+                problems.add("电话格式异常");
+            }
             if ("address".equals(field)) {
                 if (!value.contains("深圳")) problems.add("地址不含'深圳'，存疑");
                 // 防"张冠李戴"：同名网点可能有多家，地址必须落在实体所属区
@@ -162,24 +206,55 @@ public class AgentService {
         }
     }
 
-    /** 管理员采纳：写入主表 + 版本记录，来源记为 agent 与原始 URL */
+    /**
+     * 管理员采纳：写入主表 + 版本记录（同一事务）。
+     *
+     * 复核发现的三个问题都在这修：
+     * - 并发重复版本 → SELECT ... FOR UPDATE 锁住 run 行，状态机 ready→applying 兜底
+     * - 失败半写 → @Transactional，主表/版本/run 一起提交或回滚
+     * - 覆盖人工修改 → 只允许写空字段；若期间被人工改过则拒绝
+     */
+    @org.springframework.transaction.annotation.Transactional
     public Map<String, Object> apply(long runId, String reviewer) {
-        Map<String, Object> run = jdbcTemplate.queryForMap("SELECT * FROM agent_run WHERE id = ?", runId);
+        Map<String, Object> run = jdbcTemplate.queryForMap(
+                "SELECT * FROM agent_run WHERE id = ? FOR UPDATE", runId);
         if (!"ready".equals(run.get("status"))) {
             throw new IllegalStateException("只有 ready 状态的建议可以采纳，当前：" + run.get("status"));
         }
-        JsonNode payload = parseJson(String.valueOf(run.get("result_json")));
-        String value = payload.path("value").asText("");
-        String url = payload.path("sourceUrl").asText("");
         String entityType = String.valueOf(run.get("entity_type"));
-        String entityId = String.valueOf(run.get("entity_id"));
         String field = String.valueOf(run.get("field"));
-        String table = "bank".equals(entityType) ? "poi_bank" : "poi_community";
-        String column = "openingHours".equals(field) ? "opening_hours" : field;
+        // 白名单：不信任库里存的字符串
+        String table = TABLE_BY_TYPE.get(entityType);
+        String column = COLUMN_BY_FIELD.get(field);
+        if (table == null || column == null) {
+            throw new IllegalArgumentException("非法实体类型或字段：" + entityType + "/" + field);
+        }
 
-        Map<String, Object> before = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", entityId);
-        jdbcTemplate.update("UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ?",
+        JsonNode payload = parseJson(String.valueOf(run.get("result_json")));
+        String value = payload.path("value").asText("").trim();
+        String url = payload.path("sourceUrl").asText("");
+        String entityId = String.valueOf(run.get("entity_id"));
+        if (value.isEmpty()) {
+            throw new IllegalStateException("建议内容为空，无法采纳");
+        }
+
+        Map<String, Object> before = jdbcTemplate.queryForMap(
+                "SELECT * FROM " + table + " WHERE id = ? FOR UPDATE", entityId);
+        Object current = before.get(column);
+        String currentText = current == null ? "" : String.valueOf(current).trim();
+        if (!currentText.isEmpty()) {
+            // 起草时为空、采纳时已有值 → 期间被人改过，拒绝覆盖
+            throw new IllegalStateException("该字段已有人填写（" + currentText + "），请重新生成建议");
+        }
+
+        // 条件更新：只有仍为空时才写，防止并发下互相覆盖
+        int changed = jdbcTemplate.update(
+                "UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ? AND (" + column + " = '' OR " + column + " IS NULL)",
                 value, entityId);
+        if (changed == 0) {
+            throw new IllegalStateException("字段已被其他操作修改，本次采纳放弃");
+        }
+
         Map<String, Object> after = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", entityId);
         // operator 列只有 64 字符，记「谁 + 来源域名」，完整 URL 在 agent_run.result_json 里
         String operator = ("agent:" + reviewer + "@" + hostOf(url));
@@ -295,12 +370,20 @@ public class AgentService {
     }
 
     private long startRun(String entityType, String entityId, String field) {
-        jdbcTemplate.update("""
-                INSERT INTO agent_run (entity_type, entity_id, field, status, model)
-                VALUES (?, ?, ?, 'running', 'deepseek-flash')
-                """, entityType, entityId, field);
-        Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
-        return id == null ? 0L : id;
+        org.springframework.jdbc.support.KeyHolder keyHolder = new org.springframework.jdbc.support.GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            java.sql.PreparedStatement ps = connection.prepareStatement("""
+                    INSERT INTO agent_run (entity_type, entity_id, field, status, model)
+                    VALUES (?, ?, ?, 'running', ?)
+                    """, java.sql.Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, entityType);
+            ps.setString(2, entityId);
+            ps.setString(3, field);
+            ps.setString(4, "deepseek-flash");
+            return ps;
+        }, keyHolder);
+        // 用同一连接取主键，避免 LAST_INSERT_ID() 落到别的池连接
+        return keyHolder.getKey() == null ? 0L : keyHolder.getKey().longValue();
     }
 
     private void finishRun(long runId, String status, String resultJson,
@@ -315,8 +398,37 @@ public class AgentService {
                 runId);
     }
 
-    private String hostOf(String url) {
-        try {
+    /** 回到原始搜索结果核验：URL 必须是我们真的搜到过的，且正文里确实有这个值 */
+    private boolean evidenceInHits(List<DeepSeekClient.SearchHit> hits, String sourceUrl, String value) {
+        String target = normalize(value);
+        for (DeepSeekClient.SearchHit hit : hits) {
+            if (!hit.url().equals(sourceUrl)) {
+                continue;
+            }
+            String body = normalize(hit.content() + " " + hit.summary() + " " + hit.title());
+            if (body.contains(target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void throttle() {
+        synchronized (AgentService.class) {
+            long now = System.currentTimeMillis();
+            long wait = MIN_INTERVAL_MS - (now - lastProposeAt);
+            if (wait > 0) {
+                try {
+                    Thread.sleep(wait);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            lastProposeAt = System.currentTimeMillis();
+        }
+    }
+
+    private String hostOf(String url) {        try {
             return java.net.URI.create(url).getHost() == null ? "unknown" : java.net.URI.create(url).getHost();
         } catch (Exception ex) {
             return "unknown";
