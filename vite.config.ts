@@ -61,6 +61,14 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_API_PROXY || 'http://127.0.0.1:8080',
           changeOrigin: true,
+          // 后端 CORS 白名单只含 5173，本 worktree 固定 5174：
+          // 去掉 Origin 让代理请求以同源身份到达后端，避免 POST 预检被 403
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('origin')
+              proxyReq.removeHeader('referer')
+            })
+          },
         },
       },
     },
