@@ -36,3 +36,7 @@ data/opendata-*.json
 
 data/nfra-*.json
 crawl-*.mjs
+
+crawl-*.cjs
+nf*.cjs
+probe-nfra.cjs
