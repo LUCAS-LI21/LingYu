@@ -18,9 +18,19 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
  * @param {{method?: string, headers?: Record<string,string>, body?: string, referer?: string}} options
  */
 export function curlJson(url, options = {}) {
+  const text = curlText(url, options)
+  try {
+    return JSON.parse(text)
+  } catch (e) {
+    throw new Error(`返回非 JSON：${text.slice(0, 120)}`)
+  }
+}
+
+/** 返回原始文本（JSONP、HTML 等用） */
+export function curlText(url, options = {}) {
   const { method = 'GET', headers = {}, body, referer } = options
   const dir = mkdtempSync(join(tmpdir(), 'poi-'))
-  const outFile = join(dir, 'out.json')
+  const outFile = join(dir, 'out.txt')
   const bodyFile = join(dir, 'body.txt')
   const args = ['-s', '--ssl-no-revoke', '-m', '40', '-o', outFile, '-X', method, url]
   args.push('-H', `User-Agent: ${UA}`)
@@ -34,8 +44,7 @@ export function curlJson(url, options = {}) {
   const result = spawnSync('curl.exe', args, { stdio: 'ignore', timeout: 60000 })
   try {
     if (result.error) throw result.error
-    const text = readFileSync(outFile, 'utf8')
-    return JSON.parse(text)
+    return readFileSync(outFile, 'utf8')
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
