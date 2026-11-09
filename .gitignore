@@ -33,3 +33,6 @@ backend/*.log
 # 临时抓取产物
 out/
 data/opendata-*.json
+
+data/nfra-*.json
+crawl-*.mjs
