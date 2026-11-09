@@ -18,6 +18,7 @@ declare module 'vue' {
     FeedbackDialog: typeof import('./components/FeedbackDialog.vue')['default']
     FilterPanel: typeof import('./components/FilterPanel.vue')['default']
     MapCanvas: typeof import('./components/MapCanvas.vue')['default']
+    MapIntro: typeof import('./components/MapIntro.vue')['default']
     MobileSheet: typeof import('./components/MobileSheet.vue')['default']
     PoiCard: typeof import('./components/PoiCard.vue')['default']
     QueryBehaviorPanel: typeof import('./components/admin/QueryBehaviorPanel.vue')['default']

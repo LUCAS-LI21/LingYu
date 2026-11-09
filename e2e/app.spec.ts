@@ -99,6 +99,17 @@ test.describe('邻域 POI 主流程', () => {
     await expect(page.getByText('E2E 用户后台：地址需要补充')).toBeVisible()
   })
 
+  test('开场粒子动画可跳过并展示卡片', async ({ page }) => {
+    await page.goto('/?intro=1')
+    await expect(page.getByTestId('map-intro')).toBeVisible()
+    await page.getByRole('button', { name: /跳过动画/ }).click()
+
+    await expect(page.getByTestId('map-intro')).toBeHidden()
+    await expect(page.locator('[data-testid="poi-card"]:visible').first()).toBeVisible({
+      timeout: 20_000,
+    })
+  })
+
   test('数据说明页展示三级授权模型', async ({ page }) => {
     await page.goto('/compliance')
 
