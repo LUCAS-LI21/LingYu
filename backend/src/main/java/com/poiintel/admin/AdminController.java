@@ -25,6 +25,7 @@ public class AdminController {
     private final AdminService adminService;
     private final IngestService ingestService;
     private final ImportService importService;
+    private final PendingBankService pendingBankService;
     private final AuthService authService;
 
     /** 审核人必须来自 token 主体，不能信请求体（否则可伪造审核记录） */
@@ -94,6 +95,32 @@ public class AdminController {
     @PostMapping("/import")
     public ApiResult<Map<String, Object>> importPois(@RequestBody ImportService.Request request) {
         return ApiResult.ok(importService.importRows(request));
+    }
+
+    /**
+     * 导入「有名称地址但无坐标」的网点到暂存表（如兴业银行）。
+     * 没有坐标就不写 poi_bank，避免编造位置。
+     */
+    @PostMapping("/pending/import")
+    public ApiResult<Map<String, Object>> importPending(@RequestBody PendingBankService.Request request) {
+        return ApiResult.ok(pendingBankService.importRows(request));
+    }
+
+    @GetMapping("/pending")
+    public ApiResult<List<Map<String, Object>>> pending(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "50") int limit) {
+        return ApiResult.ok(pendingBankService.list(status, limit));
+    }
+
+    /** 人工确认坐标后转正 */
+    @PostMapping("/pending/{id}/promote")
+    public ApiResult<Map<String, Object>> promote(
+            @PathVariable long id,
+            @RequestParam double lng,
+            @RequestParam double lat,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return ApiResult.ok(pendingBankService.promote(id, lng, lat, reviewerOf(authorization)));
     }
 
     @GetMapping("/jobs")

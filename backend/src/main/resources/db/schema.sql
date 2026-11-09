@@ -217,3 +217,19 @@ CREATE TABLE IF NOT EXISTS agent_run (
   KEY idx_agent_entity (entity_type, entity_id),
   KEY idx_agent_status (status, created_at)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT 'Agent 补全运行记录';
+
+CREATE TABLE IF NOT EXISTS bank_pending (
+  id            BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(128) NOT NULL,
+  address       VARCHAR(255) NOT NULL DEFAULT '',
+  phone         VARCHAR(64)  NOT NULL DEFAULT '',
+  opening_hours VARCHAR(128) NOT NULL DEFAULT '',
+  district      VARCHAR(32)  NOT NULL DEFAULT '',
+  source        VARCHAR(64)  NOT NULL DEFAULT '',
+  source_url    VARCHAR(255) NOT NULL DEFAULT '',
+  status        VARCHAR(16)  NOT NULL DEFAULT 'pending' COMMENT 'pending/geocoded/rejected',
+  note          VARCHAR(200) NOT NULL DEFAULT '',
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_pending_status (status),
+  KEY idx_pending_source (source)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '待定位银行网点（有名称地址但无坐标）';
