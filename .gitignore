@@ -29,3 +29,7 @@ shot-*.png
 # Java 后端构建产物
 backend/target/
 backend/*.log
+
+# 临时抓取产物
+out/
+data/opendata-*.json
