@@ -53,3 +53,8 @@ app:
     # L2 实时层：只用于「查地址」等即时展示，绝不落库（高德协议 3.5）
     # 留空则前端显示不可用，但保留「补充地址」的反馈入口
     amap-key: ${AMAP_KEY:}
+  agent:
+    # 数据接入 Agent：搜索 + 抽取 + 复核，产出建议后由管理员采纳
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    model: ${DEEPSEEK_MODEL:deepseek-flash}

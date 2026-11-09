@@ -197,3 +197,23 @@ CREATE TABLE IF NOT EXISTS sys_user (
   UNIQUE KEY uk_user (username)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '运营账号';
 
+
+CREATE TABLE IF NOT EXISTS agent_run (
+  id                BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  entity_type       VARCHAR(16)  NOT NULL DEFAULT 'bank',
+  entity_id         VARCHAR(64)  NOT NULL,
+  field             VARCHAR(32)  NOT NULL,
+  status            VARCHAR(16)  NOT NULL DEFAULT 'running',
+  model             VARCHAR(64)  NOT NULL DEFAULT 'deepseek-flash',
+  prompt_tokens     INT          NOT NULL DEFAULT 0,
+  completion_tokens INT          NOT NULL DEFAULT 0,
+  latency_ms        INT          NOT NULL DEFAULT 0,
+  result_json       TEXT         NULL,
+  error             VARCHAR(500) NOT NULL DEFAULT '',
+  reviewed_by       VARCHAR(64)  NOT NULL DEFAULT '',
+  reviewed_at       DATETIME     NULL,
+  created_at        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  finished_at       DATETIME     NULL,
+  KEY idx_agent_entity (entity_type, entity_id),
+  KEY idx_agent_status (status, created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT 'Agent 补全运行记录';

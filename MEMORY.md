@@ -445,3 +445,34 @@ TOP：建行 133 · 招行 90 · 兴业 53 · 邮储 45 · 广发 34 · 华润 2
 ### 赛题已入库
 
 `docs/requirements/00-赛题原文.md`：原文 + 24 项实现状态对照；AGENTS.md 列为最高优先级基准。
+
+## 第八轮：数据接入 Agent P0 跑通（2026-11-10）
+
+### 已实现（后端 `com.poiintel.agent`）
+
+| 组件                   | 作用                                                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `DeepSeekClient`       | JSON 模式抽取（**关闭思考模式**）、平台自带 Search、记账                                                        |
+| `AgentService.propose` | 搜索 → 抽取 → 独立复核 → 规则校验 → 出建议（**不写库**）                                                        |
+| `AgentService.apply`   | 管理员采纳后才写主表 + `poi_version`                                                                            |
+| `agent_run` 表         | 每次运行的状态、token、耗时、结果 JSON、审核人                                                                  |
+| 接口                   | `POST /admin/agent/propose`、`POST /admin/agent/{id}/apply`、`GET /admin/agent/runs`、`GET /admin/agent/status` |
+
+### 实测（真实数据，非 mock）
+
+- 民生银行（南山）：搜索 5 条 → 抽取「深圳市南山区滨海大道南山新天地公寓裙楼西一、二楼」→ 复核通过 → `ready`
+- 渤海银行（南山）：来源为**渤海银行官网** `cbhb.com.cn` → 采纳后写入主表，
+  版本 operator 记为 `agent:operator@www.cbhb.com.cn`，`agent_run.status=applied`
+- 单次耗时 ~10 秒，成本 < 0.01 元
+
+### 两个踩坑
+
+1. `poi_version.operator` 只有 64 字符，最初把完整 URL 塞进去 → `Data too long`。改为「审核人@来源域名」
+2. **同名网点张冠李戴**：实体名可能只是"中国民生银行"，而搜到的是某支行地址。
+   已加硬校验：地址必须包含实体所属区（如"南山区"），否则进 `needs_review`
+
+### 待做
+
+- 后台「Agent 建议」Tab（前端会话）
+- 来源权威性排序（官网 > 百科）
+- 批量补全 + 定时触发
