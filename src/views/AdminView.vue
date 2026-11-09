@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
+import ComplianceDoc from '@/components/ComplianceDoc.vue'
+import CorrectionComposer from '@/components/CorrectionComposer.vue'
 import {
   approveFeedback,
   fetchFeedback,
-  fetchHotspots,
   fetchJobs,
   fetchOverview,
-  recomputeHotspots,
   rejectFeedback,
   triggerJob,
   type AdminOverview,
   type FeedbackRow,
-  type HotspotRow,
   type JobRow,
 } from '@/api/admin'
 import { isServerMode } from '@/api/pois'
 import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
-type Tab = 'overview' | 'feedback' | 'jobs' | 'hotspots'
+type Tab = 'overview' | 'feedback' | 'behavior' | 'correction' | 'jobs' | 'compliance'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -31,15 +31,16 @@ const loginError = ref('')
 const loading = ref(false)
 const overview = ref<AdminOverview | null>(null)
 const feedback = ref<FeedbackRow[]>([])
-const feedbackStatus = ref<'pending' | 'approved' | 'rejected' | 'all'>('pending')
+const feedbackStatus = ref<'pending' | 'approved' | 'rejected' | 'need_refetch' | 'all'>('pending')
 const feedbackPage = ref(1)
 const feedbackSize = ref(10)
 const feedbackTotal = ref(0)
+const expandedCode = ref('')
+const rejectNote = ref('')
 const jobs = ref<JobRow[]>([])
 const jobsAutoRefresh = ref(true)
 const jobsRefreshing = ref(false)
 const jobsUpdatedAt = ref('')
-const hotspots = ref<HotspotRow[]>([])
 const busy = ref('')
 
 /** 自动刷新间隔：任务从 pending/running 到终态应在 5s 内可见（FR-D-03） */
@@ -85,8 +86,10 @@ function onLogout(): void {
 const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'overview', label: '概览' },
   { key: 'feedback', label: '反馈审核' },
+  { key: 'behavior', label: '查询行为' },
+  { key: 'correction', label: '数据纠错' },
   { key: 'jobs', label: '抓取任务' },
-  { key: 'hotspots', label: '热点' },
+  { key: 'compliance', label: '数据说明' },
 ]
 
 const kpis = computed(() => [
@@ -142,6 +145,12 @@ const statusLabel: Record<string, string> = {
   pending_job: '排队中',
 }
 
+const feedbackTypeLabel: Record<string, string> = {
+  error: '信息有误',
+  closed: '已关闭',
+  add: '补充 / 新增',
+}
+
 function handleLoadError(error: unknown): void {
   const message = error instanceof Error ? error.message : '加载失败'
   if (message.includes('登录')) {
@@ -186,8 +195,6 @@ async function refresh(): Promise<void> {
       await loadFeedbackPage()
     } else if (tab.value === 'jobs') {
       await loadJobsPage()
-    } else {
-      hotspots.value = await fetchHotspots()
     }
   } catch (error) {
     handleLoadError(error)
@@ -260,12 +267,15 @@ watch([tab, online, authed, jobsAutoRefresh], () => {
 
 async function switchTab(next: Tab): Promise<void> {
   tab.value = next
-  await refresh()
+  if (next === 'overview' || next === 'feedback' || next === 'jobs') {
+    await refresh()
+  }
 }
 
 async function setFeedbackStatus(next: string): Promise<void> {
   feedbackStatus.value = next as typeof feedbackStatus.value
   feedbackPage.value = 1
+  expandedCode.value = ''
   await refresh()
 }
 
@@ -273,6 +283,7 @@ async function goFeedbackPage(next: number): Promise<void> {
   const target = Math.min(Math.max(1, next), feedbackPages.value)
   if (target === feedbackPage.value) return
   feedbackPage.value = target
+  expandedCode.value = ''
   await refresh()
 }
 
@@ -281,12 +292,27 @@ async function onFeedbackSizeChange(): Promise<void> {
   await refresh()
 }
 
+function toggleExpanded(code: string): void {
+  expandedCode.value = expandedCode.value === code ? '' : code
+  rejectNote.value = ''
+}
+
+async function syncOverview(): Promise<void> {
+  try {
+    overview.value = await fetchOverview()
+  } catch {
+    // 概览同步失败不影响审核结果
+  }
+}
+
 async function onApprove(row: FeedbackRow): Promise<void> {
   busy.value = row.code
   try {
     const result = await approveFeedback(row.code)
     toast(result.status === 'approved' ? '已采纳并生效' : '已标记待重抓', 'success')
+    expandedCode.value = ''
     await refresh()
+    await syncOverview()
   } catch (error) {
     toast(error instanceof Error ? error.message : '操作失败', 'error')
   } finally {
@@ -297,9 +323,13 @@ async function onApprove(row: FeedbackRow): Promise<void> {
 async function onReject(row: FeedbackRow): Promise<void> {
   busy.value = row.code
   try {
-    await rejectFeedback(row.code, '信息与现有数据不符')
+    const note = rejectNote.value.trim() || '信息与现有数据不符'
+    await rejectFeedback(row.code, note)
     toast('已驳回', 'info')
+    expandedCode.value = ''
+    rejectNote.value = ''
     await refresh()
+    await syncOverview()
   } catch (error) {
     toast(error instanceof Error ? error.message : '操作失败', 'error')
   } finally {
@@ -321,17 +351,13 @@ async function onTriggerJob(): Promise<void> {
   }
 }
 
-async function onRecompute(): Promise<void> {
-  busy.value = 'hot'
-  try {
-    const result = await recomputeHotspots()
-    toast(`热点已重算，影响 ${result.affected} 个网格`, 'success')
-    await refresh()
-  } catch (error) {
-    toast(error instanceof Error ? error.message : '重算失败', 'error')
-  } finally {
-    busy.value = ''
-  }
+function onUnauthorized(): void {
+  authed.value = false
+  toast('登录已过期，请重新登录', 'error')
+}
+
+async function onCorrectionSubmitted(): Promise<void> {
+  await syncOverview()
 }
 
 onMounted(async () => {
@@ -353,13 +379,14 @@ onBeforeUnmount(() => {
   <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
     <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-xl font-semibold tracking-tight text-ink-900">运营后台</h1>
+        <h1 class="text-xl font-semibold tracking-tight text-ink-900">管理后台</h1>
         <p class="mt-1 text-xs text-ink-500">
-          反馈审核 · 抓取任务 · 热点调度，构成数据闭环的运营侧
+          查询行为 · 反馈审核 · 数据纠错 · 抓取任务 · 数据说明，一个后台完成运营闭环
         </p>
       </div>
       <div class="flex items-center gap-2">
         <button
+          v-if="tab === 'overview' || tab === 'feedback' || tab === 'jobs'"
           class="h-9 rounded-[10px] border border-line bg-surface px-3 text-xs text-ink-600 transition hover:border-line-strong"
           @click="refresh"
         >
@@ -396,9 +423,9 @@ onBeforeUnmount(() => {
       v-else-if="!authed"
       class="mx-auto max-w-sm rounded-card border border-line bg-surface p-6 shadow-float"
     >
-      <h2 class="text-sm font-semibold text-ink-900">运营登录</h2>
+      <h2 class="text-sm font-semibold text-ink-900">管理后台登录</h2>
       <p class="mt-1 text-[11px] text-ink-400">
-        后台接口需要鉴权，请使用运营账号登录（口令由部署方提供）
+        管理接口需要鉴权，请使用运营账号登录（口令由部署方提供）
       </p>
 
       <div class="mt-4 space-y-3">
@@ -434,11 +461,13 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <nav class="mb-4 flex gap-1 rounded-[12px] border border-line bg-surface-soft p-1">
+      <nav
+        class="mb-4 flex gap-1 overflow-x-auto rounded-[12px] border border-line bg-surface-soft p-1"
+      >
         <button
           v-for="item in tabs"
           :key="item.key"
-          class="flex-1 rounded-[9px] py-2 text-xs transition"
+          class="min-w-[82px] shrink-0 flex-1 whitespace-nowrap rounded-[9px] px-3 py-2 text-xs transition"
           :class="
             tab === item.key
               ? 'bg-surface font-medium text-ink-900 shadow-card'
@@ -447,6 +476,12 @@ onBeforeUnmount(() => {
           @click="switchTab(item.key)"
         >
           {{ item.label }}
+          <span
+            v-if="item.key === 'feedback' && overview?.pendingFeedback"
+            class="ml-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-600"
+          >
+            {{ overview?.pendingFeedback }}
+          </span>
         </button>
       </nav>
 
@@ -488,6 +523,7 @@ onBeforeUnmount(() => {
                 { key: 'pending', label: '待审核' },
                 { key: 'approved', label: '已采纳' },
                 { key: 'rejected', label: '已驳回' },
+                { key: 'need_refetch', label: '待重抓' },
                 { key: 'all', label: '全部' },
               ]"
               :key="option.key"
@@ -520,13 +556,16 @@ onBeforeUnmount(() => {
           <li v-for="row in feedback" :key="row.code" class="px-4 py-3">
             <div class="flex flex-wrap items-start gap-3">
               <div class="min-w-0 flex-1">
-                <p class="flex items-center gap-2 text-[13px] font-medium text-ink-900">
+                <p class="flex flex-wrap items-center gap-2 text-[13px] font-medium text-ink-900">
                   {{ row.poiName || row.poiId }}
                   <span
                     class="rounded-full border px-1.5 py-0.5 text-[10px]"
                     :class="statusStyle[row.status] ?? 'border-line text-ink-500'"
                   >
                     {{ statusLabel[row.status] ?? row.status }}
+                  </span>
+                  <span class="rounded bg-surface-soft px-1.5 py-0.5 text-[10px] text-ink-500">
+                    {{ feedbackTypeLabel[row.type] ?? row.type }}
                   </span>
                 </p>
                 <p class="mt-1 text-xs text-ink-500">
@@ -536,24 +575,76 @@ onBeforeUnmount(() => {
                 <p class="mt-1 text-[11px] text-ink-400">
                   {{ row.code }} · {{ row.poiType === 'bank' ? '银行' : '小区' }} ·
                   {{ row.createdAt }}
+                  <span v-if="row.contact"> · {{ row.contact }}</span>
                 </p>
               </div>
-              <div v-if="row.status === 'pending'" class="flex shrink-0 gap-2">
+              <div class="flex shrink-0 flex-wrap items-center gap-2">
                 <button
-                  class="rounded-lg border border-line px-3 py-1.5 text-[11px] text-ink-500 transition hover:bg-surface-soft"
-                  :disabled="busy === row.code"
-                  @click="onReject(row)"
+                  class="rounded-lg border border-line px-2.5 py-1.5 text-[11px] text-ink-500 transition hover:bg-surface-soft"
+                  @click="toggleExpanded(row.code)"
                 >
-                  驳回
+                  {{ expandedCode === row.code ? '收起' : '详情' }}
                 </button>
-                <button
-                  class="rounded-lg bg-brand-500 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
-                  :disabled="busy === row.code"
-                  @click="onApprove(row)"
-                >
-                  采纳生效
-                </button>
+                <template v-if="row.status === 'pending'">
+                  <button
+                    class="rounded-lg border border-line px-3 py-1.5 text-[11px] text-ink-500 transition hover:bg-surface-soft"
+                    :disabled="busy === row.code"
+                    @click="onReject(row)"
+                  >
+                    驳回
+                  </button>
+                  <button
+                    class="rounded-lg bg-brand-500 px-3 py-1.5 text-[11px] font-medium text-white transition hover:bg-brand-600 disabled:opacity-60"
+                    :disabled="busy === row.code"
+                    @click="onApprove(row)"
+                  >
+                    采纳生效
+                  </button>
+                </template>
               </div>
+            </div>
+
+            <div
+              v-if="expandedCode === row.code"
+              class="mt-3 rounded-soft border border-line bg-surface-soft p-3"
+            >
+              <dl class="grid gap-2 text-[11px] sm:grid-cols-2">
+                <div>
+                  <dt class="text-ink-400">点位</dt>
+                  <dd class="mt-0.5 text-ink-700">
+                    {{ row.poiName || row.poiId }}（{{ row.poiType === 'bank' ? '银行' : '小区' }}）
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-ink-400">字段 / 新值</dt>
+                  <dd class="mt-0.5 text-ink-700">
+                    {{ row.field }} → {{ row.newValue || '未填写' }}
+                  </dd>
+                </div>
+                <div class="sm:col-span-2">
+                  <dt class="text-ink-400">问题说明</dt>
+                  <dd class="mt-0.5 leading-relaxed text-ink-700">{{ row.description }}</dd>
+                </div>
+                <div>
+                  <dt class="text-ink-400">联系方式</dt>
+                  <dd class="mt-0.5 text-ink-700">{{ row.contact || '未留' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-ink-400">审核记录</dt>
+                  <dd class="mt-0.5 text-ink-700">
+                    {{ row.reviewer || '—'
+                    }}<span v-if="row.reviewNote"> · {{ row.reviewNote }}</span>
+                  </dd>
+                </div>
+              </dl>
+              <label v-if="row.status === 'pending'" class="mt-3 block">
+                <span class="mb-1 block text-[11px] text-ink-400">驳回理由（选填）</span>
+                <input
+                  v-model="rejectNote"
+                  class="h-8 w-full rounded-lg border border-line bg-surface px-2.5 text-[11px] text-ink-700 outline-none focus:border-brand-500"
+                  placeholder="例如：已电话核实，与原数据不符"
+                />
+              </label>
             </div>
           </li>
         </ul>
@@ -676,38 +767,23 @@ onBeforeUnmount(() => {
         </ul>
       </div>
 
-      <!-- 热点 -->
-      <div v-else class="rounded-card border border-line bg-surface shadow-card">
-        <div class="flex items-center justify-between border-b border-line px-4 py-3">
-          <p class="text-xs text-ink-500">按「查询次数 + 2 × 零结果次数」计算优先级</p>
-          <button
-            class="rounded-lg border border-line px-3 py-1.5 text-[11px] text-ink-600 transition hover:border-brand-500/50 hover:text-brand-600 disabled:opacity-60"
-            :disabled="busy === 'hot'"
-            @click="onRecompute"
-          >
-            {{ busy === 'hot' ? '重算中…' : '重算热点' }}
-          </button>
-        </div>
-        <div v-if="hotspots.length === 0" class="px-4 py-12 text-center text-xs text-ink-400">
-          暂无热点数据，先在地图上查询几次再重算
-        </div>
-        <ul v-else class="divide-y divide-line">
-          <li
-            v-for="item in hotspots"
-            :key="`${item.grid}-${item.statDate}`"
-            class="flex items-center gap-3 px-4 py-2.5"
-          >
-            <span
-              class="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-[11px] font-medium text-brand-600"
-            >
-              {{ item.priority }}
-            </span>
-            <span class="min-w-0 flex-1 text-xs text-ink-700">{{ item.grid }}</span>
-            <span class="text-[11px] text-ink-500">查询 {{ item.queryCount }}</span>
-            <span class="text-[11px] text-amber-600">零结果 {{ item.zeroResultCount }}</span>
-            <span class="text-[11px] text-ink-400">{{ item.updatedAt }}</span>
-          </li>
-        </ul>
+      <!-- 查询行为：query_log 实时聚合 + 热点重算 -->
+      <div v-else-if="tab === 'behavior'">
+        <QueryBehaviorPanel @unauthorized="onUnauthorized" />
+      </div>
+
+      <!-- 数据纠错：与用户后台共用同一套表单 -->
+      <div v-else-if="tab === 'correction'">
+        <CorrectionComposer
+          mode="admin"
+          @review="switchTab('feedback')"
+          @submitted="onCorrectionSubmitted"
+        />
+      </div>
+
+      <!-- 数据说明：与用户后台共用同一份合规文档 -->
+      <div v-else class="rounded-card border border-line bg-surface p-5 shadow-card">
+        <ComplianceDoc />
       </div>
     </template>
   </div>

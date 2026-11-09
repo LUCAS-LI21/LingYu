@@ -89,7 +89,7 @@ async function mountView(): Promise<VueWrapper> {
 }
 
 async function clickButton(wrapper: VueWrapper, label: string): Promise<void> {
-  const button = wrapper.findAll('button').find((item) => item.text().trim() === label)
+  const button = wrapper.findAll('button').find((item) => item.text().trim().startsWith(label))
   expect(button, `找不到按钮「${label}」`).toBeTruthy()
   await button!.trigger('click')
   await flushAll()
