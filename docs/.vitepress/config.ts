@@ -26,6 +26,7 @@ export default defineConfig({
       {
         text: '项目需求（M0）',
         items: [
+          { text: '⓪ 赛题原文（基准）', link: '/requirements/00-赛题原文' },
           { text: '① 需求规格说明书', link: '/requirements/01-SRS' },
           { text: '② 数据字典', link: '/requirements/02-数据字典' },
           { text: '③ 合规与数据来源', link: '/requirements/03-合规与数据来源' },

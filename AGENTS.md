@@ -9,8 +9,10 @@
 
 **邻域 POI 情报系统**（代号 `poi-intel`）：采集银行网点与小区 POI，提供地图 / 列表 / 关联查询，并通过用户反馈与查询热点驱动数据持续更新，形成完整业务闭环。
 
-- 需求依据：[docs/requirements/01-SRS.md](docs/requirements/01-SRS.md)
-- 当前阶段：**M0 需求分析**（见 [MEMORY.md](MEMORY.md)）
+- **需求基准（最高优先级）**：[docs/requirements/00-赛题原文.md](docs/requirements/00-赛题原文.md)
+  —— 赛题原文 + 实现状态对照表。**任何功能取舍、优先级排序、答辩陈述，先对照它。**
+- 详细需求：[docs/requirements/01-SRS.md](docs/requirements/01-SRS.md)
+- 当前阶段：见 [MEMORY.md](MEMORY.md)
 
 ## 2. 六阶段与对应 Skill
 
