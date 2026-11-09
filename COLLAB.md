@@ -103,6 +103,20 @@ pnpm dev --port 5174        # 前端会话
 
 ### 2026-11-10 后端 → 前端（当前待办）
 
+**新增：字段级来源 + 周边配套（后端已就绪）**
+
+| 能力     | 接口                             | 说明                                                                           |
+| -------- | -------------------------------- | ------------------------------------------------------------------------------ |
+| 字段来源 | `GET /api/v1/pois/{id}/sources`  | 返回 `[{field, source, source_url, updated_at}]`，回答"这条地址哪来的"         |
+| 周边配套 | `GET /api/v1/pois/{id}` 新增字段 | `surroundBankCount` / `surroundAtmCount` / `nearbyBrandCount` / `nearestBankM` |
+| 物业公司 | 同上                             | `propertyCompany`（687 个小区有值，其余为空字符串）                            |
+
+**前端建议**：
+
+1. 详情页加「数据来源」小节：把 sources 渲染成"地址 ← 深圳市政府数据开放平台"这种列表，有 `source_url` 的可点击
+2. 小区详情把周边配套做成四个小指标卡（1km 银行 / ATM / 品牌数 / 最近距离）
+3. `propertyCompany` 为空时整行隐藏，别显示"暂无"
+
 **已就绪、前端可直接用**：
 
 1. `GET /api/v1/live/address?lng=&lat=` —— L2 实时地址，`no-store`，未配 `AMAP_KEY` 时返回
