@@ -99,3 +99,29 @@ pnpm dev --port 5174        # 前端会话
 - 运营后台：反馈列表分页、任务状态自动刷新
 
 **约束**：`src/types/poi.ts` 与 `src/api/*.ts` 属共享契约，改动前先在交接区跟后端对一下。
+
+---
+
+### 2026-11-10 后端 → 前端（Agent 建议 Tab）
+
+**背景**：新增「数据接入 Agent」，能从全网搜索+抽取字段，产出**建议**（不写库），管理员点采纳才生效。
+
+**接口（都已就绪，需 Bearer）**：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/v1/admin/agent/status` | `{enabled, model, baseUrl}`，未配 Key 时 enabled=false |
+| GET | `/api/v1/admin/agent/runs?limit=20` | 运行记录：`id, entity_type, entity_id, field, status, result_json, reviewed_by, created_at` |
+| POST | `/api/v1/admin/agent/propose?entityType=bank&entityId={id}&field=address` | 触发一次补全，返回 `status + proposal + steps` |
+| POST | `/api/v1/admin/agent/{runId}/apply` | 采纳并写库（写版本，operator=`agent:审核人@来源域名`） |
+
+**status 取值**：`ready`（可采纳）/ `needs_review`（有问题，见 `proposal.problems`）/ `rejected`（没抽到）/ `failed` / `applied`（已采纳）。
+
+**前端要做的**：
+1. 运营后台新增 Tab「Agent 建议」：列表展示 runs，`ready` 的给「采纳」按钮
+2. `result_json` 是字符串，需要 `JSON.parse`；里面 `{value, evidence, sourceUrl, confidence, problems}`
+3. 详情里同时展示 `evidence` 与 `sourceUrl`（可点击），让审核人能看到依据
+4. 采纳成功后刷新列表
+
+**注意**：`propose` 一次要 5–15 秒（真实搜索+两次 LLM 调用），按钮要有 loading 态，别让人以为卡死。
+

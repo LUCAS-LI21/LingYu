@@ -128,6 +128,10 @@ public class AgentService {
                 if (!entityDistrict.isEmpty() && !value.contains(entityDistrict)) {
                     problems.add("地址与所属区不一致（该点位在" + entityDistrict + "）");
                 }
+                // 身份校验：实体名若只有品牌（如"交通银行"），无法确认搜到的是不是同一个网点
+                if (!BRANCH_LEVEL.matcher(name).find()) {
+                    problems.add("名称未含网点级别（支行/分行/营业部等），无法确认与搜索结果是否同一网点");
+                }
             }
 
             String status = problems.isEmpty() ? "ready" : "needs_review";
@@ -206,6 +210,9 @@ public class AgentService {
     }
 
     // ---------- 内部 ----------
+
+    private static final java.util.regex.Pattern BRANCH_LEVEL =
+            java.util.regex.Pattern.compile(".*(支行|分行|营业部|分理处|储蓄所|ATM|自助|社区).*");
 
     private static final String EXTRACT_SYSTEM = """
             你是严谨的数据抽取器。只输出 JSON，不要解释。
