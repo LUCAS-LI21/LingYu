@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
+import AgentPanel from '@/components/admin/AgentPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
 import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
@@ -19,7 +20,7 @@ import { isServerMode } from '@/api/pois'
 import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
-type Tab = 'overview' | 'feedback' | 'behavior' | 'correction' | 'jobs' | 'compliance'
+type Tab = 'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs' | 'compliance'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -86,6 +87,7 @@ function onLogout(): void {
 const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'overview', label: '概览' },
   { key: 'feedback', label: '反馈审核' },
+  { key: 'agent', label: 'Agent 建议' },
   { key: 'behavior', label: '查询行为' },
   { key: 'correction', label: '数据纠错' },
   { key: 'jobs', label: '抓取任务' },
@@ -381,7 +383,7 @@ onBeforeUnmount(() => {
       <div>
         <h1 class="text-xl font-semibold tracking-tight text-ink-900">管理后台</h1>
         <p class="mt-1 text-xs text-ink-500">
-          查询行为 · 反馈审核 · 数据纠错 · 抓取任务 · 数据说明，一个后台完成运营闭环
+          查询行为 · 反馈审核 · Agent 建议 · 数据纠错 · 抓取任务 · 数据说明，一个后台完成运营闭环
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -765,6 +767,11 @@ onBeforeUnmount(() => {
             </span>
           </li>
         </ul>
+      </div>
+
+      <!-- Agent 建议：运行数据接入 Agent 并人工采纳 -->
+      <div v-else-if="tab === 'agent'">
+        <AgentPanel @unauthorized="onUnauthorized" />
       </div>
 
       <!-- 查询行为：query_log 实时聚合 + 热点重算 -->
