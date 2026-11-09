@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
 
+import { useViewportGap } from '@/lib/viewport'
+
 const props = withDefaults(defineProps<{ open: boolean; label?: string }>(), {
   label: '点位详情',
 })
 
 const emit = defineEmits<{ (e: 'close'): void }>()
+
+const { gap: bottomOffset, bind: bindViewport, unbind: unbindViewport } = useViewportGap()
 
 let previousOverflow = ''
 let scrollLocked = false
@@ -33,15 +37,18 @@ watch(
     if (open) {
       document.addEventListener('keydown', onKeydown)
       lockScroll()
+      bindViewport()
       return
     }
     document.removeEventListener('keydown', onKeydown)
+    unbindViewport()
     unlockScroll()
   },
 )
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
+  unbindViewport()
   unlockScroll()
 })
 </script>
@@ -59,6 +66,7 @@ onBeforeUnmount(() => {
 
         <section
           class="mobile-sheet-panel absolute inset-x-0 bottom-0 flex h-[85dvh] max-h-[85dvh] flex-col overflow-hidden rounded-t-card border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] shadow-pop"
+          :style="{ marginBottom: `${bottomOffset}px` }"
           role="dialog"
           aria-modal="true"
           :aria-label="label"

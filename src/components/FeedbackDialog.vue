@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { submitFeedback, type FeedbackPayload } from '@/api/pois'
 import { toast } from '@/lib/toast'
+import { useViewportGap } from '@/lib/viewport'
 import type { Poi } from '@/types/poi'
 
 const props = defineProps<{ poi: Poi; initialField?: string }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'submitted', code: string): void }>()
+
+const { gap: bottomOffset, bind: bindViewport, unbind: unbindViewport } = useViewportGap()
 
 const type = ref<FeedbackPayload['type']>('error')
 // 从「地址待补充」入口进来时预选字段，少点一次
@@ -46,6 +49,9 @@ async function handleSubmit(): Promise<void> {
     submitting.value = false
   }
 }
+
+onMounted(bindViewport)
+onBeforeUnmount(unbindViewport)
 </script>
 
 <template>
@@ -55,6 +61,7 @@ async function handleSubmit(): Promise<void> {
     >
       <div
         class="w-full max-w-lg overflow-hidden rounded-t-card border border-line bg-surface shadow-pop sm:rounded-card"
+        :style="{ marginBottom: `${bottomOffset}px` }"
       >
         <header class="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div>
