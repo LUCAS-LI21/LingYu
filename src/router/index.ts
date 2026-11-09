@@ -31,10 +31,20 @@ const router = createRouter({
       meta: { title: '数据说明' },
     },
     {
+      path: '/me',
+      name: 'me',
+      component: () => import('@/views/UserCenterView.vue'),
+      meta: { title: '用户后台' },
+    },
+    {
+      path: '/user',
+      redirect: '/me',
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: () => import('@/views/AdminView.vue'),
-      meta: { title: '运营后台' },
+      meta: { title: '管理后台' },
     },
     {
       path: '/:pathMatch(.*)*',
