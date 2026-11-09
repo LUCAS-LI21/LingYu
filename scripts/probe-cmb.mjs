@@ -23,7 +23,11 @@ function findChrome() {
   } catch {}
   const base = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright')
   if (!fs.existsSync(base)) return undefined
-  for (const d of fs.readdirSync(base).filter((x) => /^chromium-\d+$/.test(x)).sort().reverse()) {
+  for (const d of fs
+    .readdirSync(base)
+    .filter((x) => /^chromium-\d+$/.test(x))
+    .sort()
+    .reverse()) {
     const p = path.join(base, d, 'chrome-win64', 'chrome.exe')
     if (fs.existsSync(p)) return p
   }
@@ -33,7 +37,12 @@ function findChrome() {
 async function get(url, init = {}) {
   const r = await fetch(url, {
     ...init,
-    headers: { 'User-Agent': UA, Referer: BASE + '/map', Accept: 'application/json', ...(init.headers || {}) },
+    headers: {
+      'User-Agent': UA,
+      Referer: BASE + '/map',
+      Accept: 'application/json',
+      ...(init.headers || {}),
+    },
   })
   const text = await r.text()
   if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`)
@@ -52,7 +61,11 @@ async function robots() {
 // —— 第 1 步：浏览器渲染 + 交互，捕获真正在用的 XHR ——
 async function discover() {
   const browser = await chromium.launch({ headless: true, executablePath: findChrome() })
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN', userAgent: UA })
+  const ctx = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+    locale: 'zh-CN',
+    userAgent: UA,
+  })
   const page = await ctx.newPage()
   const api = []
   page.on('response', async (res) => {
@@ -78,7 +91,9 @@ async function discover() {
     await page.waitForTimeout(2000)
   }
   await browser.close()
-  console.log(`[发现] 页面交互 ${((Date.now() - t0) / 1000).toFixed(1)}s，捕获 /api/map 响应 ${api.length} 条`)
+  console.log(
+    `[发现] 页面交互 ${((Date.now() - t0) / 1000).toFixed(1)}s，捕获 /api/map 响应 ${api.length} 条`,
+  )
   for (const a of api) console.log('  ', a.status, a.url.replace(BASE, ''), a.body.length + 'B')
   return api
 }
@@ -89,7 +104,9 @@ async function collect() {
   const list = await get(listUrl)
   if (list.returnCode !== 'SUC0000') throw new Error('getCmbData 返回 ' + list.returnCode)
   const branches = list.body
-  console.log(`[列表] ${listUrl}\n        网点 ${branches.length} 条，字段 ${Object.keys(branches[0]).join(',')}`)
+  console.log(
+    `[列表] ${listUrl}\n        网点 ${branches.length} 条，字段 ${Object.keys(branches[0]).join(',')}`,
+  )
   const out = []
   for (const b of branches.slice(0, LIMIT)) {
     await sleep(1100)
@@ -120,8 +137,20 @@ fs.mkdirSync(OUT_DIR, { recursive: true })
 const file = path.join(OUT_DIR, 'cmb-shenzhen.json')
 fs.writeFileSync(
   file,
-  JSON.stringify({ bank: '招商银行', city: '深圳', robots: robotsInfo, discoveredApi: discovered, ...data }, null, 2),
+  JSON.stringify(
+    { bank: '招商银行', city: '深圳', robots: robotsInfo, discoveredApi: discovered, ...data },
+    null,
+    2,
+  ),
 )
 console.log(`\n[结果] ${data.count} 个网点，已取详情 ${data.items.length} 条 -> ${file}`)
 const s = data.items[0]
-if (s) console.log('示例:', JSON.stringify({ name: s.name, address: s.address, phone: s.phone, lng: s.lng, lat: s.lat }, null, 1))
+if (s)
+  console.log(
+    '示例:',
+    JSON.stringify(
+      { name: s.name, address: s.address, phone: s.phone, lng: s.lng, lat: s.lat },
+      null,
+      1,
+    ),
+  )

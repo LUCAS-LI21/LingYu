@@ -23,8 +23,13 @@ async function launch() {
 }
 
 const browser = await launch()
-const page = await browser.newContext({ locale: 'zh-CN', ignoreHTTPSErrors: true }).then((c) => c.newPage())
-await page.goto('https://www.psbc.com/cn/common/fwwd/', { waitUntil: 'domcontentloaded', timeout: 60000 })
+const page = await browser
+  .newContext({ locale: 'zh-CN', ignoreHTTPSErrors: true })
+  .then((c) => c.newPage())
+await page.goto('https://www.psbc.com/cn/common/fwwd/', {
+  waitUntil: 'domcontentloaded',
+  timeout: 60000,
+})
 await page.waitForTimeout(2500)
 
 async function jsonp(path, params) {

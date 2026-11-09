@@ -45,3 +45,8 @@ probe-nfra.cjs
 scripts/_recon-out/
 data/ccb-probe/
 *.token
+
+.verify_tmp/
+.dsh-tmp/
+scripts/probe-out/
+data/raw/

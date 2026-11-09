@@ -20,8 +20,20 @@ const flag = (name, fallback = '') => {
 const LIMIT = Number(flag('limit', '999'))
 const DRY = args.includes('--dry-run')
 
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区']
-const URL_BASE = 'https://rsb.pingan.com.cn/mkt/iclient-core/cust/ams-rbms-core/app/getBankShowListJsonp'
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+]
+const URL_BASE =
+  'https://rsb.pingan.com.cn/mkt/iclient-core/cust/ams-rbms-core/app/getBankShowListJsonp'
 
 function districtOf(address) {
   for (const d of DISTRICTS) if ((address || '').includes(d)) return d
@@ -30,10 +42,19 @@ function districtOf(address) {
 
 /** workingTime 有重复片段，优先用 shopHour；否则去重后截断 */
 function formatHours(item) {
-  const shop = String(item.shopHour || '').replace(/\s+/g, ' ').trim()
+  const shop = String(item.shopHour || '')
+    .replace(/\s+/g, ' ')
+    .trim()
   if (shop) return shop.slice(0, 120)
   const raw = String(item.workingTime || '')
-  const parts = [...new Set(raw.split(';').map((s) => s.trim()).filter(Boolean))]
+  const parts = [
+    ...new Set(
+      raw
+        .split(';')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ]
   return parts.join('；').slice(0, 120)
 }
 
@@ -48,7 +69,10 @@ const rows = []
 let badCoords = 0
 for (const item of list) {
   const [lng, lat] = toWgs84(Number(item.lng), Number(item.lat), 'bd09')
-  if (!inShenzhen(lng, lat)) { badCoords++; continue }
+  if (!inShenzhen(lng, lat)) {
+    badCoords++
+    continue
+  }
   const rawAddress = item.address || ''
   // 源数据偶发「福田区深圳市福田区…」这类重复前缀，统一裁到第一个「深圳市」
   const cut = rawAddress.indexOf('深圳市')

@@ -22,8 +22,13 @@ async function launch() {
 }
 
 const browser = await launch()
-const page = await browser.newContext({ locale: 'zh-CN', ignoreHTTPSErrors: true }).then((c) => c.newPage())
-await page.goto('https://www.cgbchina.com.cn/Channel/185652', { waitUntil: 'domcontentloaded', timeout: 60000 })
+const page = await browser
+  .newContext({ locale: 'zh-CN', ignoreHTTPSErrors: true })
+  .then((c) => c.newPage())
+await page.goto('https://www.cgbchina.com.cn/Channel/185652', {
+  waitUntil: 'domcontentloaded',
+  timeout: 60000,
+})
 await page.waitForTimeout(2000)
 
 async function nearBank(form) {

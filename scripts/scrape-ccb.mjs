@@ -23,9 +23,22 @@ const DELAY = 1100
 const ADIV = flag('district', '440300')
 const TYPE = flag('type', '1')
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/156.0.0.0 Safari/537.36 poi-intel-demo/0.1'
-const BASE = 'https://wealth.ccb.com/tran/WCCMainPlatV5?CCB_IBSVersion=V5&SERVLET_NAME=WCCMainPlatV5&isAjaxRequest=true&TXCODE=NZX013&isJSONRequest=true'
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区']
+const UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/156.0.0.0 Safari/537.36 poi-intel-demo/0.1'
+const BASE =
+  'https://wealth.ccb.com/tran/WCCMainPlatV5?CCB_IBSVersion=V5&SERVLET_NAME=WCCMainPlatV5&isAjaxRequest=true&TXCODE=NZX013&isJSONRequest=true'
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+]
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function districtOf(address) {
@@ -40,15 +53,18 @@ function hm(t) {
 
 function formatHours(item) {
   const parts = []
-  const weekday = hm(item.Prvt_WkDy_Oprg_StTm) && hm(item.Prvt_WkDy_Oprg_EdTm)
-    ? `周一至周五 ${hm(item.Prvt_WkDy_Oprg_StTm)}-${hm(item.Prvt_WkDy_Oprg_EdTm)}`
-    : ''
-  const sat = hm(item.Prvt_Sat_Oprg_StTm) && hm(item.Prvt_Sat_Oprg_EdTm)
-    ? `周六 ${hm(item.Prvt_Sat_Oprg_StTm)}-${hm(item.Prvt_Sat_Oprg_EdTm)}`
-    : ''
-  const sun = hm(item.Prvt_Sun_Oprg_StTm) && hm(item.Prvt_Sun_Oprg_EdTm)
-    ? `周日 ${hm(item.Prvt_Sun_Oprg_StTm)}-${hm(item.Prvt_Sun_Oprg_EdTm)}`
-    : ''
+  const weekday =
+    hm(item.Prvt_WkDy_Oprg_StTm) && hm(item.Prvt_WkDy_Oprg_EdTm)
+      ? `周一至周五 ${hm(item.Prvt_WkDy_Oprg_StTm)}-${hm(item.Prvt_WkDy_Oprg_EdTm)}`
+      : ''
+  const sat =
+    hm(item.Prvt_Sat_Oprg_StTm) && hm(item.Prvt_Sat_Oprg_EdTm)
+      ? `周六 ${hm(item.Prvt_Sat_Oprg_StTm)}-${hm(item.Prvt_Sat_Oprg_EdTm)}`
+      : ''
+  const sun =
+    hm(item.Prvt_Sun_Oprg_StTm) && hm(item.Prvt_Sun_Oprg_EdTm)
+      ? `周日 ${hm(item.Prvt_Sun_Oprg_StTm)}-${hm(item.Prvt_Sun_Oprg_EdTm)}`
+      : ''
   for (const p of [weekday, sat, sun]) if (p) parts.push(p)
   return parts.join('；').slice(0, 120)
 }
@@ -65,7 +81,7 @@ while (page <= totalPage && rows.length < LIMIT) {
   let body
   try {
     body = JSON.parse(text)
-  } catch (e) {
+  } catch {
     throw new Error(`建行返回非 JSON（可能被限流）：${text.slice(0, 80)}`)
   }
   if (body.SUCCESS !== 'true') throw new Error(`接口失败：${JSON.stringify(body).slice(0, 120)}`)

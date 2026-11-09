@@ -22,7 +22,19 @@ const LIMIT = Number(flag('limit', '999'))
 const DRY = args.includes('--dry-run')
 
 const URL_BASE = 'https://www.4001961200.com/api/CMS/BranchQryList.do'
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区', '深汕特别合作区']
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+  '深汕特别合作区',
+]
 
 function districtOf(address) {
   for (const d of DISTRICTS) if ((address || '').includes(d)) return d
@@ -42,12 +54,20 @@ for (const item of list) {
   const lngRaw = Number(item.lat)
   const latRaw = Number(item.lon)
   const [lng, lat] = toWgs84(lngRaw, latRaw, 'gcj02')
-  if (!inShenzhen(lng, lat)) { badCoords++; continue }
+  if (!inShenzhen(lng, lat)) {
+    badCoords++
+    continue
+  }
   rows.push({
-    name: (item.name || '').startsWith('深圳农商银行') ? item.name : `深圳农商银行${item.name || ''}`,
+    name: (item.name || '').startsWith('深圳农商银行')
+      ? item.name
+      : `深圳农商银行${item.name || ''}`,
     address: item.address || '',
     phone: item.phonenum || '',
-    openingHours: String(item.time || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+    openingHours: String(item.time || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120),
     district: districtOf(item.address),
     lng,
     lat,

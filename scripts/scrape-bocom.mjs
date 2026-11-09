@@ -39,7 +39,7 @@ const DISTRICTS = [
 const decode = (v) => {
   try {
     return decodeURIComponent(String(v ?? '').replace(/\+/g, ' '))
-  } catch (e) {
+  } catch {
     return String(v ?? '')
   }
 }

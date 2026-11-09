@@ -21,7 +21,7 @@ export function curlJson(url, options = {}) {
   const text = curlText(url, options)
   try {
     return JSON.parse(text)
-  } catch (e) {
+  } catch {
     throw new Error(`返回非 JSON：${text.slice(0, 120)}`)
   }
 }

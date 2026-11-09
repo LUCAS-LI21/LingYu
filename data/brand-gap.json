@@ -1,457 +1,457 @@
 [
- {
-  "brand": "中国建设银行",
-  "sample": 133,
-  "est": 353,
-  "mine": 31,
-  "coverage": 8.8
- },
- {
-  "brand": "招商银行",
-  "sample": 90,
-  "est": 239,
-  "mine": 35,
-  "coverage": 14.6
- },
- {
-  "brand": "兴业银行",
-  "sample": 53,
-  "est": 141,
-  "mine": 14,
-  "coverage": 9.9
- },
- {
-  "brand": "中国邮政储蓄银行",
-  "sample": 45,
-  "est": 119,
-  "mine": 9,
-  "coverage": 7.6
- },
- {
-  "brand": "广发银行",
-  "sample": 34,
-  "est": 90,
-  "mine": 3,
-  "coverage": 3.3
- },
- {
-  "brand": "广东华润银行",
-  "sample": 27,
-  "est": 72,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "中国工商银行",
-  "sample": 26,
-  "est": 69,
-  "mine": 39,
-  "coverage": 56.5
- },
- {
-  "brand": "上海浦东发展银行",
-  "sample": 23,
-  "est": 61,
-  "mine": 11,
-  "coverage": 18
- },
- {
-  "brand": "中国农业银行",
-  "sample": 23,
-  "est": 61,
-  "mine": 20,
-  "coverage": 32.8
- },
- {
-  "brand": "深圳农商银行",
-  "sample": 23,
-  "est": 61,
-  "mine": 14,
-  "coverage": 23
- },
- {
-  "brand": "平安银行",
-  "sample": 22,
-  "est": 58,
-  "mine": 13,
-  "coverage": 22.4
- },
- {
-  "brand": "交通银行",
-  "sample": 21,
-  "est": 56,
-  "mine": 12,
-  "coverage": 21.4
- },
- {
-  "brand": "中国银行",
-  "sample": 21,
-  "est": 56,
-  "mine": 35,
-  "coverage": 62.5
- },
- {
-  "brand": "中国民生银行",
-  "sample": 18,
-  "est": 48,
-  "mine": 11,
-  "coverage": 22.9
- },
- {
-  "brand": "深圳福田深通村镇银行",
-  "sample": 16,
-  "est": 42,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "中信银行",
-  "sample": 16,
-  "est": 42,
-  "mine": 10,
-  "coverage": 23.8
- },
- {
-  "brand": "其他",
-  "sample": 14,
-  "est": 37,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "浙商银行",
-  "sample": 10,
-  "est": 27,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "深圳宝安桂银村镇银行",
-  "sample": 8,
-  "est": 21,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "华夏银行",
-  "sample": 7,
-  "est": 19,
-  "mine": 7,
-  "coverage": 36.8
- },
- {
-  "brand": "宁波银行",
-  "sample": 7,
-  "est": 19,
-  "mine": 8,
-  "coverage": 42.1
- },
- {
-  "brand": "中国光大银行",
-  "sample": 7,
-  "est": 19,
-  "mine": 13,
-  "coverage": 68.4
- },
- {
-  "brand": "广州银行",
-  "sample": 6,
-  "est": 16,
-  "mine": 3,
-  "coverage": 18.8
- },
- {
-  "brand": "广州农村商业银行",
-  "sample": 6,
-  "est": 16,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "广东华兴银行",
-  "sample": 6,
-  "est": 16,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "江苏银行",
-  "sample": 6,
-  "est": 16,
-  "mine": 1,
-  "coverage": 6.3
- },
- {
-  "brand": "上海银行",
-  "sample": 5,
-  "est": 13,
-  "mine": 7,
-  "coverage": 53.8
- },
- {
-  "brand": "北京银行",
-  "sample": 5,
-  "est": 13,
-  "mine": 6,
-  "coverage": 46.2
- },
- {
-  "brand": "渤海银行",
-  "sample": 5,
-  "est": 13,
-  "mine": 1,
-  "coverage": 7.7
- },
- {
-  "brand": "徽商银行",
-  "sample": 5,
-  "est": 13,
-  "mine": 2,
-  "coverage": 15.4
- },
- {
-  "brand": "渣打银行",
-  "sample": 4,
-  "est": 11,
-  "mine": 2,
-  "coverage": 18.2
- },
- {
-  "brand": "南洋商业银行",
-  "sample": 4,
-  "est": 11,
-  "mine": 1,
-  "coverage": 9.1
- },
- {
-  "brand": "深圳南山宝生村镇银行",
-  "sample": 4,
-  "est": 11,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "杭州银行",
-  "sample": 3,
-  "est": 8,
-  "mine": 3,
-  "coverage": 37.5
- },
- {
-  "brand": "恒丰银行",
-  "sample": 3,
-  "est": 8,
-  "mine": 1,
-  "coverage": 12.5
- },
- {
-  "brand": "广东南粤银行",
-  "sample": 3,
-  "est": 8,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "东亚银行",
-  "sample": 3,
-  "est": 8,
-  "mine": 6,
-  "coverage": 75
- },
- {
-  "brand": "吉林银行",
-  "sample": 3,
-  "est": 8,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "大众银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "广东顺德农村商业银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "星展银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 2,
-  "coverage": 40
- },
- {
-  "brand": "玉山银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "恒生银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 1,
-  "coverage": 20
- },
- {
-  "brand": "深圳光明沪农商村镇银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "华商银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "深圳龙岗中银富登村镇银行",
-  "sample": 2,
-  "est": 5,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "开泰银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "毕节农村商业银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "富邦华一银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "河南农村商业银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "汇丰银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "招商永隆银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "富邦银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "西班牙桑坦德银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "淮安兴福村镇银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "集友银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "国家开发银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "威海银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "大新银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "浙江乐清农村商业银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "广西百色右江农村合作银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "青岛农村商业银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "江西信丰农村商业银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "三菱日联银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- },
- {
-  "brand": "深圳罗湖蓝海村镇银行",
-  "sample": 1,
-  "est": 3,
-  "mine": 0,
-  "coverage": 0
- }
+  {
+    "brand": "中国建设银行",
+    "sample": 133,
+    "est": 353,
+    "mine": 31,
+    "coverage": 8.8
+  },
+  {
+    "brand": "招商银行",
+    "sample": 90,
+    "est": 239,
+    "mine": 35,
+    "coverage": 14.6
+  },
+  {
+    "brand": "兴业银行",
+    "sample": 53,
+    "est": 141,
+    "mine": 14,
+    "coverage": 9.9
+  },
+  {
+    "brand": "中国邮政储蓄银行",
+    "sample": 45,
+    "est": 119,
+    "mine": 9,
+    "coverage": 7.6
+  },
+  {
+    "brand": "广发银行",
+    "sample": 34,
+    "est": 90,
+    "mine": 3,
+    "coverage": 3.3
+  },
+  {
+    "brand": "广东华润银行",
+    "sample": 27,
+    "est": 72,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "中国工商银行",
+    "sample": 26,
+    "est": 69,
+    "mine": 39,
+    "coverage": 56.5
+  },
+  {
+    "brand": "上海浦东发展银行",
+    "sample": 23,
+    "est": 61,
+    "mine": 11,
+    "coverage": 18
+  },
+  {
+    "brand": "中国农业银行",
+    "sample": 23,
+    "est": 61,
+    "mine": 20,
+    "coverage": 32.8
+  },
+  {
+    "brand": "深圳农商银行",
+    "sample": 23,
+    "est": 61,
+    "mine": 14,
+    "coverage": 23
+  },
+  {
+    "brand": "平安银行",
+    "sample": 22,
+    "est": 58,
+    "mine": 13,
+    "coverage": 22.4
+  },
+  {
+    "brand": "交通银行",
+    "sample": 21,
+    "est": 56,
+    "mine": 12,
+    "coverage": 21.4
+  },
+  {
+    "brand": "中国银行",
+    "sample": 21,
+    "est": 56,
+    "mine": 35,
+    "coverage": 62.5
+  },
+  {
+    "brand": "中国民生银行",
+    "sample": 18,
+    "est": 48,
+    "mine": 11,
+    "coverage": 22.9
+  },
+  {
+    "brand": "深圳福田深通村镇银行",
+    "sample": 16,
+    "est": 42,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "中信银行",
+    "sample": 16,
+    "est": 42,
+    "mine": 10,
+    "coverage": 23.8
+  },
+  {
+    "brand": "其他",
+    "sample": 14,
+    "est": 37,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "浙商银行",
+    "sample": 10,
+    "est": 27,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "深圳宝安桂银村镇银行",
+    "sample": 8,
+    "est": 21,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "华夏银行",
+    "sample": 7,
+    "est": 19,
+    "mine": 7,
+    "coverage": 36.8
+  },
+  {
+    "brand": "宁波银行",
+    "sample": 7,
+    "est": 19,
+    "mine": 8,
+    "coverage": 42.1
+  },
+  {
+    "brand": "中国光大银行",
+    "sample": 7,
+    "est": 19,
+    "mine": 13,
+    "coverage": 68.4
+  },
+  {
+    "brand": "广州银行",
+    "sample": 6,
+    "est": 16,
+    "mine": 3,
+    "coverage": 18.8
+  },
+  {
+    "brand": "广州农村商业银行",
+    "sample": 6,
+    "est": 16,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "广东华兴银行",
+    "sample": 6,
+    "est": 16,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "江苏银行",
+    "sample": 6,
+    "est": 16,
+    "mine": 1,
+    "coverage": 6.3
+  },
+  {
+    "brand": "上海银行",
+    "sample": 5,
+    "est": 13,
+    "mine": 7,
+    "coverage": 53.8
+  },
+  {
+    "brand": "北京银行",
+    "sample": 5,
+    "est": 13,
+    "mine": 6,
+    "coverage": 46.2
+  },
+  {
+    "brand": "渤海银行",
+    "sample": 5,
+    "est": 13,
+    "mine": 1,
+    "coverage": 7.7
+  },
+  {
+    "brand": "徽商银行",
+    "sample": 5,
+    "est": 13,
+    "mine": 2,
+    "coverage": 15.4
+  },
+  {
+    "brand": "渣打银行",
+    "sample": 4,
+    "est": 11,
+    "mine": 2,
+    "coverage": 18.2
+  },
+  {
+    "brand": "南洋商业银行",
+    "sample": 4,
+    "est": 11,
+    "mine": 1,
+    "coverage": 9.1
+  },
+  {
+    "brand": "深圳南山宝生村镇银行",
+    "sample": 4,
+    "est": 11,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "杭州银行",
+    "sample": 3,
+    "est": 8,
+    "mine": 3,
+    "coverage": 37.5
+  },
+  {
+    "brand": "恒丰银行",
+    "sample": 3,
+    "est": 8,
+    "mine": 1,
+    "coverage": 12.5
+  },
+  {
+    "brand": "广东南粤银行",
+    "sample": 3,
+    "est": 8,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "东亚银行",
+    "sample": 3,
+    "est": 8,
+    "mine": 6,
+    "coverage": 75
+  },
+  {
+    "brand": "吉林银行",
+    "sample": 3,
+    "est": 8,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "大众银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "广东顺德农村商业银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "星展银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 2,
+    "coverage": 40
+  },
+  {
+    "brand": "玉山银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "恒生银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 1,
+    "coverage": 20
+  },
+  {
+    "brand": "深圳光明沪农商村镇银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "华商银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "深圳龙岗中银富登村镇银行",
+    "sample": 2,
+    "est": 5,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "开泰银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "毕节农村商业银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "富邦华一银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "河南农村商业银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "汇丰银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "招商永隆银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "富邦银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "西班牙桑坦德银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "淮安兴福村镇银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "集友银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "国家开发银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "威海银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "大新银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "浙江乐清农村商业银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "广西百色右江农村合作银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "青岛农村商业银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "江西信丰农村商业银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "三菱日联银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  },
+  {
+    "brand": "深圳罗湖蓝海村镇银行",
+    "sample": 1,
+    "est": 3,
+    "mine": 0,
+    "coverage": 0
+  }
 ]

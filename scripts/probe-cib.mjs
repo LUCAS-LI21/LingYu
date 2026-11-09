@@ -23,7 +23,11 @@ function findChrome() {
   } catch {}
   const base = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright')
   if (!fs.existsSync(base)) return undefined
-  for (const d of fs.readdirSync(base).filter((x) => /^chromium-\d+$/.test(x)).sort().reverse()) {
+  for (const d of fs
+    .readdirSync(base)
+    .filter((x) => /^chromium-\d+$/.test(x))
+    .sort()
+    .reverse()) {
     const p = path.join(base, d, 'chrome-win64', 'chrome.exe')
     if (fs.existsSync(p)) return p
   }
@@ -34,11 +38,15 @@ async function robots() {
   const res = []
   for (const h of HOSTS) {
     try {
-      const r = await fetch(h + '/robots.txt', { headers: { 'User-Agent': UA, Accept: 'text/plain' } })
+      const r = await fetch(h + '/robots.txt', {
+        headers: { 'User-Agent': UA, Accept: 'text/plain' },
+      })
       const t = await r.text()
       const isRobots = /^\s*(User-agent|Sitemap|Disallow|Allow)/im.test(t) && !/<html/i.test(t)
       res.push({ host: h, status: r.status, isRobots, head: t.slice(0, 120).replace(/\s+/g, ' ') })
-      console.log(`[robots] ${h}/robots.txt -> ${r.status} ${isRobots ? 'robots 文件' : '非 robots（软 404）'}`)
+      console.log(
+        `[robots] ${h}/robots.txt -> ${r.status} ${isRobots ? 'robots 文件' : '非 robots（软 404）'}`,
+      )
     } catch (e) {
       res.push({ host: h, status: 'ERR', error: e.message })
       console.log(`[robots] ${h}/robots.txt -> ERR ${e.message}`)
@@ -49,21 +57,33 @@ async function robots() {
 }
 
 const browser = await chromium.launch({ headless: true, executablePath: findChrome() })
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'zh-CN', userAgent: UA })
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 1000 },
+  locale: 'zh-CN',
+  userAgent: UA,
+})
 const page = await ctx.newPage()
 const xhr = []
 page.on('response', async (res) => {
   const req = res.request()
   if (req.resourceType() !== 'xhr' && req.resourceType() !== 'fetch') return
   try {
-    xhr.push({ method: req.method(), status: res.status(), url: res.url(), body: (await res.text()).slice(0, 200) })
+    xhr.push({
+      method: req.method(),
+      status: res.status(),
+      url: res.url(),
+      body: (await res.text()).slice(0, 200),
+    })
   } catch {}
 })
 
 const robotsInfo = await robots()
 
 // 全行营业网点 → 深圳分行 → 营业网点
-await page.goto('https://branch.cib.com.cn/index.html', { waitUntil: 'domcontentloaded', timeout: 45000 })
+await page.goto('https://branch.cib.com.cn/index.html', {
+  waitUntil: 'domcontentloaded',
+  timeout: 45000,
+})
 await page.waitForTimeout(1500)
 await sleep(1100)
 await page.locator('a[href$="/ShenZhen/outlets/index.html"]').first().click()
@@ -75,7 +95,9 @@ const data = await page.evaluate(() => {
   const items = []
   const seen = new Set()
   for (const tr of rows) {
-    const cells = [...tr.querySelectorAll('td .cell')].map((c) => c.innerText.replace(/\s+\n/g, '\n').trim())
+    const cells = [...tr.querySelectorAll('td .cell')].map((c) =>
+      c.innerText.replace(/\s+\n/g, '\n').trim(),
+    )
     if (cells.length < 4) continue
     const [name, address, phone, hours] = cells
     if (!/^0\d{2,3}-/.test(phone) || seen.has(name)) continue
@@ -92,12 +114,26 @@ const file = path.join(OUT_DIR, 'cib-shenzhen.json')
 fs.writeFileSync(
   file,
   JSON.stringify(
-    { bank: '兴业银行', city: '深圳', robots: robotsInfo, page: { url: data.url, title: data.title }, xhr, hasCoordinate: data.hasCoord, count: data.items.length, items: data.items },
+    {
+      bank: '兴业银行',
+      city: '深圳',
+      robots: robotsInfo,
+      page: { url: data.url, title: data.title },
+      xhr,
+      hasCoordinate: data.hasCoord,
+      count: data.items.length,
+      items: data.items,
+    },
     null,
     2,
   ),
 )
-console.log(`\n[结果] ${data.url} 抓取 ${data.items.length} 个营业网点，页面坐标字段：${data.hasCoord ? '有' : '无'} -> ${file}`)
-console.log('[XHR]', xhr.length ? xhr.map((x) => `${x.method} ${x.url}`).join('\n       ') : '无业务 XHR')
+console.log(
+  `\n[结果] ${data.url} 抓取 ${data.items.length} 个营业网点，页面坐标字段：${data.hasCoord ? '有' : '无'} -> ${file}`,
+)
+console.log(
+  '[XHR]',
+  xhr.length ? xhr.map((x) => `${x.method} ${x.url}`).join('\n       ') : '无业务 XHR',
+)
 console.log('示例:', JSON.stringify(data.items[0], null, 1))
 await browser.close()

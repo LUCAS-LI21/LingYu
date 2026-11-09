@@ -29,7 +29,18 @@ const REFERER = 'https://map.cmbchina.com/map'
 const BASE = 'https://map.cmbchina.com/api/map'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区']
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+]
 
 function districtOf(address) {
   for (const d of DISTRICTS) if ((address || '').includes(d)) return d
@@ -60,16 +71,22 @@ for (let i = 0; i < branches.length; i++) {
   const b = branches[i]
   try {
     await sleep(DELAY)
-    const detail = (await getJson(`${BASE}/getCmbBrnBusiInfo?branchNo=${encodeURIComponent(b.branchNo)}`)).body || {}
+    const detail =
+      (await getJson(`${BASE}/getCmbBrnBusiInfo?branchNo=${encodeURIComponent(b.branchNo)}`))
+        .body || {}
     const [lng, lat] = toWgs84(Number(b.lng), Number(b.lat), 'gcj02')
-    if (!inShenzhen(lng, lat)) { skipped++; continue }
+    if (!inShenzhen(lng, lat)) {
+      skipped++
+      continue
+    }
     rows.push({
       name: `招商银行${b.name}`,
       address: detail.branchAddr || '',
       phone: detail.serviceTels || '',
       openingHours: formatHours(detail.branchOpenTime),
       district: districtOf(detail.branchAddr),
-      lng, lat,
+      lng,
+      lat,
       brand: '招商银行',
       branchType: 'branch',
     })

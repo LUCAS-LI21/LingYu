@@ -20,9 +20,19 @@ const LIMIT = Number(flag('limit', '999'))
 const DRY = args.includes('--dry-run')
 const DELAY = 1100
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
 const URL = 'https://app.abchina.com.cn/branch/Branch'
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区']
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+]
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function districtOf(address) {

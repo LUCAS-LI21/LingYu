@@ -21,7 +21,18 @@ const DRY = args.includes('--dry-run')
 const DELAY = 1100
 
 const URL = 'https://www.cgbchina.com.cn/mobile/jsp/common/getRtpTrade.jsp'
-const DISTRICTS = ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '盐田区', '龙华区', '坪山区', '光明区', '大鹏新区']
+const DISTRICTS = [
+  '福田区',
+  '南山区',
+  '罗湖区',
+  '宝安区',
+  '龙岗区',
+  '盐田区',
+  '龙华区',
+  '坪山区',
+  '光明区',
+  '大鹏新区',
+]
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function districtOf(address) {
@@ -53,7 +64,9 @@ while (rows.length < LIMIT) {
   for (const item of list) {
     const [lng, lat] = toWgs84(Number(item.longitude), Number(item.latitude), 'gcj02')
     if (!inShenzhen(lng, lat)) continue
-    const name = (item.markName || '').startsWith('广发银行') ? item.markName : `广发银行${item.markName || ''}`
+    const name = (item.markName || '').startsWith('广发银行')
+      ? item.markName
+      : `广发银行${item.markName || ''}`
     rows.push({
       name,
       address: item.markAdress || '',
