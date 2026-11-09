@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 
 import MapCanvas from '@/components/MapCanvas.vue'
@@ -15,6 +15,7 @@ import {
   nearbyFromServer,
   type NearbyItem,
 } from '@/api/pois'
+import { scheduleQueryLog, trackQueryNow } from '@/lib/queryTracker'
 import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
 
 interface Bounds {
@@ -53,15 +54,61 @@ onMounted(async () => {
   }
 })
 
+function trackPoiQuery(poi: Poi): void {
+  const span = 0.01
+  trackQueryNow({
+    keyword: poi.name,
+    types: [poi.type],
+    bounds: {
+      west: poi.lng - span,
+      south: poi.lat - span,
+      east: poi.lng + span,
+      north: poi.lat + span,
+    },
+  })
+}
+
 function onSelect(poi: Poi): void {
   selected.value = poi
   nearbyItems.value = []
+  trackPoiQuery(poi)
 }
 
 function onBoxSelect(nextBounds: Bounds): void {
   bounds.value = nextBounds
   boxActive.value = false
+  trackQueryNow({
+    keyword: filters.value.keyword,
+    district: filters.value.district,
+    types: filters.value.layers,
+    bounds: nextBounds,
+  })
 }
+
+watch(
+  () => filters.value.keyword,
+  (value) => {
+    if (!value.trim()) return
+    scheduleQueryLog({
+      keyword: value,
+      district: filters.value.district,
+      types: filters.value.layers,
+      bounds: bounds.value ?? undefined,
+    })
+  },
+)
+
+watch(
+  () => filters.value.district,
+  (value) => {
+    if (value === '全部区域') return
+    scheduleQueryLog({
+      keyword: filters.value.keyword,
+      district: value,
+      types: filters.value.layers,
+    })
+  },
+)
 
 function clearBox(): void {
   bounds.value = null
@@ -77,6 +124,7 @@ function startBox(): void {
 function locate(poi: Poi): void {
   selected.value = poi
   mapRef.value?.focusOn(poi.lng, poi.lat, 16)
+  trackPoiQuery(poi)
 }
 
 async function handleNearby(payload: {
