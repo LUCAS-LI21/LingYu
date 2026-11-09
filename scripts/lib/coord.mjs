@@ -58,11 +58,33 @@ export function gcj02ToWgs84(lng, lat) {
   return [wgsLng, wgsLat]
 }
 
+const X_PI = (Math.PI * 3000.0) / 180.0
+
+/** BD-09 → GCJ-02（百度坐标转火星坐标） */
+export function bd09ToGcj02(lng, lat) {
+  const x = lng - 0.0065
+  const y = lat - 0.006
+  const z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * X_PI)
+  const theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * X_PI)
+  return [z * Math.cos(theta), z * Math.sin(theta)]
+}
+
+/** GCJ-02 → BD-09 */
+export function gcj02ToBd09(lng, lat) {
+  const z = Math.sqrt(lng * lng + lat * lat) + 0.00002 * Math.sin(lat * X_PI)
+  const theta = Math.atan2(lat, lng) + 0.000003 * Math.cos(lng * X_PI)
+  return [z * Math.cos(theta) + 0.0065, z * Math.sin(theta) + 0.006]
+}
+
 /**
  * 按来源坐标系转换到 WGS-84。
- * @param {'wgs84'|'gcj02'} source
+ * @param {'wgs84'|'gcj02'|'bd09'} source
  */
 export function toWgs84(lng, lat, source = 'gcj02') {
   if (source === 'wgs84') return [lng, lat]
+  if (source === 'bd09') {
+    const [gcjLng, gcjLat] = bd09ToGcj02(lng, lat)
+    return gcj02ToWgs84(gcjLng, gcjLat)
+  }
   return gcj02ToWgs84(lng, lat)
 }
