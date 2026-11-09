@@ -65,6 +65,40 @@ test.describe('邻域 POI 主流程', () => {
     await expect(sheet).toBeHidden()
   })
 
+  test('数据洞察搜索把关键词带到列表页', async ({ page }) => {
+    await page.goto('/stats')
+    await page.getByTestId('stats-search').fill('招商')
+    await page.getByTestId('stats-search-submit').click()
+
+    await expect(page).toHaveURL(/\/list\?/)
+    await expect(page.getByTestId('list-search')).toHaveValue('招商')
+    await expect(page.getByTestId('poi-card').first()).toBeVisible({ timeout: 20_000 })
+  })
+
+  test('用户后台可提交纠错并查看我的反馈', async ({ page }) => {
+    await page.route('**/api/v1/feedback', (route) =>
+      route.fulfill({
+        json: {
+          code: 0,
+          message: 'ok',
+          data: { code: 'FB20261110-9999', status: 'pending' },
+        },
+      }),
+    )
+
+    await page.goto('/me')
+    await expect(page.getByRole('heading', { name: '用户后台' })).toBeVisible()
+
+    await page.getByTestId('correction-search').fill('建设')
+    await page.getByTestId('correction-result').first().click({ timeout: 20_000 })
+    await page.getByTestId('correction-description').fill('E2E 用户后台：地址需要补充')
+    await page.getByTestId('correction-submit').click()
+
+    await expect(page.getByText('已提交，等待审核')).toBeVisible({ timeout: 15_000 })
+    await page.getByRole('button', { name: '查看我的反馈' }).click()
+    await expect(page.getByText('E2E 用户后台：地址需要补充')).toBeVisible()
+  })
+
   test('数据说明页展示三级授权模型', async ({ page }) => {
     await page.goto('/compliance')
 
