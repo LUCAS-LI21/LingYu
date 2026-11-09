@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS poi_community (
   property_company    VARCHAR(64) NOT NULL DEFAULT '' COMMENT '物业公司',
   surround_bank_count INT         NOT NULL DEFAULT 0 COMMENT '1km 内银行网点数',
   surround_atm_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内 ATM 数',
+  nearest_bank_m      INT         NOT NULL DEFAULT 0 COMMENT '最近银行距离(米)',
+  nearby_brand_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内银行品牌数',
   demo_attributes  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '字段是否为演示数据',
   source           VARCHAR(64)  NOT NULL DEFAULT 'OpenStreetMap',
   license          VARCHAR(32)  NOT NULL DEFAULT 'ODbL',
@@ -73,6 +75,7 @@ SELECT id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type
        CAST(NULL AS DECIMAL(6,1)) AS property_fee,
        CAST(NULL AS CHAR(64)) AS property_company,
        CAST(NULL AS SIGNED) AS surround_bank_count, CAST(NULL AS SIGNED) AS surround_atm_count,
+       CAST(NULL AS SIGNED) AS nearest_bank_m, CAST(NULL AS SIGNED) AS nearby_brand_count,
        0 AS demo_attributes, source, license, source_level, updated_at
 FROM poi_bank WHERE status <> 'closed'
 UNION ALL
@@ -80,6 +83,7 @@ SELECT id, 'community' AS type, name, address, district, lng, lat,
        CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
        built_year, avg_price, property_fee, property_company, surround_bank_count, surround_atm_count,
+       nearest_bank_m, nearby_brand_count,
        demo_attributes, source, license, source_level, updated_at
 FROM poi_community WHERE status <> 'closed';
 
@@ -207,3 +211,13 @@ CREATE TABLE IF NOT EXISTS bank_pending (
   KEY idx_pending_status (status),
   KEY idx_pending_source (source)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '待定位银行网点（有名称地址但无坐标）';
+
+CREATE TABLE IF NOT EXISTS poi_field_source (
+  poi_type   VARCHAR(16)  NOT NULL,
+  poi_id     VARCHAR(64)  NOT NULL,
+  field      VARCHAR(32)  NOT NULL,
+  source     VARCHAR(64)  NOT NULL DEFAULT '',
+  source_url VARCHAR(255) NOT NULL DEFAULT '',
+  updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (poi_type, poi_id, field)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '字段级来源（谁最后写了这个字段）';

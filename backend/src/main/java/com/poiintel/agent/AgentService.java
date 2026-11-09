@@ -271,6 +271,12 @@ public class AgentService {
                 INSERT INTO poi_version (poi_type, poi_id, change_type, before_json, after_json, changed_fields, operator)
                 VALUES (?, ?, 'update', ?, ?, ?, ?)
                 """, entityType, entityId, toJson(before), toJson(after), column, operator);
+        // 字段级来源：Agent 写入的字段要能追到具体 URL
+        jdbcTemplate.update("""
+                INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url), updated_at = NOW()
+                """, entityType, entityId, column, "Agent(DeepSeek)", url);
         jdbcTemplate.update("UPDATE agent_run SET status = 'applied', reviewed_by = ?, reviewed_at = NOW() WHERE id = ?",
                 reviewer, runId);
 

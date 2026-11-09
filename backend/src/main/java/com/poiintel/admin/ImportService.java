@@ -313,6 +313,21 @@ public class ImportService {
                     row.lng(), row.lat(), row.builtYear(), row.avgPrice(), row.propertyFee(),
                     blankTo(row.propertyCompany(), ""), source, license);
         }
+        // 新增行也记字段来源
+        List<String> fields = new ArrayList<>();
+        if (!blankTo(row.address(), "").isBlank()) fields.add("address");
+        if (!blankTo(row.district(), "").isBlank()) fields.add("district");
+        if ("bank".equals(type)) {
+            if (!blankTo(row.phone(), "").isBlank()) fields.add("phone");
+            if (!blankTo(row.openingHours(), "").isBlank()) fields.add("opening_hours");
+            if (!blankTo(row.brand(), "").isBlank()) fields.add("brand");
+        } else {
+            if (row.builtYear() != null) fields.add("built_year");
+            if (row.avgPrice() != null) fields.add("avg_price");
+            if (row.propertyFee() != null) fields.add("property_fee");
+            if (!blankTo(row.propertyCompany(), "").isBlank()) fields.add("property_company");
+        }
+        recordFieldSources(type, id, fields, source, "");
     }
 
     /**
@@ -343,7 +358,28 @@ public class ImportService {
         args.add(id);
         jdbcTemplate.update("UPDATE " + table + " SET " + String.join(", ", sets) + " WHERE id = ?",
                 args.toArray());
+
+        // 字段级来源：只记真正被写入的数据列（source/license 是元数据，不算）
+        Map<String, Object> after = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", id);
+        List<String> touched = changedFields(before, after);
+        touched.removeAll(List.of("source", "license", "updated_at"));
+        recordFieldSources(typeOfTable(table), id, touched, source, "");
         return sets.size() - 1;
+    }
+
+    private String typeOfTable(String table) {
+        return "poi_bank".equals(table) ? "bank" : "community";
+    }
+
+    /** 记录「某个字段最后由谁写入」，解决 enrich 改整行 source 掩盖真实来源的问题 */
+    private void recordFieldSources(String poiType, String id, List<String> fields, String source, String url) {
+        for (String field : fields) {
+            jdbcTemplate.update("""
+                    INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url), updated_at = NOW()
+                    """, poiType, id, field, source, url == null ? "" : url);
+        }
     }
 
     private void putIfNeeded(List<String> sets, List<Object> args, Map<String, Object> before,

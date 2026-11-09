@@ -99,6 +99,15 @@ public class PoiController {
         return ApiResult.ok(poiService.detail(id));
     }
 
+    /** 字段级来源：每个字段最后由谁写入（政府/官网/Agent/审核），用于回答"这条数据哪来的" */
+    @GetMapping("/pois/{id}/sources")
+    public ApiResult<java.util.List<Map<String, Object>>> sources(@PathVariable String id) {
+        return ApiResult.ok(jdbcTemplate.queryForList("""
+                SELECT field, source, source_url, updated_at
+                FROM poi_field_source WHERE poi_id = ? ORDER BY field
+                """, id));
+    }
+
     @GetMapping("/stats")
     public ApiResult<Map<String, Object>> stats() {
         return ApiResult.ok(poiService.stats());
