@@ -1,5 +1,7 @@
+import { saveFeedbackRecord } from '@/lib/feedbackHistory'
 import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 import {
+  apiRequest,
   fetchAllPois,
   fetchNearby as fetchNearbyRemote,
   fetchStats as fetchStatsRemote,
@@ -175,6 +177,75 @@ export async function loadPois(): Promise<Poi[]> {
     return cache
   })()
   return loading
+}
+
+export interface QueryBounds {
+  west: number
+  south: number
+  east: number
+  north: number
+}
+
+export interface QueryEvent {
+  keyword?: string
+  district?: string
+  types?: PoiType[]
+  bounds?: QueryBounds
+  minPrice?: number
+  maxPrice?: number
+  minYear?: number
+  maxYear?: number
+}
+
+/** 把用户搜索行为记到后端 query_log：复用 /pois（size=1），失败静默不影响主流程 */
+export async function recordQuery(event: QueryEvent): Promise<void> {
+  if (!(await isServerMode())) return
+  const params = new URLSearchParams({ size: '1' })
+  const keyword = event.keyword?.trim()
+  if (keyword) params.set('keyword', keyword)
+  if (event.district && event.district !== '全部区域') params.set('district', event.district)
+  if (event.types?.length) params.set('types', event.types.join(','))
+
+  const bounds = event.bounds ?? districtBounds(event.district)
+  if (bounds) {
+    params.set('west', String(bounds.west))
+    params.set('south', String(bounds.south))
+    params.set('east', String(bounds.east))
+    params.set('north', String(bounds.north))
+  }
+  if (event.minPrice !== undefined) params.set('minPrice', String(event.minPrice))
+  if (event.maxPrice !== undefined) params.set('maxPrice', String(event.maxPrice))
+  if (event.minYear !== undefined) params.set('minYear', String(event.minYear))
+  if (event.maxYear !== undefined) params.set('maxYear', String(event.maxYear))
+
+  try {
+    await apiRequest<unknown>(`/pois?${params.toString()}`)
+  } catch {
+    // 行为埋点失败不影响查询本身；热点分析可接受少量缺失
+  }
+}
+
+function districtBounds(district?: string): QueryBounds | undefined {
+  if (!district || district === '全部区域') return undefined
+  const anchor = DISTRICT_ANCHORS.find((item) => item.name === district)
+  if (!anchor) return undefined
+  const span = 0.02
+  return {
+    west: anchor.lng - span,
+    south: anchor.lat - span,
+    east: anchor.lng + span,
+    north: anchor.lat + span,
+  }
+}
+
+/** 本地全量检索：用于纠错表单选点位，避免每次输入都打后端 */
+export async function searchPois(keyword: string, limit = 8): Promise<Poi[]> {
+  const term = keyword.trim().toLowerCase()
+  if (!term) return []
+  const all = await loadPois()
+  return all
+    .filter((poi) => `${poi.name} ${poi.address} ${poi.district}`.toLowerCase().includes(term))
+    .slice(0, limit)
 }
 
 export interface QueryOptions {
@@ -375,6 +446,7 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
         createdAt: new Date().toISOString(),
       }
       feedbackStore.unshift(record)
+      saveFeedbackRecord(record)
       return record
     } catch {
       // 后端异常时退回本地记录，避免用户白填
@@ -390,6 +462,7 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
   }
   feedbackStore.unshift(record)
   await new Promise((resolve) => setTimeout(resolve, 260))
+  saveFeedbackRecord(record)
   return record
 }
 

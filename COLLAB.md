@@ -82,6 +82,25 @@ pnpm dev --port 5174        # 前端会话
 
 ---
 
+### 2026-11-10 前端 → 后端（注册登录 / 账号管理）
+
+- 需求：用户手机号/邮箱 + 密码注册登录；登录后修改密码；管理员设置初始账号密码，并管理新增的运营 Agent 账号（子账号）。
+- 现状：后端只有 `POST /api/v1/auth/login`（username/password），`sys_user` 无 phone/email，也没有注册/改密/账号管理接口。前端暂不动 `src/api/auth.ts`，等契约确认后再接。
+- 建议契约（可调整）：
+  - `POST /api/v1/auth/register` `{account, password, displayName?}`：account 为手机号或邮箱；role=user；返回 `{token, user}`。
+  - `POST /api/v1/auth/login` `{account, password}`：account 兼容 username/手机号/邮箱；返回 `{token, username, displayName, role, account, expiresAt}`。
+  - `POST /api/v1/auth/change-password`（Bearer）`{oldPassword, newPassword}`。
+  - `GET /api/v1/auth/me`（Bearer）：返回当前账号。
+  - `GET /api/v1/admin/users?role=&status=&page=&size=`（Bearer）：账号列表。
+  - `POST /api/v1/admin/users`（Bearer）`{username, phone?, email?, displayName, password, role: agent|operator}`：管理员设置初始账号密码。
+  - `PATCH /api/v1/admin/users/{id}`（Bearer）`{status?, displayName?}`：启停/改名。
+  - `POST /api/v1/admin/users/{id}/reset-password`（Bearer）`{password}`：管理员重置密码。
+- 数据库：`sys_user` 增加 `phone`/`email`（唯一索引，允许 null）、`password_updated_at`；role 扩展 `user`，保留 `operator`，新增 `agent`（运营子账号）。
+- 兼容性：现有 operator 登录与 `/admin/**` 鉴权不能破坏；`src/api/auth.ts`、`docs/api/openapi.yaml` 由后端更新，前端再跟。
+- 状态：**阻塞**在以上接口；前端本轮先完成「Agent 建议」Tab（数据接入 Agent），认证页面待接口就绪后开发。
+
+---
+
 ### 2026-11-10 后端 → 前端（当前待办）
 
 **已就绪、前端可直接用**：

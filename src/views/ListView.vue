@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
+import { useRoute } from 'vue-router'
 
 import DetailPanel from '@/components/DetailPanel.vue'
 import FeedbackDialog from '@/components/FeedbackDialog.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import MobileSheet from '@/components/MobileSheet.vue'
 import PoiCard from '@/components/PoiCard.vue'
 import { filterPois, loadPois, nearby as nearbyQuery, paginate, type NearbyItem } from '@/api/pois'
-import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
+import { scheduleQueryLog, trackQueryNow } from '@/lib/queryTracker'
+import { DEFAULT_FILTERS, type Filters, type Poi, type PoiType } from '@/types/poi'
 
+const route = useRoute()
 const pois = ref<Poi[]>([])
 const loading = ref(true)
 const filters = ref<Filters>({ ...DEFAULT_FILTERS })
@@ -17,6 +22,62 @@ const pageSize = 12
 const selected = ref<Poi | null>(null)
 const nearbyItems = ref<NearbyItem[]>([])
 const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
+const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+let suppressTrack = false
+
+function applyRouteQuery(): void {
+  suppressTrack = true
+  const query = route.query
+  const next: Filters = { ...filters.value }
+  if (typeof query.keyword === 'string') next.keyword = query.keyword
+  if (typeof query.district === 'string' && query.district) next.district = query.district
+  if (typeof query.layers === 'string') {
+    const layers = query.layers
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item): item is PoiType => item === 'bank' || item === 'community')
+    if (layers.length) next.layers = layers
+  }
+  filters.value = next
+  page.value = 1
+  void nextTick(() => {
+    suppressTrack = false
+  })
+}
+
+function currentQueryEvent() {
+  const value = filters.value
+  return {
+    keyword: value.keyword,
+    district: value.district,
+    types: value.layers,
+    minPrice: value.priceRange?.[0],
+    maxPrice: value.priceRange?.[1],
+    minYear: value.yearRange?.[0],
+    maxYear: value.yearRange?.[1],
+  }
+}
+
+function trackCurrentFilters(): void {
+  const value = filters.value
+  if (!value.keyword.trim() && value.district === '全部区域') return
+  scheduleQueryLog(currentQueryEvent())
+}
+
+watch(
+  () => [
+    filters.value.keyword,
+    filters.value.district,
+    filters.value.layers.join(','),
+    filters.value.branchType,
+    JSON.stringify(filters.value.priceRange),
+    JSON.stringify(filters.value.yearRange),
+  ],
+  () => {
+    if (!suppressTrack) trackCurrentFilters()
+  },
+)
 
 const filtered = computed(() =>
   filterPois(pois.value, { filters: filters.value, sort: sort.value }),
@@ -25,12 +86,25 @@ const paged = computed(() => paginate(filtered.value, page.value, pageSize))
 const maxPage = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
 
 onMounted(async () => {
+  applyRouteQuery()
   pois.value = await loadPois()
   loading.value = false
 })
 
+watch(
+  () => route.query,
+  () => applyRouteQuery(),
+  { deep: true },
+)
+
 function resetPage(): void {
   page.value = 1
+}
+
+function onKeywordSearch(): void {
+  resetPage()
+  if (!filters.value.keyword.trim() && filters.value.district === '全部区域') return
+  trackQueryNow(currentQueryEvent())
 }
 
 function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | 'atm' }): void {
@@ -55,7 +129,27 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="relative">
+          <svg
+            class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+          </svg>
+          <input
+            v-model="filters.keyword"
+            data-testid="list-search"
+            class="h-9 w-48 rounded-[10px] border border-line bg-surface pl-9 pr-3 text-xs text-ink-700 outline-none transition placeholder:text-ink-400 focus:border-brand-500 sm:w-56"
+            placeholder="搜索名称 / 地址"
+            @input="resetPage"
+            @keyup.enter="onKeywordSearch"
+          />
+        </div>
         <span class="text-xs text-ink-400">
           共 <span class="font-medium text-ink-700">{{ filtered.length }}</span> 条
         </span>
@@ -131,7 +225,7 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
       leave-to-class="translate-x-6 opacity-0"
     >
       <div
-        v-if="selected"
+        v-if="selected && isDesktop"
         class="fixed inset-y-3 right-3 top-[3.75rem] z-[1500] w-[360px] max-w-[calc(100vw-1.5rem)]"
       >
         <div class="h-full overflow-hidden rounded-card border border-line bg-surface shadow-float">
@@ -146,6 +240,19 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
         </div>
       </div>
     </Transition>
+
+    <!-- 移动端详情：底部面板，与地图页保持一致的交互 -->
+    <MobileSheet :open="Boolean(selected) && !isDesktop" @close="selected = null">
+      <DetailPanel
+        v-if="selected"
+        :poi="selected"
+        :nearby="nearbyItems"
+        @close="selected = null"
+        @locate="selected = null"
+        @feedback="(payload) => (feedbackTarget = payload)"
+        @nearby="handleNearby"
+      />
+    </MobileSheet>
 
     <FeedbackDialog
       v-if="feedbackTarget"

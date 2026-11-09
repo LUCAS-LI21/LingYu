@@ -11,11 +11,16 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AgentPanel: typeof import('./components/admin/AgentPanel.vue')['default']
+    ComplianceDoc: typeof import('./components/ComplianceDoc.vue')['default']
+    CorrectionComposer: typeof import('./components/CorrectionComposer.vue')['default']
     DetailPanel: typeof import('./components/DetailPanel.vue')['default']
     FeedbackDialog: typeof import('./components/FeedbackDialog.vue')['default']
     FilterPanel: typeof import('./components/FilterPanel.vue')['default']
     MapCanvas: typeof import('./components/MapCanvas.vue')['default']
+    MobileSheet: typeof import('./components/MobileSheet.vue')['default']
     PoiCard: typeof import('./components/PoiCard.vue')['default']
+    QueryBehaviorPanel: typeof import('./components/admin/QueryBehaviorPanel.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ToastHost: typeof import('./components/ToastHost.vue')['default']

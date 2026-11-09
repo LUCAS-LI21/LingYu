@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 
 import MapCanvas from '@/components/MapCanvas.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import MobileSheet from '@/components/MobileSheet.vue'
 import PoiCard from '@/components/PoiCard.vue'
 import DetailPanel from '@/components/DetailPanel.vue'
 import FeedbackDialog from '@/components/FeedbackDialog.vue'
@@ -13,6 +15,7 @@ import {
   nearbyFromServer,
   type NearbyItem,
 } from '@/api/pois'
+import { scheduleQueryLog, trackQueryNow } from '@/lib/queryTracker'
 import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
 
 interface Bounds {
@@ -33,6 +36,7 @@ const nearbyItems = ref<NearbyItem[]>([])
 const nearbyLoading = ref(false)
 const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
 const mapRef = ref<InstanceType<typeof MapCanvas> | null>(null)
+const isDesktop = useMediaQuery('(min-width: 1024px)')
 
 const visiblePois = computed(() =>
   filterPois(pois.value, { filters: filters.value, bounds: bounds.value }),
@@ -50,15 +54,61 @@ onMounted(async () => {
   }
 })
 
+function trackPoiQuery(poi: Poi): void {
+  const span = 0.01
+  trackQueryNow({
+    keyword: poi.name,
+    types: [poi.type],
+    bounds: {
+      west: poi.lng - span,
+      south: poi.lat - span,
+      east: poi.lng + span,
+      north: poi.lat + span,
+    },
+  })
+}
+
 function onSelect(poi: Poi): void {
   selected.value = poi
   nearbyItems.value = []
+  trackPoiQuery(poi)
 }
 
 function onBoxSelect(nextBounds: Bounds): void {
   bounds.value = nextBounds
   boxActive.value = false
+  trackQueryNow({
+    keyword: filters.value.keyword,
+    district: filters.value.district,
+    types: filters.value.layers,
+    bounds: nextBounds,
+  })
 }
+
+watch(
+  () => filters.value.keyword,
+  (value) => {
+    if (!value.trim()) return
+    scheduleQueryLog({
+      keyword: value,
+      district: filters.value.district,
+      types: filters.value.layers,
+      bounds: bounds.value ?? undefined,
+    })
+  },
+)
+
+watch(
+  () => filters.value.district,
+  (value) => {
+    if (value === '全部区域') return
+    scheduleQueryLog({
+      keyword: filters.value.keyword,
+      district: value,
+      types: filters.value.layers,
+    })
+  },
+)
 
 function clearBox(): void {
   bounds.value = null
@@ -74,6 +124,7 @@ function startBox(): void {
 function locate(poi: Poi): void {
   selected.value = poi
   mapRef.value?.focusOn(poi.lng, poi.lat, 16)
+  trackPoiQuery(poi)
 }
 
 async function handleNearby(payload: {
@@ -229,7 +280,7 @@ function closeDetail(): void {
         class="flex h-full w-full flex-col overflow-hidden rounded-card border border-line bg-surface/95 shadow-float backdrop-blur"
       >
         <DetailPanel
-          v-if="selected"
+          v-if="selected && isDesktop"
           :poi="selected"
           :nearby="nearbyItems"
           :loading="nearbyLoading"
@@ -287,6 +338,20 @@ function closeDetail(): void {
         </template>
       </div>
     </aside>
+
+    <!-- 移动端详情：底部面板，避免 360px 侧栏在窄屏上挤压地图 -->
+    <MobileSheet :open="Boolean(selected) && !isDesktop" @close="closeDetail">
+      <DetailPanel
+        v-if="selected"
+        :poi="selected"
+        :nearby="nearbyItems"
+        :loading="nearbyLoading"
+        @close="closeDetail"
+        @locate="locate"
+        @feedback="(payload) => (feedbackTarget = payload)"
+        @nearby="handleNearby"
+      />
+    </MobileSheet>
 
     <!-- 图例 -->
     <div
