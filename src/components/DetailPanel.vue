@@ -22,61 +22,74 @@ const radius = ref(1000)
 const branchType = ref<'all' | 'atm'>('all')
 const queried = ref(false)
 
+/** 实时层状态：idle 未查 / loading / success 有结果 / empty 无结果 / unavailable 未开通 / error 请求失败 */
+type LiveState = 'idle' | 'loading' | 'success' | 'empty' | 'unavailable' | 'error'
+
 // L2 实时地址：只在本次会话内存里，页面关闭即消失
 const liveAddress = ref('')
-const liveMessage = ref('')
-const liveLoading = ref(false)
+const liveAddressState = ref<LiveState>('idle')
+const liveAddressMessage = ref('')
 
 // L2 实时周边（高德）：同样只在内存
 const livePois = ref<LivePoiItem[]>([])
+const livePoiState = ref<LiveState>('idle')
 const livePoiMessage = ref('')
-const livePoiLoading = ref(false)
 
 async function loadLivePois(): Promise<void> {
-  livePoiLoading.value = true
+  livePoiState.value = 'loading'
   livePoiMessage.value = ''
+  livePois.value = []
   try {
     const result = await fetchLiveAround(props.poi.lng, props.poi.lat, 1000)
     if (!result.enabled) {
-      livePoiMessage.value = result.reason ?? '实时周边不可用'
+      livePoiState.value = 'unavailable'
+      livePoiMessage.value = result.reason ?? '高德实时周边未启用'
       return
     }
     if (result.error) {
+      livePoiState.value = 'error'
       livePoiMessage.value = result.error
       return
     }
     livePois.value = result.items ?? []
     if (livePois.value.length === 0) {
-      livePoiMessage.value = '1km 内没有查到 POI'
+      livePoiState.value = 'empty'
+      livePoiMessage.value = '1km 内没有查到点位'
+      return
     }
+    livePoiState.value = 'success'
   } catch {
-    livePoiMessage.value = '实时周边查询失败'
-  } finally {
-    livePoiLoading.value = false
+    livePoiState.value = 'error'
+    livePoiMessage.value = '实时周边查询失败，请稍后重试'
   }
 }
 
 async function loadLiveAddress(): Promise<void> {
-  liveLoading.value = true
-  liveMessage.value = ''
+  liveAddressState.value = 'loading'
+  liveAddressMessage.value = ''
+  liveAddress.value = ''
   try {
     const result = await fetchLiveAddress(props.poi.lng, props.poi.lat)
     if (!result.enabled) {
-      liveMessage.value = result.reason ?? '实时地址不可用'
+      liveAddressState.value = 'unavailable'
+      liveAddressMessage.value = result.reason ?? '高德实时地址未启用'
       return
     }
     if (result.error) {
-      liveMessage.value = result.error
+      liveAddressState.value = 'error'
+      liveAddressMessage.value = result.error
       return
     }
     liveAddress.value = result.address ?? ''
     if (!liveAddress.value) {
-      liveMessage.value = '高德未返回地址'
+      liveAddressState.value = 'empty'
+      liveAddressMessage.value = '高德未返回该坐标的地址'
+      return
     }
+    liveAddressState.value = 'success'
   } catch {
-    liveMessage.value = '实时地址查询失败'
-  } finally {
-    liveLoading.value = false
+    liveAddressState.value = 'error'
+    liveAddressMessage.value = '实时地址查询失败，请稍后重试'
   }
 }
 
@@ -85,14 +98,25 @@ watch(
   () => {
     queried.value = false
     liveAddress.value = ''
-    liveMessage.value = ''
+    liveAddressState.value = 'idle'
+    liveAddressMessage.value = ''
     livePois.value = []
+    livePoiState.value = 'idle'
     livePoiMessage.value = ''
   },
 )
 
 const isBank = computed(() => props.poi.type === 'bank')
 const bank = computed(() => (props.poi.type === 'bank' ? (props.poi as BankPoi) : null))
+const hasAddress = computed(() => props.poi.address.trim().length > 0)
+const visibleNearby = computed(() => (props.loading ? [] : props.nearby.slice(0, 6)))
+
+function distanceLabel(item: LivePoiItem): string {
+  if (item.distance === undefined) return ''
+  return item.distance < 1000
+    ? `${Math.round(item.distance)}m`
+    : `${(item.distance / 1000).toFixed(1)}km`
+}
 
 const rows = computed(() => {
   const poi = props.poi
@@ -185,41 +209,157 @@ function queryNearby(type: 'all' | 'atm'): void {
             :class="{ 'text-ink-400': row.value === '暂无' || row.value === '待核实' }"
           >
             <template v-if="row.label === '地址'">
-              <span v-if="row.value !== '暂无'">{{ row.value }}</span>
-              <span v-else class="text-ink-400">暂无</span>
-              <template v-if="row.value === '暂无'">
-                <button
-                  class="ml-1.5 text-brand-600 transition hover:underline disabled:opacity-50"
-                  :disabled="liveLoading"
-                  @click="loadLiveAddress"
-                >
-                  {{ liveLoading ? '查询中…' : '查实时地址' }}
-                </button>
-                <button
-                  class="ml-1.5 text-ink-500 transition hover:text-brand-600 hover:underline"
-                  @click="emit('feedback', { poi, field: '地址' })"
-                >
-                  补充地址
-                </button>
-              </template>
+              <span v-if="hasAddress">{{ row.value }}</span>
+              <span
+                v-else
+                data-testid="address-missing"
+                class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-600"
+              >
+                <span class="h-1 w-1 rounded-full bg-amber-500" />
+                地址待补充
+              </span>
             </template>
             <template v-else>{{ row.value }}</template>
           </dd>
         </div>
       </dl>
 
-      <div
-        v-if="liveAddress"
-        class="rounded-soft border border-brand-500/25 bg-brand-50/60 px-3 py-2.5"
+      <!-- 地址入口分层：主操作「查实时地址」+ 次操作「补充地址」，避免两个同级文字链 -->
+      <section
+        v-if="!hasAddress"
+        data-testid="address-action"
+        class="rounded-soft border border-amber-200/80 bg-amber-50/50 p-3"
       >
-        <p class="text-[10px] font-medium text-brand-600">
-          实时数据来自高德 · 未存储 · 关闭页面即消失
+        <div class="flex items-start gap-2">
+          <span
+            class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-600"
+          >
+            <svg
+              class="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M12 21s6-5.3 6-10a6 6 0 10-12 0c0 4.7 6 10 6 10z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="11" r="2.2" />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-ink-900">补全地址信息</p>
+            <p class="mt-0.5 text-[11px] leading-relaxed text-ink-500">
+              OSM 源头未记录该点位地址。可先用高德实时解析，或提交补充由运营核实后入库。
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-2.5 flex gap-2">
+          <button
+            data-testid="live-address-action"
+            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-500 px-3 py-1.5 text-[11px] font-medium text-white shadow-card transition hover:bg-brand-600 disabled:opacity-60"
+            :disabled="liveAddressState === 'loading'"
+            @click="loadLiveAddress"
+          >
+            <svg
+              class="h-3 w-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+            </svg>
+            {{
+              liveAddressState === 'loading'
+                ? '查询中…'
+                : liveAddressState === 'success'
+                  ? '重新查询'
+                  : '查实时地址'
+            }}
+          </button>
+          <button
+            data-testid="supplement-address-action"
+            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-[11px] text-ink-600 transition hover:border-brand-500/50 hover:text-brand-600"
+            @click="emit('feedback', { poi, field: '地址' })"
+          >
+            <svg
+              class="h-3 w-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M4 20h4l10.5-10.5a2.1 2.1 0 00-3-3L5 17v3z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            补充地址
+          </button>
+        </div>
+
+        <div v-if="liveAddressState === 'loading'" class="mt-2.5 space-y-1.5" aria-live="polite">
+          <div class="h-3 w-2/3 animate-pulse rounded bg-amber-100/80" />
+          <div class="h-3 w-1/2 animate-pulse rounded bg-amber-100/60" />
+        </div>
+        <div
+          v-else-if="liveAddressState === 'success' && liveAddress"
+          data-testid="live-address-result"
+          class="mt-2.5 rounded-lg border border-brand-500/20 bg-surface p-2.5"
+        >
+          <div class="flex items-center gap-1.5">
+            <span class="rounded bg-brand-50 px-1 py-0.5 text-[10px] font-medium text-brand-600">
+              高德实时
+            </span>
+            <span class="text-[10px] text-ink-400">L2 · 仅展示，不写入数据库</span>
+          </div>
+          <p class="mt-1 text-xs leading-relaxed text-ink-700">{{ liveAddress }}</p>
+          <p class="mt-0.5 text-[10px] text-ink-400">关闭页面后即消失</p>
+        </div>
+        <div
+          v-else-if="liveAddressState === 'unavailable' || liveAddressState === 'error'"
+          data-testid="live-address-status"
+          class="mt-2.5 rounded-lg border px-2.5 py-2"
+          :class="
+            liveAddressState === 'unavailable'
+              ? 'border-amber-200 bg-amber-50/70'
+              : 'border-red-200 bg-red-50/60'
+          "
+        >
+          <p
+            class="text-[11px] font-medium"
+            :class="liveAddressState === 'unavailable' ? 'text-amber-700' : 'text-red-600'"
+          >
+            {{ liveAddressState === 'unavailable' ? '实时地址暂不可用' : '实时地址查询失败' }}
+          </p>
+          <p
+            v-if="liveAddressMessage"
+            class="mt-0.5 break-words text-[11px] leading-relaxed text-ink-500"
+          >
+            {{ liveAddressMessage }}
+          </p>
+          <button
+            v-if="liveAddressState === 'error'"
+            class="mt-1 text-[11px] font-medium text-brand-600 hover:underline"
+            @click="loadLiveAddress"
+          >
+            重试
+          </button>
+        </div>
+        <p
+          v-else-if="liveAddressState === 'empty'"
+          data-testid="live-address-status"
+          class="mt-2.5 text-[11px] leading-relaxed text-ink-400"
+        >
+          高德没有返回该坐标的地址，建议补充地址让运营核实。
         </p>
-        <p class="mt-1 text-xs leading-relaxed text-ink-700">{{ liveAddress }}</p>
-      </div>
-      <p v-else-if="liveMessage" class="text-[11px] leading-relaxed text-ink-400">
-        {{ liveMessage }}
-      </p>
+      </section>
 
       <div class="rounded-soft border border-line bg-surface-soft px-3 py-2.5">
         <p class="text-[11px] font-medium text-ink-700">数据来源</p>
@@ -231,48 +371,149 @@ function queryNearby(type: 'all' | 'atm'): void {
           </template>
         </p>
         <p
-          v-if="!poi.address"
+          v-if="!hasAddress"
           class="mt-1.5 border-t border-line pt-1.5 text-[11px] leading-relaxed text-ink-400"
         >
           OSM 在中国区的网点多只记录名称与坐标，地址缺失属源头问题，不是系统故障。
         </p>
       </div>
 
-      <section class="space-y-2">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-medium text-ink-700">实时周边（高德）</p>
+      <section class="space-y-2 rounded-soft border border-line bg-surface-soft p-3">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex min-w-0 items-start gap-2">
+            <span
+              class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-600"
+            >
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M15.5 8.5l-2 5-5 2 2-5 5-2z" stroke-linejoin="round" />
+              </svg>
+            </span>
+            <div class="min-w-0">
+              <p class="flex items-center gap-1.5 text-xs font-medium text-ink-900">
+                实时周边（高德）
+                <span class="rounded bg-brand-50 px-1 py-0.5 text-[9px] font-normal text-brand-600">
+                  L2
+                </span>
+              </p>
+              <p class="mt-0.5 text-[10px] leading-relaxed text-ink-400">
+                1km 内点位 · 实时展示，不写入数据库
+              </p>
+            </div>
+          </div>
           <button
-            class="text-[11px] text-brand-600 transition hover:underline disabled:opacity-50"
-            :disabled="livePoiLoading"
+            data-testid="live-around-action"
+            class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-500/30 bg-surface px-2.5 py-1 text-[11px] font-medium text-brand-600 transition hover:border-brand-500/60 hover:bg-brand-50 disabled:opacity-60"
+            :disabled="livePoiState === 'loading'"
             @click="loadLivePois"
           >
-            {{ livePoiLoading ? '查询中…' : '查 1km 内' }}
+            <svg
+              class="h-3 w-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M20 12a8 8 0 11-2.3-5.7M20 4v4h-4" stroke-linecap="round" />
+            </svg>
+            {{
+              livePoiState === 'loading'
+                ? '查询中…'
+                : livePoiState === 'success' || livePoiState === 'empty'
+                  ? '重新查询'
+                  : '查 1km 内'
+            }}
           </button>
         </div>
-        <p v-if="livePoiMessage" class="text-[11px] leading-relaxed text-ink-400">
-          {{ livePoiMessage }}
+
+        <p
+          v-if="livePoiState === 'idle'"
+          class="rounded-lg border border-dashed border-line-strong bg-surface px-2.5 py-2 text-[11px] leading-relaxed text-ink-400"
+        >
+          按需调用高德周边搜索，节省配额；结果仅用于当前页面展示。
         </p>
-        <ul v-if="livePois.length" class="space-y-1">
+        <div v-else-if="livePoiState === 'loading'" class="space-y-1.5" aria-live="polite">
+          <div v-for="i in 3" :key="i" class="h-7 animate-pulse rounded-lg bg-surface" />
+        </div>
+        <div
+          v-else-if="livePoiState === 'unavailable' || livePoiState === 'error'"
+          data-testid="live-around-status"
+          class="rounded-lg border px-2.5 py-2"
+          :class="
+            livePoiState === 'unavailable'
+              ? 'border-amber-200 bg-amber-50/70'
+              : 'border-red-200 bg-red-50/60'
+          "
+        >
+          <p
+            class="text-[11px] font-medium"
+            :class="livePoiState === 'unavailable' ? 'text-amber-700' : 'text-red-600'"
+          >
+            {{ livePoiState === 'unavailable' ? '实时周边暂不可用' : '实时周边查询失败' }}
+          </p>
+          <p
+            v-if="livePoiMessage"
+            class="mt-0.5 break-words text-[11px] leading-relaxed text-ink-500"
+          >
+            {{ livePoiMessage }}
+          </p>
+          <p class="mt-0.5 text-[10px] leading-relaxed text-ink-400">
+            {{
+              livePoiState === 'unavailable'
+                ? poi.type === 'community'
+                  ? '本地库数据不受影响，仍可使用下方「周边银行」查询。'
+                  : '本地库数据不受影响，不影响详情与列表查询。'
+                : '可稍后重试，不影响本地库查询。'
+            }}
+          </p>
+        </div>
+        <p
+          v-else-if="livePoiState === 'empty'"
+          data-testid="live-around-status"
+          class="rounded-lg border border-dashed border-line-strong bg-surface px-2.5 py-2 text-[11px] leading-relaxed text-ink-400"
+        >
+          {{ livePoiMessage || '1km 内没有查到点位' }}
+        </p>
+        <ul v-else-if="livePois.length" data-testid="live-around-list" class="space-y-1">
           <li
             v-for="(item, index) in livePois.slice(0, 5)"
             :key="`${item.name}-${index}`"
             class="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5"
           >
             <span class="min-w-0 flex-1 truncate text-[11px] text-ink-700">{{ item.name }}</span>
-            <span class="shrink-0 text-[10px] text-ink-400">
-              {{ item.distance !== undefined ? `${item.distance}m` : '' }}
+            <span class="shrink-0 text-[10px] tabular-nums text-ink-400">
+              {{ distanceLabel(item) }}
             </span>
           </li>
         </ul>
-        <p v-if="livePois.length" class="text-[10px] text-ink-400">
-          实时数据来自高德 · 未存储 · 关闭页面即消失
+        <p v-if="livePoiState === 'success'" class="text-[10px] leading-relaxed text-ink-400">
+          来源：高德开放平台 · 实时展示（L2），不写入数据库 · 关闭页面即消失
         </p>
       </section>
 
-      <section v-if="poi.type === 'community'" class="space-y-2.5">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-medium text-ink-700">周边银行</p>
-          <div class="flex rounded-lg border border-line bg-surface-soft p-0.5">
+      <section
+        v-if="poi.type === 'community'"
+        class="space-y-2.5 rounded-soft border border-line bg-surface-soft p-3"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="flex items-center gap-1.5 text-xs font-medium text-ink-900">
+              周边银行
+              <span
+                class="rounded bg-surface px-1 py-0.5 text-[9px] font-normal text-ink-400 ring-1 ring-line"
+              >
+                本地库
+              </span>
+            </p>
+            <p class="mt-0.5 text-[10px] text-ink-400">球面距离查询 · 数据已入库</p>
+          </div>
+          <div class="flex rounded-lg border border-line bg-surface p-0.5">
             <button
               v-for="option in [
                 { label: '500m', value: 500 },
@@ -307,13 +548,14 @@ function queryNearby(type: 'all' | 'atm'): void {
         </div>
 
         <div v-if="queried" class="space-y-1.5">
-          <p class="text-[11px] text-ink-400">
+          <p v-if="loading" class="text-[11px] text-ink-400">查询中…</p>
+          <p v-else class="text-[11px] text-ink-400">
             半径 {{ radius >= 1000 ? `${radius / 1000}km` : `${radius}m` }} 内共
             <span class="font-medium text-ink-700">{{ nearby.length }}</span> 个结果
           </p>
           <div
-            v-if="nearby.length === 0"
-            class="rounded-soft border border-dashed border-line-strong px-3 py-4"
+            v-if="!loading && nearby.length === 0"
+            class="rounded-lg border border-dashed border-line-strong bg-surface px-3 py-4"
           >
             <p class="text-[11px] text-ink-500">该区域本地库暂无数据</p>
             <button
@@ -324,7 +566,7 @@ function queryNearby(type: 'all' | 'atm'): void {
             </button>
           </div>
           <button
-            v-for="item in nearby.slice(0, 6)"
+            v-for="item in visibleNearby"
             :key="item.poi.id"
             class="flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-left transition hover:border-brand-500/40"
             @click="emit('locate', item.poi)"
