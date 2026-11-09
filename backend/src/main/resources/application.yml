@@ -58,3 +58,7 @@ app:
     api-key: ${DEEPSEEK_API_KEY:}
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
     model: ${DEEPSEEK_MODEL:deepseek-flash}
+    # 每日 03:30 自动补一批（免费时段，价格是高峰一半）；默认关闭
+    schedule-enabled: ${AGENT_SCHEDULE_ENABLED:false}
+    batch-size: 10
+    cron: 0 30 3 * * *
