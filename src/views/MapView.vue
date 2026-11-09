@@ -37,7 +37,6 @@ interface PanelShard {
   dy: string
   rot: string
   delay: string
-  color: string
   clip: string
 }
 
@@ -71,102 +70,161 @@ let introFallbackTimer: number | null = null
 
 const panelShards: PanelShard[] = [
   {
-    top: '7%',
-    left: '-22px',
-    width: '82px',
-    height: '3px',
-    dx: '-64px',
-    dy: '-38px',
-    rot: '-30deg',
+    top: '-16px',
+    left: '6%',
+    width: '30px',
+    height: '26px',
+    dx: '-40px',
+    dy: '-110px',
+    rot: '-44deg',
     delay: '0ms',
-    color: 'linear-gradient(90deg, rgba(37,99,235,0), rgba(37,99,235,.9))',
-    clip: 'polygon(0 25%, 100% 0, 84% 100%, 8% 76%)',
+    clip: 'polygon(0 0, 100% 18%, 78% 100%, 8% 82%)',
   },
   {
-    top: '26%',
-    left: 'calc(100% - 18px)',
-    width: '64px',
-    height: '2px',
-    dx: '58px',
-    dy: '-18px',
-    rot: '26deg',
+    top: '-10px',
+    left: '38%',
+    width: '46px',
+    height: '14px',
+    dx: '0px',
+    dy: '-120px',
+    rot: '28deg',
     delay: '40ms',
-    color: 'linear-gradient(90deg, rgba(103,232,249,.9), rgba(103,232,249,0))',
-    clip: 'polygon(16% 0, 100% 22%, 92% 100%, 0 72%)',
+    clip: 'polygon(0 8%, 100% 0, 84% 100%, 12% 88%)',
   },
   {
-    top: '48%',
-    left: '-30px',
-    width: '54px',
-    height: '4px',
-    dx: '-48px',
-    dy: '22px',
-    rot: '18deg',
-    delay: '90ms',
-    color: 'linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.85))',
-    clip: 'polygon(0 0, 100% 18%, 88% 100%, 4% 82%)',
-  },
-  {
-    top: '63%',
-    left: 'calc(100% - 26px)',
-    width: '76px',
-    height: '2px',
-    dx: '66px',
-    dy: '34px',
-    rot: '-22deg',
-    delay: '20ms',
-    color: 'linear-gradient(90deg, rgba(37,99,235,0), rgba(96,165,250,.85))',
-    clip: 'polygon(8% 12%, 100% 0, 96% 82%, 0 100%)',
-  },
-  {
-    top: '82%',
-    left: '-14px',
-    width: '48px',
-    height: '3px',
-    dx: '-38px',
-    dy: '46px',
-    rot: '34deg',
-    delay: '120ms',
-    color: 'linear-gradient(90deg, rgba(103,232,249,0), rgba(103,232,249,.8))',
-    clip: 'polygon(0 18%, 100% 0, 90% 100%, 10% 86%)',
-  },
-  {
-    top: '92%',
-    left: 'calc(100% - 20px)',
-    width: '58px',
-    height: '2px',
-    dx: '46px',
-    dy: '50px',
-    rot: '-16deg',
-    delay: '60ms',
-    color: 'linear-gradient(90deg, rgba(255,255,255,.75), rgba(255,255,255,0))',
-    clip: 'polygon(0 0, 100% 18%, 84% 100%, 12% 78%)',
+    top: '-14px',
+    left: '74%',
+    width: '24px',
+    height: '28px',
+    dx: '50px',
+    dy: '-110px',
+    rot: '-30deg',
+    delay: '80ms',
+    clip: 'polygon(10% 0, 100% 22%, 82% 100%, 0 70%)',
   },
   {
     top: '16%',
-    left: '38%',
-    width: '34px',
-    height: '2px',
-    dx: '12px',
-    dy: '-56px',
-    rot: '42deg',
-    delay: '150ms',
-    color: 'linear-gradient(90deg, rgba(96,165,250,.85), rgba(96,165,250,0))',
-    clip: 'polygon(0 20%, 100% 0, 82% 100%, 12% 74%)',
+    left: '-18px',
+    width: '18px',
+    height: '62px',
+    dx: '-120px',
+    dy: '20px',
+    rot: '58deg',
+    delay: '30ms',
+    clip: 'polygon(0 8%, 100% 0, 84% 100%, 12% 88%)',
+  },
+  {
+    top: '52%',
+    left: '-14px',
+    width: '30px',
+    height: '40px',
+    dx: '-130px',
+    dy: '10px',
+    rot: '-26deg',
+    delay: '110ms',
+    clip: 'polygon(0 0, 100% 16%, 74% 100%)',
+  },
+  {
+    top: '82%',
+    left: '-12px',
+    width: '38px',
+    height: '22px',
+    dx: '-100px',
+    dy: '70px',
+    rot: '38deg',
+    delay: '160ms',
+    clip: 'polygon(0 0, 100% 24%, 84% 100%, 10% 74%)',
+  },
+  {
+    top: '10%',
+    left: 'calc(100% - 4px)',
+    width: '22px',
+    height: '54px',
+    dx: '120px',
+    dy: '-30px',
+    rot: '34deg',
+    delay: '60ms',
+    clip: 'polygon(12% 0, 100% 12%, 88% 100%, 0 78%)',
+  },
+  {
+    top: '44%',
+    left: 'calc(100% - 8px)',
+    width: '28px',
+    height: '38px',
+    dx: '130px',
+    dy: '20px',
+    rot: '-32deg',
+    delay: '20ms',
+    clip: 'polygon(0 20%, 100% 0, 72% 100%)',
+  },
+  {
+    top: '74%',
+    left: 'calc(100% - 6px)',
+    width: '24px',
+    height: '30px',
+    dx: '110px',
+    dy: '60px',
+    rot: '26deg',
+    delay: '140ms',
+    clip: 'polygon(0 0, 100% 16%, 80% 100%, 10% 74%)',
+  },
+  {
+    top: 'calc(100% - 6px)',
+    left: '20%',
+    width: '42px',
+    height: '16px',
+    dx: '-20px',
+    dy: '110px',
+    rot: '-18deg',
+    delay: '90ms',
+    clip: 'polygon(0 12%, 100% 0, 88% 100%, 8% 82%)',
+  },
+  {
+    top: 'calc(100% - 4px)',
+    left: '52%',
+    width: '26px',
+    height: '20px',
+    dx: '10px',
+    dy: '120px',
+    rot: '46deg',
+    delay: '180ms',
+    clip: 'polygon(0 0, 100% 30%, 60% 100%)',
+  },
+  {
+    top: 'calc(100% - 8px)',
+    left: '80%',
+    width: '22px',
+    height: '18px',
+    dx: '40px',
+    dy: '110px',
+    rot: '-52deg',
+    delay: '30ms',
+    clip: 'polygon(0 20%, 100% 0, 86% 100%)',
   },
 ]
 
-function shardStyle(shard: PanelShard): Record<string, string> {
+const SHARD_COLORS = [
+  'linear-gradient(135deg, rgba(37,99,235,0.9), rgba(56,189,248,0.14))',
+  'linear-gradient(160deg, rgba(14,165,233,0.86), rgba(125,211,252,0.12))',
+  'linear-gradient(120deg, rgba(59,130,246,0.9), rgba(165,243,252,0.18))',
+  'linear-gradient(200deg, rgba(96,165,250,0.88), rgba(30,64,175,0.16))',
+]
+
+function shardOffset(value: string): string {
+  return `${Math.round(parseFloat(value) * 0.45)}px`
+}
+
+function shardStyle(shard: PanelShard, index: number): Record<string, string> {
   return {
     top: shard.top,
     left: shard.left,
     width: shard.width,
     height: shard.height,
-    '--dx': shard.dx,
-    '--dy': shard.dy,
+    '--dx': shardOffset(shard.dx),
+    '--dy': shardOffset(shard.dy),
     '--rot': shard.rot,
     '--delay': shard.delay,
-    background: shard.color,
+    background: SHARD_COLORS[index % SHARD_COLORS.length] ?? SHARD_COLORS[0],
     clipPath: shard.clip,
   }
 }
@@ -358,7 +416,7 @@ function closeDetail(): void {
         v-for="(shard, index) in panelShards"
         :key="index"
         class="intro-shard"
-        :style="shardStyle(shard)"
+        :style="shardStyle(shard, index)"
         aria-hidden="true"
       />
       <div
@@ -480,7 +538,7 @@ function closeDetail(): void {
         v-for="(shard, index) in panelShards"
         :key="index"
         class="intro-shard"
-        :style="shardStyle(shard)"
+        :style="shardStyle(shard, index)"
         aria-hidden="true"
       />
       <div
@@ -572,8 +630,6 @@ function closeDetail(): void {
       <span class="flex items-center gap-1.5"
         ><span class="h-2 w-2 rounded-full bg-amber-500" />小区</span
       >
-      <span class="h-3 w-px bg-line-strong" />
-      <span>数据：OpenStreetMap · ODbL</span>
     </div>
 
     <!-- 移动端列表 -->
@@ -610,39 +666,55 @@ function closeDetail(): void {
 
 <style scoped>
 .intro-card {
+  position: relative;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(18px) scale(0.97);
-  filter: blur(8px);
+  transform: translateY(14px) scale(0.97);
+  filter: blur(5px);
 }
 
 .intro-card.is-revealed {
   visibility: visible;
   pointer-events: auto;
-  animation: intro-card-assemble 0.72s cubic-bezier(0.16, 0.84, 0.3, 1) forwards;
+  animation: intro-card-assemble 0.68s cubic-bezier(0.16, 0.84, 0.3, 1) 0.34s both;
+}
+
+.intro-card.is-revealed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.55),
+    0 0 30px rgba(56, 189, 248, 0.32);
+  animation: intro-card-glow 1.15s ease-out 0.1s both;
 }
 
 .intro-panel .intro-shard {
   position: absolute;
   z-index: 1200;
+  border: 1px solid rgba(224, 242, 254, 0.75);
   border-radius: 2px;
   opacity: 0;
   pointer-events: none;
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
-  transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.5);
+  box-shadow:
+    0 0 22px rgba(37, 99, 235, 0.5),
+    inset 0 0 14px rgba(255, 255, 255, 0.28);
+  transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.45);
 }
 
 .intro-panel.is-revealed .intro-shard {
-  animation: intro-shard-fly 0.95s cubic-bezier(0.16, 0.84, 0.3, 1) forwards;
+  animation: intro-shard-fly 1.3s cubic-bezier(0.16, 0.84, 0.3, 1) forwards;
   animation-delay: var(--delay);
 }
 
 @keyframes intro-card-assemble {
   0% {
     opacity: 0;
-    transform: translateY(18px) scale(0.97);
-    filter: blur(8px);
+    transform: translateY(14px) scale(0.97);
+    filter: blur(5px);
   }
   55% {
     opacity: 1;
@@ -654,13 +726,28 @@ function closeDetail(): void {
   }
 }
 
-@keyframes intro-shard-fly {
+@keyframes intro-card-glow {
   0% {
     opacity: 0;
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.5);
   }
   22% {
-    opacity: 0.9;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes intro-shard-fly {
+  0% {
+    opacity: 0.95;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.45);
+  }
+  55% {
+    opacity: 0.85;
+  }
+  82% {
+    opacity: 0.4;
   }
   100% {
     opacity: 0;

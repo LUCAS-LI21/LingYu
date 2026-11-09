@@ -90,6 +90,11 @@
   transform: translateY(4px);
 }
 
+/* 隐藏 Vue DevTools 的悬浮按钮：演示截图时不要挡住底部控件 */
+#__vue-devtools-container__ {
+  display: none !important;
+}
+
 /* ---------------- Leaflet 定制 ---------------- */
 /* 底图去饱和：OSM 原生瓦片偏彩色，用滤镜压成浅灰，贴合白净的界面风格 */
 .leaflet-tile-pane {

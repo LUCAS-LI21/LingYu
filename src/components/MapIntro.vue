@@ -31,7 +31,6 @@ const emit = defineEmits<{
 }>()
 
 const canvas = ref<HTMLCanvasElement | null>(null)
-const stage = ref('初始化粒子场')
 const fading = ref(false)
 
 const FORM_MS = 1300
@@ -291,9 +290,6 @@ function drawFrame(now: number): void {
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
 
-  if (elapsed >= FORM_MS * 0.55) stage.value = '汇聚世界地图'
-  if (elapsed >= ZOOM_START) stage.value = '锁定深圳 · 福田'
-  if (elapsed >= ZOOM_START + ZOOM_MS * 0.3) stage.value = '展开本地情报'
   if (elapsed >= ZOOM_START + 120) fading.value = true
 
   if (!formed && elapsed >= ZOOM_START) {
@@ -376,7 +372,6 @@ onBeforeUnmount(() => {
     </header>
 
     <footer class="map-intro__footer">
-      <p class="map-intro__stage">{{ stage }}</p>
       <div class="map-intro__progress"><span /></div>
       <p class="map-intro__meta">Natural Earth · Public Domain · OpenStreetMap · ODbL 1.0</p>
     </footer>
@@ -479,16 +474,9 @@ onBeforeUnmount(() => {
   color: #e0f2fe;
 }
 
-.map-intro__stage {
-  font-size: 0.72rem;
-  letter-spacing: 0.32em;
-  color: rgba(224, 242, 254, 0.82);
-}
-
 .map-intro__progress {
   width: 100%;
   height: 2px;
-  margin-top: 0.85rem;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(125, 211, 252, 0.12);
@@ -551,11 +539,6 @@ onBeforeUnmount(() => {
 
   .map-intro__footer {
     bottom: 2.4rem;
-  }
-
-  .map-intro__stage {
-    font-size: 0.62rem;
-    letter-spacing: 0.22em;
   }
 }
 </style>
