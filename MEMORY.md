@@ -306,6 +306,48 @@ Docker 守护进程当前未启动，本轮只准备与静态校验，**没有�
 2. **按值回滚失败**：`UPDATE ... WHERE avg_price=88888` 时，定时抓取已把该行改回演示值，
    WHERE 不匹配 → 回滚静默失效、source 残留。**教训：回滚一律按主键 id，不按值匹配。**
 
+## 第六轮：三条数据线的实测进展（2026-11-10）
+
+### ① 参考价展示（已完成后端）
+
+- 新增 `ReferencePriceService/Controller`：读 `resources/seed/reference-price.csv`，
+  暴露 `GET /api/v1/reference-price`（分区中位数/最高/最低）与 `/items`（按区分页）
+- **数据坑**：用户下载的这份 463 条**全是罗湖区**（且 43 条价格是 `-`，解析时正确跳过 →
+  实际 420 条）。也就是说平台导出可能按区过滤，需要重新下载全市或逐区下载
+- 解析不需要容错解码：文件本身合法，只读到 420 行是因为 43 行价格为 `-`
+
+### ② 官方小区名录（子代理调研 + 我亲自复验）
+
+- **国家地名信息库** `https://dmfw.mca.gov.cn/9095/stname/listPub?code={9位街道码}` 匿名可用：
+  实测 `code=440304011` → 200、`total=197`，字段含 `standard_name`、`place_type_code`、
+  `area_name`、`gdm`（坐标几何）。`place_type_code=22100` 为城镇居民点（住宅区）。
+  **有名称 + 坐标，没有门牌地址** → 可用来校准坐标、补行政归属
+- 深圳「物业管理区域基础信息」（29200/01903550）需注册下载，可能带门牌地址，未核实字段
+- 高德：条款 3.5 明确只能展示、不得存储/缓存/抓取；3.4 还禁止用于数据集构建 → **不能当底册**
+
+### ③ 银行官网（进行中）
+
+- 建行网点页 `ebank3.ccb.cn/cn/home/map/branchSearch.html` 无验证码、robots 404
+- 数据走 `https://wealth.ccb.com/tran/WCCMainPlatV5` 网关：
+  `TXCODE=NAREA2&type=1/2/3` 取省/市/区；`TXCODE=NHY000` 需会话（直接调只返回 loginStatus）
+- **结论**：要选完省市区才发查询 → 需用 Playwright 驱动页面抓返回，不能纯 HTTP 调
+
+### ④ GitHub 可借鉴方案（子代理调研，已核对为 GitHub REST 当日数据）
+
+| 仓库                              | 可借鉴                                                    |
+| --------------------------------- | --------------------------------------------------------- |
+| hootenanny                        | 合并保留属性/几何 provenance，低分转人工                  |
+| splink                            | Fellegi–Sunter 概率打分 + 可组合 blocking，m/u 权重可解释 |
+| dedupe                            | blocking + affine gap + 主动学习，Gazetteer 链权威库      |
+| alltheplaces                      | 一品牌一 spider、统一 schema、周增量、少打扰站点          |
+| scrapy                            | robots 中间件、AutoThrottle 自适应限速、统一 UA           |
+| dolt                              | diff/blame/AS OF、单元格式历史、三方 merge                |
+| Administrative-divisions-of-China | 五级行政区划词典，做地址切分底座                          |
+
+**三个可直接落地的做法**：① blocking（区县+geohash+名称首字）后算 0–1 概率，>0.9 自动合并、
+0.6–0.9 人审；② 字段级 provenance `(field,value,source,confidence,run_id,operator,ts)`；
+③ 采集框架化（robots + 自适应限速 + 每站配额）。
+
 ## 高德服务选型（成本核算，2026-11-07）
 
 结论：**只开 1 个「Web 服务」Key + 2 个接口**（逆地理编码主力、周边搜索按钮兜底），底图不换、导航走 URI API。详见 [ADR-0002](docs/adr/0002-高德服务选型与配额预算.md)。
