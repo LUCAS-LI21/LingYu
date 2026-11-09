@@ -35,6 +35,7 @@ export default defineConfig({
       {
         text: '设计',
         items: [
+          { text: '数据接入 Agent（设计）', link: '/design/数据接入Agent' },
           { text: '数据源矩阵（能否入库）', link: '/design/数据源矩阵' },
           { text: 'ER 与索引', link: '/design/ER' },
         ],
