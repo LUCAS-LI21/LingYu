@@ -23,6 +23,11 @@ public class PoiRow {
     private Integer builtYear;
     private Integer avgPrice;
     private BigDecimal propertyFee;
+    /** 物业公司（政府物业项目库） */
+    private String propertyCompany;
+    /** 周边配套：1km 内银行网点数 / ATM 数（由本地库计算，非抓取） */
+    private Integer surroundBankCount;
+    private Integer surroundAtmCount;
     private Boolean demoAttributes;
     private String source;
     private String license;

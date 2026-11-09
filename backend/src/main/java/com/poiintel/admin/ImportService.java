@@ -55,7 +55,8 @@ public class ImportService {
             String branchType,
             Integer builtYear,
             Integer avgPrice,
-            Double propertyFee) {
+            Double propertyFee,
+            String propertyCompany) {
     }
 
     public record Request(String source, String license, String type, Boolean overwrite, Boolean enrich,
@@ -201,7 +202,8 @@ public class ImportService {
         return new Row(
                 trim(row.id()), trim(row.name()), trim(row.address()), trim(row.district()),
                 row.lng(), row.lat(), trim(row.phone()), trim(row.openingHours()), trim(row.brand()),
-                trim(row.branchType()), row.builtYear(), row.avgPrice(), row.propertyFee());
+                trim(row.branchType()), row.builtYear(), row.avgPrice(), row.propertyFee(),
+                trim(row.propertyCompany()));
     }
 
     private String validateEnrich(Row row) {
@@ -304,10 +306,12 @@ public class ImportService {
         } else {
             jdbcTemplate.update("""
                     INSERT INTO poi_community (id, name, address, district, lng, lat, built_year, avg_price,
-                                               property_fee, demo_attributes, source, license, source_level, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'L1', 'active')
+                                               property_fee, property_company, demo_attributes, source, license,
+                                               source_level, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'L1', 'active')
                     """, id, row.name(), blankTo(row.address(), ""), blankTo(row.district(), ""),
-                    row.lng(), row.lat(), row.builtYear(), row.avgPrice(), row.propertyFee(), source, license);
+                    row.lng(), row.lat(), row.builtYear(), row.avgPrice(), row.propertyFee(),
+                    blankTo(row.propertyCompany(), ""), source, license);
         }
     }
 
@@ -332,6 +336,7 @@ public class ImportService {
             putIfNeeded(sets, args, before, "built_year", row.builtYear(), overwrite);
             putIfNeeded(sets, args, before, "avg_price", row.avgPrice(), overwrite);
             putIfNeeded(sets, args, before, "property_fee", row.propertyFee(), overwrite);
+            putIfNeeded(sets, args, before, "property_company", row.propertyCompany(), overwrite);
         }
         if (sets.isEmpty()) return 0;
         sets.add("updated_at = NOW()");
