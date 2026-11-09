@@ -60,4 +60,14 @@ public class AgentController {
     public ApiResult<List<Map<String, Object>>> runs(@RequestParam(defaultValue = "20") int limit) {
         return ApiResult.ok(agentService.recentRuns(Math.min(Math.max(limit, 1), 100)));
     }
+
+    /** 批量补全：一次最多 20 条，只出建议不写库 */
+    @PostMapping("/batch")
+    public ApiResult<Map<String, Object>> batch(
+            @RequestParam(defaultValue = "bank") String entityType,
+            @RequestParam(defaultValue = "address") String field,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "false") boolean branchOnly) {
+        return ApiResult.ok(agentService.batch(entityType, field, limit, branchOnly));
+    }
 }

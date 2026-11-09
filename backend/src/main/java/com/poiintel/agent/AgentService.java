@@ -209,6 +209,47 @@ public class AgentService {
                 """, limit);
     }
 
+    /**
+     * 批量补全：挑出缺该字段的实体，逐个跑 propose。
+     * 只出建议、不写库；返回各类结果计数，便于判断要不要继续投人审。
+     */
+    public Map<String, Object> batch(String entityType, String field, int limit, boolean branchOnly) {
+        String table = "bank".equals(entityType) ? "poi_bank" : "poi_community";
+        String column = switch (field) {
+            case "address" -> "address";
+            case "phone" -> "phone";
+            case "openingHours" -> "opening_hours";
+            default -> throw new IllegalArgumentException("不支持的字段：" + field);
+        };
+        int size = Math.min(Math.max(limit, 1), 20);
+
+        String sql = "SELECT id FROM " + table + " WHERE " + column + " = ''"
+                + (branchOnly ? " AND name REGEXP '支行|分行|营业部|分理处|储蓄所|ATM'" : "")
+                + " ORDER BY id LIMIT " + size;
+        List<String> ids = jdbcTemplate.queryForList(sql, String.class);
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        Map<String, Integer> tally = new LinkedHashMap<>();
+        for (String id : ids) {
+            Map<String, Object> one = propose(entityType, id, field);
+            String status = String.valueOf(one.get("status"));
+            tally.merge(status, 1, Integer::sum);
+            Map<String, Object> brief = new LinkedHashMap<>();
+            brief.put("id", id);
+            brief.put("name", one.get("name"));
+            brief.put("status", status);
+            brief.put("runId", one.get("runId"));
+            items.add(brief);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("requested", size);
+        result.put("processed", ids.size());
+        result.put("tally", tally);
+        result.put("items", items);
+        return result;
+    }
+
     // ---------- 内部 ----------
 
     private static final java.util.regex.Pattern BRANCH_LEVEL =
