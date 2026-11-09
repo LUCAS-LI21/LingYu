@@ -30,6 +30,8 @@ const license = flag('license', '政府公开信息（署名）')
 const batchSize = Number(flag('batch', '200'))
 const mappingArg = flag('map')
 const apiBase = flag('api', 'http://127.0.0.1:8080')
+// 数据集没有坐标时用补全模式：按名称匹配已有 POI，不新建记录
+const enrich = hasFlag('enrich')
 const overwrite = hasFlag('overwrite')
 const dryRun = hasFlag('dry-run')
 
@@ -156,7 +158,7 @@ for (let i = 0; i < rows.length; i += batchSize) {
   const response = await fetch(`${apiBase}/api/v1/admin/import`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ source, license, type, overwrite, rows: chunk }),
+    body: JSON.stringify({ source, license, type, overwrite, enrich, rows: chunk }),
   })
   const body = await response.json()
   if (body.code !== 0) {
