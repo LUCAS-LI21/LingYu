@@ -18,7 +18,7 @@ const submitting = ref(false)
 
 const fieldOptions = computed(() =>
   props.poi.type === 'bank'
-    ? ['名称', '地址', '电话', '营业时间', '网点状态']
+    ? ['名称', '地址', '电话', '营业时间']
     : ['名称', '地址', '建成年份', '均价', '物业费'],
 )
 

@@ -45,7 +45,7 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null
 const fieldOptions = computed(() => {
   if (!selected.value) return []
   return selected.value.type === 'bank'
-    ? ['地址', '电话', '营业时间', '名称', '网点状态']
+    ? ['地址', '电话', '营业时间', '名称']
     : ['地址', '建成年份', '均价', '物业费', '名称']
 })
 

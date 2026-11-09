@@ -111,7 +111,7 @@ watch(
       <div>
         <h1 class="text-xl font-semibold tracking-tight text-ink-900">用户后台</h1>
         <p class="mt-1 text-xs text-ink-500">
-          对数据纠错、补充与关闭；提交后进入运营审核队列，并可用于优化采集优先级
+          访客模式 · 对数据纠错、补充与关闭；提交后进入运营审核队列，并可用于优化采集优先级
         </p>
       </div>
 
