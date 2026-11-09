@@ -15,6 +15,7 @@ declare module 'vue' {
     FeedbackDialog: typeof import('./components/FeedbackDialog.vue')['default']
     FilterPanel: typeof import('./components/FilterPanel.vue')['default']
     MapCanvas: typeof import('./components/MapCanvas.vue')['default']
+    MobileSheet: typeof import('./components/MobileSheet.vue')['default']
     PoiCard: typeof import('./components/PoiCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

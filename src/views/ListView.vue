@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 
 import DetailPanel from '@/components/DetailPanel.vue'
 import FeedbackDialog from '@/components/FeedbackDialog.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import MobileSheet from '@/components/MobileSheet.vue'
 import PoiCard from '@/components/PoiCard.vue'
 import { filterPois, loadPois, nearby as nearbyQuery, paginate, type NearbyItem } from '@/api/pois'
 import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
@@ -17,6 +19,7 @@ const pageSize = 12
 const selected = ref<Poi | null>(null)
 const nearbyItems = ref<NearbyItem[]>([])
 const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
+const isDesktop = useMediaQuery('(min-width: 1024px)')
 
 const filtered = computed(() =>
   filterPois(pois.value, { filters: filters.value, sort: sort.value }),
@@ -131,7 +134,7 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
       leave-to-class="translate-x-6 opacity-0"
     >
       <div
-        v-if="selected"
+        v-if="selected && isDesktop"
         class="fixed inset-y-3 right-3 top-[3.75rem] z-[1500] w-[360px] max-w-[calc(100vw-1.5rem)]"
       >
         <div class="h-full overflow-hidden rounded-card border border-line bg-surface shadow-float">
@@ -146,6 +149,19 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
         </div>
       </div>
     </Transition>
+
+    <!-- 移动端详情：底部面板，与地图页保持一致的交互 -->
+    <MobileSheet :open="Boolean(selected) && !isDesktop" @close="selected = null">
+      <DetailPanel
+        v-if="selected"
+        :poi="selected"
+        :nearby="nearbyItems"
+        @close="selected = null"
+        @locate="selected = null"
+        @feedback="(payload) => (feedbackTarget = payload)"
+        @nearby="handleNearby"
+      />
+    </MobileSheet>
 
     <FeedbackDialog
       v-if="feedbackTarget"

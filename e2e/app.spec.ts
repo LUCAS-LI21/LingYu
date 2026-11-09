@@ -49,6 +49,22 @@ test.describe('邻域 POI 主流程', () => {
     await expect(page.getByText(/反馈已提交：FB/)).toBeVisible({ timeout: 10_000 })
   })
 
+  test('移动端点击点位打开底部详情面板', async ({ page, isMobile }) => {
+    test.skip(!isMobile, '仅移动端布局')
+    await page.goto('/')
+    await expect.poll(() => readCount(page), { timeout: 25_000 }).toBeGreaterThan(0)
+
+    await page.locator('[data-testid="poi-card"]:visible').first().click()
+
+    const sheet = page.getByTestId('mobile-detail-sheet')
+    await expect(sheet).toBeVisible()
+    await expect(sheet.getByText('数据来源')).toBeVisible()
+    await expect(sheet.getByRole('button', { name: '地图定位' })).toBeVisible()
+
+    await sheet.getByRole('button', { name: '关闭', exact: true }).click()
+    await expect(sheet).toBeHidden()
+  })
+
   test('数据说明页展示三级授权模型', async ({ page }) => {
     await page.goto('/compliance')
 
