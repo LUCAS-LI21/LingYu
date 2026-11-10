@@ -62,7 +62,8 @@ public class PoiController {
         query.setEast(east);
         query.setNorth(north);
         query.setSort(sort == null ? "default" : sort);
-        int safeSize = Math.min(Math.max(size, 1), 5000);
+        // 上限 20000：小区已扩到 3600+，加上银行超过 5000，卡太低会导致前端静默丢点位
+        int safeSize = Math.min(Math.max(size, 1), 20000);
         query.setSize(safeSize);
         query.setOffset(Math.max(0, (Math.max(page, 1) - 1) * safeSize));
 

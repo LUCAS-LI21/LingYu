@@ -113,7 +113,7 @@ function toPoi(row: ServerPoi): Poi {
 }
 
 export async function fetchAllPois(): Promise<Poi[]> {
-  const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=5000')
+  const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=20000')
   return data.items.map(toPoi)
 }
 
