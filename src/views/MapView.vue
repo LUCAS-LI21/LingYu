@@ -65,6 +65,7 @@ const introActive = ref(shouldIntro)
 const cardsReady = ref(!shouldIntro)
 const overlayDone = ref(!shouldIntro)
 const mapSettled = ref(!shouldIntro)
+const instantReveal = ref(!shouldIntro)
 
 let introFallbackTimer: number | null = null
 
@@ -234,9 +235,14 @@ const panelShards: PanelShard[] = SHARD_SEEDS.map((seed, index) => ({
   clip: SHARD_CLIPS[index % SHARD_CLIPS.length] ?? SHARD_CLIPS[0],
 }))
 
-function shardOffset(value: string): string {
-  // 从地图内侧向卡片边缘汇聚，避免碎片一开始就飞出屏幕
+function shardOffsetX(value: string): string {
+  // 左右卡片：从地图内侧向卡片边缘汇聚
   return `${Math.round(parseFloat(value) * -0.8)}px`
+}
+
+function shardOffsetY(value: string): string {
+  // 上下卡片：从卡片外侧向边缘汇聚
+  return `${Math.round(parseFloat(value) * 0.5)}px`
 }
 
 function shardStyle(shard: PanelShard): Record<string, string> {
@@ -245,8 +251,8 @@ function shardStyle(shard: PanelShard): Record<string, string> {
     left: shard.left,
     width: shard.width,
     height: shard.height,
-    '--dx': shardOffset(shard.dx),
-    '--dy': shardOffset(shard.dy),
+    '--dx': shardOffsetX(shard.dx),
+    '--dy': shardOffsetY(shard.dy),
     '--rot': shard.rot,
     '--delay': shard.delay,
     clipPath: shard.clip,
@@ -291,6 +297,7 @@ function skipIntro(): void {
   overlayDone.value = true
   mapSettled.value = true
   cardsReady.value = true
+  instantReveal.value = true
   introActive.value = false
   mapRef.value?.finishIntro()
 }
@@ -301,6 +308,7 @@ onMounted(async () => {
       overlayDone.value = true
       mapSettled.value = true
       cardsReady.value = true
+      instantReveal.value = true
       introActive.value = false
       mapRef.value?.finishIntro()
     }, 6000)
@@ -414,7 +422,10 @@ function closeDetail(): void {
 </script>
 
 <template>
-  <div class="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-canvas">
+  <div
+    class="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-canvas"
+    :class="{ 'intro-instant': instantReveal }"
+  >
     <MapCanvas
       ref="mapRef"
       :pois="visiblePois"
@@ -700,7 +711,23 @@ function closeDetail(): void {
 .intro-card.is-revealed {
   visibility: visible;
   pointer-events: auto;
-  animation: intro-card-assemble 0.7s cubic-bezier(0.16, 0.84, 0.3, 1) 0.55s both;
+  animation: intro-card-assemble 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) 2.25s both;
+}
+
+/* 跳过动画 / 减少动效 / 自动化环境：立即显示，避免卡片透明但仍可点击 */
+.intro-instant .intro-card,
+.intro-instant .intro-card.is-revealed {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  animation: none !important;
+  transform: none;
+  filter: none;
+}
+
+.intro-instant .intro-card.is-revealed::after,
+.intro-instant .intro-shard {
+  display: none;
 }
 
 .intro-card.is-revealed::after {
