@@ -11,6 +11,12 @@ const liveMocks = vi.hoisted(() => ({
 
 vi.mock('@/api/live', () => liveMocks)
 
+const poiApi = vi.hoisted(() => ({ fieldSourcesFromServer: vi.fn() }))
+vi.mock('@/api/pois', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/pois')>()
+  return { ...actual, fieldSourcesFromServer: poiApi.fieldSourcesFromServer }
+})
+
 const bank = (over: Partial<BankPoi> = {}): BankPoi => ({
   id: 'b1',
   type: 'bank',
@@ -143,5 +149,49 @@ describe('DetailPanel 地址入口分层', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="live-address-result"]').exists()).toBe(false)
+  })
+})
+
+describe('小区配套与字段来源', () => {
+  it('渲染周边配套四个指标', async () => {
+    const wrapper = mount(DetailPanel, {
+      props: {
+        poi: community({
+          propertyCompany: '深圳市万科物业管理有限公司',
+          surroundBankCount: 31,
+          nearbyBrandCount: 14,
+          nearestBankM: 218,
+          surroundAtmCount: 0,
+        }),
+        nearby: [],
+      },
+    })
+    await flushPromises()
+    const box = wrapper.find('[data-testid="community-amenities"]')
+    expect(box.exists()).toBe(true)
+    expect(box.text()).toContain('31 家')
+    expect(box.text()).toContain('14 个')
+    expect(box.text()).toContain('218 m')
+    expect(wrapper.text()).toContain('深圳市万科物业管理有限公司')
+  })
+
+  it('有字段来源时逐条渲染，无来源时整块隐藏', async () => {
+    poiApi.fieldSourcesFromServer.mockResolvedValueOnce([
+      { field: 'address', source: '深圳市政府数据开放平台', sourceUrl: '', updatedAt: '' },
+      { field: 'property_company', source: '深圳市政府数据开放平台', sourceUrl: '', updatedAt: '' },
+    ])
+    const wrapper = mount(DetailPanel, {
+      props: { poi: community({ propertyCompany: '某物业' }), nearby: [] },
+    })
+    await flushPromises()
+    const rows = wrapper.findAll('[data-testid="field-sources"] li')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.text()).toContain('地址')
+    expect(rows[0]?.text()).toContain('深圳市政府数据开放平台')
+
+    poiApi.fieldSourcesFromServer.mockResolvedValueOnce(null)
+    const empty = mount(DetailPanel, { props: { poi: community(), nearby: [] } })
+    await flushPromises()
+    expect(empty.find('[data-testid="field-sources"]').exists()).toBe(false)
   })
 })

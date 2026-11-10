@@ -24,6 +24,11 @@ interface ServerPoi {
   builtYear?: number | null
   avgPrice?: number | null
   propertyFee?: number | null
+  propertyCompany?: string | null
+  surroundBankCount?: number | null
+  surroundAtmCount?: number | null
+  nearbyBrandCount?: number | null
+  nearestBankM?: number | null
   demoAttributes?: boolean | null
   source?: string | null
   license?: string | null
@@ -98,6 +103,11 @@ function toPoi(row: ServerPoi): Poi {
     avgPrice: row.avgPrice ?? null,
     propertyFee:
       row.propertyFee === null || row.propertyFee === undefined ? null : Number(row.propertyFee),
+    propertyCompany: row.propertyCompany ?? '',
+    surroundBankCount: Number(row.surroundBankCount ?? 0),
+    surroundAtmCount: Number(row.surroundAtmCount ?? 0),
+    nearbyBrandCount: Number(row.nearbyBrandCount ?? 0),
+    nearestBankM: Number(row.nearestBankM ?? 0),
     demoAttributes: Boolean(row.demoAttributes),
   }
 }
@@ -105,6 +115,26 @@ function toPoi(row: ServerPoi): Poi {
 export async function fetchAllPois(): Promise<Poi[]> {
   const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=5000')
   return data.items.map(toPoi)
+}
+
+export interface FieldSource {
+  field: string
+  source: string
+  sourceUrl: string
+  updatedAt: string
+}
+
+/** 字段级来源：回答"这条地址/电话是哪来的" */
+export async function fetchFieldSources(id: string): Promise<FieldSource[]> {
+  const rows = await request<
+    Array<{ field: string; source: string; source_url?: string; updated_at?: string }>
+  >(`/pois/${encodeURIComponent(id)}/sources`)
+  return rows.map((r) => ({
+    field: r.field,
+    source: r.source,
+    sourceUrl: r.source_url ?? '',
+    updatedAt: r.updated_at ?? '',
+  }))
 }
 
 export interface ServerStats {

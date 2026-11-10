@@ -28,6 +28,13 @@ export interface CommunityPoi extends BasePoi {
   builtYear: number | null
   avgPrice: number | null
   propertyFee: number | null
+  /** 物业公司（政府物业项目库匹配所得，可能为空） */
+  propertyCompany?: string
+  /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数、最近银行距离（米） */
+  surroundBankCount?: number
+  surroundAtmCount?: number
+  nearbyBrandCount?: number
+  nearestBankM?: number
   /** 均价等字段是否为演示数据 */
   demoAttributes?: boolean
 }

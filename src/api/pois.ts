@@ -4,6 +4,8 @@ import {
   apiRequest,
   fetchAllPois,
   fetchNearby as fetchNearbyRemote,
+  fetchFieldSources,
+  type FieldSource,
   fetchStats as fetchStatsRemote,
   postFeedback,
   probeServer,
@@ -480,6 +482,15 @@ export async function statsFromServer(): Promise<Stats | null> {
   }
 }
 
+/** 字段级来源：后端在线才有，离线返回 null 让界面隐藏该区块 */
+export async function fieldSourcesFromServer(poi: Poi): Promise<FieldSource[] | null> {
+  if (!(await isServerMode())) return null
+  try {
+    return await fetchFieldSources(poi.id)
+  } catch {
+    return null
+  }
+}
 /** 优先走后端球面距离查询，失败返回 null 让调用方本地兜底 */
 export async function nearbyFromServer(
   poi: Poi,

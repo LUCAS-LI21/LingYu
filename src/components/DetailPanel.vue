@@ -2,7 +2,9 @@
 import { computed, ref, watch } from 'vue'
 
 import type { NearbyItem } from '@/api/pois'
+import { fieldSourcesFromServer } from '@/api/pois'
 import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
+import type { FieldSource } from '@/api/server'
 import type { BankPoi, Poi } from '@/types/poi'
 
 const props = defineProps<{
@@ -21,6 +23,30 @@ const emit = defineEmits<{
 const radius = ref(1000)
 const branchType = ref<'all' | 'atm'>('all')
 const queried = ref(false)
+
+/** 字段级来源：换了点位就重新拉，离线或后端不可用时为空（区块隐藏） */
+const fieldSources = ref<FieldSource[]>([])
+const FIELD_LABELS: Record<string, string> = {
+  address: '地址',
+  district: '行政区',
+  phone: '电话',
+  opening_hours: '营业时间',
+  brand: '品牌',
+  property_company: '物业公司',
+  built_year: '建成年份',
+  avg_price: '参考均价',
+  property_fee: '物业费',
+}
+watch(
+  () => props.poi?.id,
+  async (id) => {
+    fieldSources.value = []
+    if (!id) return
+    const rows = await fieldSourcesFromServer(props.poi)
+    if (rows) fieldSources.value = rows
+  },
+  { immediate: true },
+)
 
 /** 实时层状态：idle 未查 / loading / success 有结果 / empty 无结果 / unavailable 未开通 / error 请求失败 */
 type LiveState = 'idle' | 'loading' | 'success' | 'empty' | 'unavailable' | 'error'
@@ -134,6 +160,19 @@ const rows = computed(() => {
     { label: '建成年份', value: poi.builtYear ? `${poi.builtYear} 年` : '暂无' },
     { label: '参考均价', value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无' },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
+    ...(poi.propertyCompany ? [{ label: '物业公司', value: poi.propertyCompany }] : []),
+  ]
+})
+
+/** 周边配套：由本地库按 1km 球面距离算出来的，不是抓取的 */
+const amenities = computed(() => {
+  const poi = props.poi
+  if (poi.type !== 'community' || !poi.surroundBankCount) return []
+  return [
+    { label: '1km 银行', value: `${poi.surroundBankCount} 家` },
+    { label: '银行品牌', value: `${poi.nearbyBrandCount ?? 0} 个` },
+    { label: '最近银行', value: poi.nearestBankM ? `${poi.nearestBankM} m` : '—' },
+    { label: 'ATM', value: `${poi.surroundAtmCount ?? 0} 台` },
   ]
 })
 
@@ -368,6 +407,27 @@ function changeRadius(value: number): void {
         </p>
       </section>
 
+      <div
+        v-if="amenities.length"
+        data-testid="community-amenities"
+        class="rounded-soft border border-line bg-surface-soft px-3 py-2.5"
+      >
+        <p class="text-[11px] font-medium text-ink-700">周边配套</p>
+        <div class="mt-1.5 grid grid-cols-2 gap-1.5">
+          <div
+            v-for="item in amenities"
+            :key="item.label"
+            class="rounded-md bg-surface px-2 py-1.5"
+          >
+            <p class="text-[10px] text-ink-400">{{ item.label }}</p>
+            <p class="text-[12px] font-medium text-ink-800">{{ item.value }}</p>
+          </div>
+        </div>
+        <p class="mt-1.5 text-[10px] leading-relaxed text-ink-400">
+          由本地库按 1km 球面距离计算，随银行数据更新
+        </p>
+      </div>
+
       <div class="rounded-soft border border-line bg-surface-soft px-3 py-2.5">
         <p class="text-[11px] font-medium text-ink-700">数据来源</p>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-500">
@@ -377,6 +437,28 @@ function changeRadius(value: number): void {
             <span class="text-amber-600">均价/年份为演示数据，不构成投资建议</span>
           </template>
         </p>
+        <ul
+          v-if="fieldSources.length"
+          data-testid="field-sources"
+          class="mt-1.5 space-y-0.5 border-t border-line pt-1.5"
+        >
+          <li
+            v-for="item in fieldSources"
+            :key="item.field"
+            class="flex items-baseline justify-between gap-2 text-[10px] text-ink-500"
+          >
+            <span class="text-ink-400">{{ FIELD_LABELS[item.field] ?? item.field }}</span>
+            <a
+              v-if="item.sourceUrl"
+              :href="item.sourceUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="truncate text-accent hover:underline"
+              >{{ item.source }}</a
+            >
+            <span v-else class="truncate">{{ item.source }}</span>
+          </li>
+        </ul>
         <p
           v-if="!hasAddress"
           class="mt-1.5 border-t border-line pt-1.5 text-[11px] leading-relaxed text-ink-400"
