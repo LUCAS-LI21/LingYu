@@ -146,6 +146,13 @@ function queryNearby(type: 'all' | 'atm'): void {
   branchType.value = type
   runNearby()
 }
+
+/** 切换半径要立刻重查，否则数字还是上一个半径的（用户反馈过） */
+function changeRadius(value: number): void {
+  if (radius.value === value) return
+  radius.value = value
+  runNearby()
+}
 </script>
 
 <template>
@@ -525,7 +532,7 @@ function queryNearby(type: 'all' | 'atm'): void {
               :class="
                 radius === option.value ? 'bg-surface text-ink-900 shadow-card' : 'text-ink-500'
               "
-              @click="radius = option.value"
+              @click="changeRadius(option.value)"
             >
               {{ option.label }}
             </button>

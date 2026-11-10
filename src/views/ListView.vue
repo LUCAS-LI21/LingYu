@@ -8,7 +8,14 @@ import FeedbackDialog from '@/components/FeedbackDialog.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import MobileSheet from '@/components/MobileSheet.vue'
 import PoiCard from '@/components/PoiCard.vue'
-import { filterPois, loadPois, nearby as nearbyQuery, paginate, type NearbyItem } from '@/api/pois'
+import {
+  filterPois,
+  loadPois,
+  nearby as nearbyQuery,
+  nearbyFromServer,
+  paginate,
+  type NearbyItem,
+} from '@/api/pois'
 import { scheduleQueryLog, trackQueryNow } from '@/lib/queryTracker'
 import { DEFAULT_FILTERS, type Filters, type Poi, type PoiType } from '@/types/poi'
 
@@ -107,14 +114,15 @@ function onKeywordSearch(): void {
   trackQueryNow(currentQueryEvent())
 }
 
-function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | 'atm' }): void {
-  nearbyItems.value = nearbyQuery(
-    pois.value,
-    payload.poi,
-    payload.radius,
-    ['bank'],
-    payload.branchType,
-  )
+async function handleNearby(payload: {
+  poi: Poi
+  radius: number
+  branchType: 'all' | 'atm'
+}): Promise<void> {
+  // 与地图页一致：优先走后端球面距离，失败再本地兜底（本地只有已加载的那批点位，数字会偏小）
+  const remote = await nearbyFromServer(payload.poi, payload.radius, payload.branchType)
+  nearbyItems.value =
+    remote ?? nearbyQuery(pois.value, payload.poi, payload.radius, ['bank'], payload.branchType)
 }
 </script>
 
