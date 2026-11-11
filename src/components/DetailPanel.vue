@@ -161,6 +161,7 @@ const rows = computed(() => {
     { label: '参考均价', value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无' },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
     ...(poi.propertyCompany ? [{ label: '物业公司', value: poi.propertyCompany }] : []),
+    ...(poi.waterSavingYear ? [{ label: '节水型小区', value: `${poi.waterSavingYear} 年度` }] : []),
   ]
 })
 

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS poi_community (
   avg_price        INT          NULL,
   property_fee     DECIMAL(6, 1) NULL,
   property_company    VARCHAR(64) NOT NULL DEFAULT '' COMMENT '物业公司',
+  water_saving_year   SMALLINT    NULL COMMENT '节水型小区获评年度',
   surround_bank_count INT         NOT NULL DEFAULT 0 COMMENT '1km 内银行网点数',
   surround_atm_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内 ATM 数',
   nearest_bank_m      INT         NOT NULL DEFAULT 0 COMMENT '最近银行距离(米)',
@@ -69,11 +70,13 @@ CREATE TABLE IF NOT EXISTS feedback (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '用户反馈';
 
 -- 统一视图：让查询层不必区分两张业务表
-CREATE OR REPLACE VIEW v_poi AS
+DROP VIEW IF EXISTS v_poi;
+CREATE VIEW v_poi AS
 SELECT id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
        CAST(NULL AS SIGNED) AS built_year, CAST(NULL AS SIGNED) AS avg_price,
        CAST(NULL AS DECIMAL(6,1)) AS property_fee,
        CAST(NULL AS CHAR(64)) AS property_company,
+       CAST(NULL AS SIGNED) AS water_saving_year,
        CAST(NULL AS SIGNED) AS surround_bank_count, CAST(NULL AS SIGNED) AS surround_atm_count,
        CAST(NULL AS SIGNED) AS nearest_bank_m, CAST(NULL AS SIGNED) AS nearby_brand_count,
        0 AS demo_attributes, source, license, source_level, updated_at
@@ -82,7 +85,7 @@ UNION ALL
 SELECT id, 'community' AS type, name, address, district, lng, lat,
        CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
-       built_year, avg_price, property_fee, property_company, surround_bank_count, surround_atm_count,
+       built_year, avg_price, property_fee, property_company, water_saving_year, surround_bank_count, surround_atm_count,
        nearest_bank_m, nearby_brand_count,
        demo_attributes, source, license, source_level, updated_at
 FROM poi_community WHERE status <> 'closed';

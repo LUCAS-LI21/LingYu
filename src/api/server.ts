@@ -25,6 +25,7 @@ interface ServerPoi {
   avgPrice?: number | null
   propertyFee?: number | null
   propertyCompany?: string | null
+  waterSavingYear?: number | null
   surroundBankCount?: number | null
   surroundAtmCount?: number | null
   nearbyBrandCount?: number | null
@@ -104,6 +105,7 @@ function toPoi(row: ServerPoi): Poi {
     propertyFee:
       row.propertyFee === null || row.propertyFee === undefined ? null : Number(row.propertyFee),
     propertyCompany: row.propertyCompany ?? '',
+    waterSavingYear: row.waterSavingYear ?? null,
     surroundBankCount: Number(row.surroundBankCount ?? 0),
     surroundAtmCount: Number(row.surroundAtmCount ?? 0),
     nearbyBrandCount: Number(row.nearbyBrandCount ?? 0),

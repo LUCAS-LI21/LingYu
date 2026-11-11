@@ -27,7 +27,7 @@ const SRC = `https://opendata.sz.gov.cn/api/1514671018/1/service.xhtml?page=%d&r
 /** 归一化：只保留名字主干，用于跨库对齐 */
 function norm(name) {
   return String(name || '')
-    .replace(/[\s\u3000（）()【】\[\]·・\-—_、,，.。]/g, '')
+    .replace(/[\s\u3000（）()【】[\]·・_—、,，.。-]/g, '')
     .replace(/^深圳市/, '')
     .replace(/^(罗湖区|福田区|南山区|宝安区|龙岗区|盐田区|龙华区|坪山区|光明区|大鹏新区)/, '')
     .replace(/(小区|花园|公寓|大厦|新村|家园|名苑|广场|新村|社区|苑|庭|阁|居|里|城|府|湾)$/, '')
