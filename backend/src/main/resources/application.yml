@@ -1,6 +1,11 @@
 server:
   port: 8080
   shutdown: graceful
+  # 首屏一次拉 5000+ 点位，未压缩约 2.9MB；开 gzip 后约 1/6（实测见 MEMORY）
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
+    min-response-size: 2048
 
 spring:
   application:
@@ -52,7 +57,14 @@ app:
   live:
     # L2 实时层：只用于「查地址」等即时展示，绝不落库（高德协议 3.5）
     # 留空则前端显示不可用，但保留「补充地址」的反馈入口
+    # Key 必须是「Web服务」平台类型（ADR-0002）；调用前本地做 WGS-84 → GCJ-02 转换
     amap-key: ${AMAP_KEY:}
+    # 每日预算闸门（ADR-0002 §7）：个人认证基础 LBS 15 万/月、基础搜索仅 5,000/月
+    # 总预算覆盖两个接口；周边搜索单独更低，防止把最贵的搜索池打穿
+    daily-budget: ${LIVE_DAILY_BUDGET:300}
+    daily-budget-around: ${LIVE_DAILY_BUDGET_AROUND:100}
+    # 全局最小调用间隔，挡住连点与循环触发
+    min-interval-ms: ${LIVE_MIN_INTERVAL_MS:200}
   agent:
     # 数据接入 Agent：搜索 + 抽取 + 复核，产出建议后由管理员采纳
     api-key: ${DEEPSEEK_API_KEY:}

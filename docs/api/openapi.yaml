@@ -15,6 +15,8 @@ tags:
     description: 用户反馈
   - name: auth
     description: 鉴权
+  - name: live
+    description: L2 实时层（高德，即取即显、不落库，已做坐标转换与配额闸门）
   - name: admin
     description: 运营接口（需鉴权）
 
@@ -251,6 +253,53 @@ paths:
       responses:
         '200':
           description: OK
+
+  /api/v1/live/address:
+    get:
+      tags: [live]
+      summary: L2 实时地址（高德逆地理编码，即取即显，不落库）
+      description: |
+        高德服务协议 3.5 条只允许展示，因此后端不写库、不缓存，响应头 `Cache-Control: no-store`。
+        入参坐标按 **WGS-84** 解释，服务端内部转 GCJ-02 后再请求高德（ADR-0002 §6）。
+        服务端有每日预算 + 最小间隔闸门：触发时仍返回 200，但 `throttled=true`，`error` 给出可读原因。
+      parameters:
+        - in: query
+          name: lng
+          required: true
+          schema: { type: number, example: 114.0579 }
+        - in: query
+          name: lat
+          required: true
+          schema: { type: number, example: 22.5431 }
+      responses:
+        '200':
+          description: '{ enabled, throttled, address?, reason?, error?, coord_sys }'
+
+  /api/v1/live/pois:
+    get:
+      tags: [live]
+      summary: L2 实时周边 POI（高德 around，即取即显，不落库）
+      description: |
+        仅用于本地库缺数据时"补一眼"。返回坐标统一转回 **WGS-84**（`coord_sys=wgs84`），可直接画在 OSM 底图上。
+        周边搜索与输入提示共用个人认证 5,000 次/月 的配额，服务端单独限流（默认 100 次/日）。
+      parameters:
+        - in: query
+          name: lng
+          required: true
+          schema: { type: number }
+        - in: query
+          name: lat
+          required: true
+          schema: { type: number }
+        - in: query
+          name: radius
+          schema: { type: integer, default: 1000, minimum: 100, maximum: 5000 }
+        - in: query
+          name: keywords
+          schema: { type: string }
+      responses:
+        '200':
+          description: '{ enabled, throttled, items[], reason?, error?, coord_sys }'
 
   /api/v1/feedback:
     post:

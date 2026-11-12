@@ -3,6 +3,8 @@ export interface LiveAddressResult {
   address?: string
   reason?: string
   error?: string
+  throttled?: boolean
+  coord_sys?: string
   source?: string
   stored?: boolean
 }
@@ -22,6 +24,8 @@ export interface LiveAroundResult {
   items?: LivePoiItem[]
   reason?: string
   error?: string
+  throttled?: boolean
+  coord_sys?: string
   source?: string
   stored?: boolean
 }
