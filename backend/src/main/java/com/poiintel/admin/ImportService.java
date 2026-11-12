@@ -222,7 +222,8 @@ public class ImportService {
         return jdbcTemplate.queryForList("SELECT id FROM " + table + " WHERE name = ?", row.name());
     }
 
-    private String validate(Row row) {
+    /** 包级可见：便于同包单测直接验证校验规则 */
+    String validate(Row row) {
         if (row == null) return "空行";
         if (blankTo(row.name(), "").isBlank()) return "缺少名称";
         // OSM 的 bank 图层偶尔混入非银行机构或垃圾名，别让它们进主表
