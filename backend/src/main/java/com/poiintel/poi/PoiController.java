@@ -109,6 +109,27 @@ public class PoiController {
                 """, id));
     }
 
+    /**
+     * 存量住宅用地（宗地级）：政府开放数据接入的旁证，和 POI 是两套语义，单独查询。
+     */
+    @GetMapping("/land-parcels")
+    public ApiResult<Map<String, Object>> landParcels(
+            @RequestParam(required = false) String district,
+            @RequestParam(defaultValue = "20") int limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 200);
+        boolean filtered = district != null && !district.isBlank();
+        String where = filtered ? "WHERE district_street LIKE ? " : "";
+        Object[] args = filtered ? new Object[]{"%" + district.trim() + "%"} : new Object[0];
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("total", jdbcTemplate.queryForObject("SELECT COUNT(*) FROM land_parcel " + where,
+                Integer.class, args));
+        result.put("items", jdbcTemplate.queryForList(
+                "SELECT id, district_street, location, area_ha, housing_type, build_status, developer, "
+                        + "project_name, supply_date FROM land_parcel " + where
+                        + "ORDER BY supply_date DESC LIMIT " + safeLimit, args));
+        return ApiResult.ok(result);
+    }
+
     @GetMapping("/stats")
     public ApiResult<Map<String, Object>> stats() {
         return ApiResult.ok(poiService.stats());

@@ -225,11 +225,63 @@ public class ImportService {
     private String validate(Row row) {
         if (row == null) return "空行";
         if (blankTo(row.name(), "").isBlank()) return "缺少名称";
+        // OSM 的 bank 图层偶尔混入非银行机构或垃圾名，别让它们进主表
+        String name = row.name().trim();
+        if (name.matches("^(ATM|atm|subexits)$")) return "无效名称";
+        if (name.contains("证券") || name.contains("保险") || name.contains("基金")) return "非银行机构";
         if (row.lng() == null || row.lat() == null) return "缺少坐标";
         if (row.lng() < LNG_MIN || row.lng() > LNG_MAX || row.lat() < LAT_MIN || row.lat() > LAT_MAX) {
             return "坐标超出深圳范围";
         }
         return null;
+    }
+
+    /** 优先用传入品牌，没有就从名称推 */
+    private String brandOrDerived(Row row) {
+        String brand = blankTo(row.brand(), "");
+        return brand.isBlank() ? deriveBrand(row.name()) : brand;
+    }
+
+    /** 从名称推品牌：OSM 常只给「招商银行深圳XX支行」或英文/繁体名，品牌列会空着 */
+    static String deriveBrand(String name) {
+        if (name == null) return "";
+        String n = name.replace('國', '国').replace('郵', '邮').replace('儲', '储')
+                .replace('銀', '银').replace('設', '设').replace('見', '见').replace('東', '东')
+                .replace('廣', '广').replace('興', '兴').replace('業', '业').replace('華', '华')
+                .replace('農', '农').replace('證', '证').replace('商', '商').trim();
+        String[][] rules = {
+                {"中国工商银行", "中国工商银行"}, {"ICBC", "中国工商银行"}, {"工商银行", "中国工商银行"},
+                {"中国农业银行", "中国农业银行"}, {"农业银行", "中国农业银行"},
+                {"中国建设银行", "中国建设银行"}, {"建设银行", "中国建设银行"}, {"建設銀行", "中国建设银行"},
+                {"中国邮政储蓄银行", "中国邮政储蓄银行"}, {"中國郵政儲蓄銀行", "中国邮政储蓄银行"},
+                {"邮政储蓄银行", "中国邮政储蓄银行"},
+                {"中国交通银行", "交通银行"}, {"交通银行", "交通银行"}, {"Bank of Communication", "交通银行"},
+                {"中国银行", "中国银行"}, {"Bank of China", "中国银行"},
+                {"招商银行", "招商银行"}, {"China Merchants Bank", "招商银行"},
+                {"平安银行", "平安银行"},
+                {"中信银行", "中信银行"},
+                {"中国光大银行", "中国光大银行"},
+                {"华夏银行", "华夏银行"},
+                {"兴业银行", "兴业银行"},
+                {"广发银行", "广发银行"},
+                {"上海浦东发展银行", "上海浦东发展银行"}, {"浦发银行", "上海浦东发展银行"},
+                {"中国民生银行", "中国民生银行"},
+                {"深圳农村商业银行", "深圳农商银行"}, {"深圳农商银行", "深圳农商银行"},
+                {"微众银行", "深圳前海微众银行"},
+                {"北京银行", "北京银行"}, {"江苏银行", "江苏银行"}, {"宁波银行", "宁波银行"},
+                {"杭州银行", "杭州银行"}, {"上海银行", "上海银行"}, {"浙商银行", "浙商银行"},
+                {"渤海银行", "渤海银行"}, {"恒丰银行", "恒丰银行"},
+                {"广东华兴银行", "广东华兴银行"}, {"华兴银行", "广东华兴银行"},
+                {"华商银行", "华商银行"}, {"广州银行", "广州银行"}, {"南粤银行", "广东南粤银行"},
+                {"华润银行", "珠海华润银行"},
+        };
+        for (String[] rule : rules) {
+            if (n.startsWith(rule[0])) return rule[1];
+        }
+        // 村镇银行：保留全名，别硬套成母行
+        int idx = n.indexOf("村镇银行");
+        if (idx > 0) return n.substring(0, idx + 4);
+        return "";
     }
 
     private String findExisting(String table, Row row) {
@@ -300,7 +352,7 @@ public class ImportService {
                     INSERT INTO poi_bank (id, name, brand, branch_type, address, district, lng, lat,
                                           phone, opening_hours, source, license, source_level, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'L1', 'active')
-                    """, id, row.name(), blankTo(row.brand(), ""),
+                    """, id, row.name(), brandOrDerived(row),
                     blankTo(row.branchType(), "branch"), blankTo(row.address(), ""),
                     blankTo(row.district(), ""), row.lng(), row.lat(),
                     blankTo(row.phone(), ""), blankTo(row.openingHours(), ""), source, license);
