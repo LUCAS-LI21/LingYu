@@ -169,3 +169,26 @@ describe('buildStats', () => {
     expect(stats.gridTop.length).toBeGreaterThan(0)
   })
 })
+
+describe('buildStats 区域维度', () => {
+  it('按区统计银行与小区数量，并按银行数倒序', () => {
+    const stats = buildStats([
+      bank('b1', { district: '南山区' }),
+      bank('b2', { district: '南山区' }),
+      bank('b3', { district: '福田区' }),
+      community('c1', { district: '福田区' }),
+      community('c2', { district: '福田区' }),
+      community('c3', { district: '南山区' }),
+    ])
+    expect(stats.byDistrict).toEqual([
+      { label: '南山区', bank: 2, community: 1 },
+      { label: '福田区', bank: 1, community: 2 },
+    ])
+    expect(stats.districts).toBe(2)
+  })
+
+  it('没有区的点位不计入区域统计', () => {
+    const stats = buildStats([bank('b1', { district: '' })])
+    expect(stats.byDistrict).toEqual([])
+  })
+})

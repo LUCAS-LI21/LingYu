@@ -45,6 +45,12 @@ const cards = computed(() => [
   { label: '覆盖区域', value: stats.value?.districts ?? 0, hint: '有数据的行政区', tone: 'ink' },
 ])
 
+const byDistrict = computed(() => stats.value?.byDistrict ?? [])
+
+/** 区域图按两者的最大值定标，保证条形可比 */
+const maxDistrict = computed(() =>
+  Math.max(1, ...byDistrict.value.map((row) => Math.max(row.bank, row.community))),
+)
 const hotBrands = computed(() => stats.value?.brands.slice(0, 6) ?? [])
 
 function submitSearch(): void {
@@ -213,6 +219,55 @@ function onClearRecent(): void {
     </div>
 
     <div class="mt-4 grid gap-4 lg:grid-cols-2">
+      <!-- 区域分布：银行 vs 小区 -->
+      <section
+        v-if="byDistrict.length"
+        data-testid="district-stats"
+        class="rounded-card border border-line bg-surface p-5 shadow-card lg:col-span-2"
+      >
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-ink-900">区域分布</h2>
+          <span class="text-[11px] text-ink-400">按行政区 · 银行 / 小区</span>
+        </div>
+        <ul class="space-y-2.5">
+          <li v-for="row in byDistrict" :key="row.label" class="flex items-center gap-3">
+            <span class="w-20 shrink-0 text-xs text-ink-600">{{ row.label }}</span>
+            <span class="flex-1 space-y-1">
+              <span class="flex items-center gap-2">
+                <span class="h-2 flex-1 overflow-hidden rounded-full bg-surface-soft">
+                  <span
+                    class="block h-full rounded-full bg-brand-500 transition-all duration-500"
+                    :style="{ width: `${(row.bank / maxDistrict) * 100}%` }"
+                  />
+                </span>
+                <span class="w-10 text-right text-[11px] tabular-nums text-ink-500">{{
+                  row.bank
+                }}</span>
+              </span>
+              <span class="flex items-center gap-2">
+                <span class="h-2 flex-1 overflow-hidden rounded-full bg-surface-soft">
+                  <span
+                    class="block h-full rounded-full bg-amber-500 transition-all duration-500"
+                    :style="{ width: `${(row.community / maxDistrict) * 100}%` }"
+                  />
+                </span>
+                <span class="w-10 text-right text-[11px] tabular-nums text-ink-400">{{
+                  row.community
+                }}</span>
+              </span>
+            </span>
+          </li>
+        </ul>
+        <div class="mt-3 flex gap-4 text-[11px] text-ink-400">
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full bg-brand-500" />银行网点
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="h-2 w-2 rounded-full bg-amber-500" />住宅小区
+          </span>
+        </div>
+      </section>
+
       <!-- 品牌分布 -->
       <section class="rounded-card border border-line bg-surface p-5 shadow-card">
         <div class="mb-4 flex items-center justify-between">

@@ -75,6 +75,7 @@ public class PoiService {
         stats.put("community", community);
         stats.put("districts", poiMapper.districtCount());
         stats.put("brands", normalizeList(poiMapper.topBrands(8), "label", "value"));
+        stats.put("byDistrict", poiMapper.countsByDistrict());
         stats.put("priceBuckets", orderedBuckets(poiMapper.priceBuckets()));
         stats.put("gridTop", gridCells(poiMapper.gridTop(6)));
         return stats;

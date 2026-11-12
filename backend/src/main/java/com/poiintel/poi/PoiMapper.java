@@ -30,4 +30,7 @@ public interface PoiMapper {
     List<Map<String, Object>> priceBuckets();
 
     List<Map<String, Object>> gridTop(@Param("limit") int limit);
+
+    /** 区域维度：每个区的银行数与小区数，供洞察页画图 */
+    List<Map<String, Object>> countsByDistrict();
 }

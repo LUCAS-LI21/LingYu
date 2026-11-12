@@ -147,6 +147,8 @@ export interface ServerStats {
   community: number
   districts: number
   brands: Array<{ label: string; value: number }>
+  /** 区域维度：每区银行数与小区数（可能为空数组，旧后端） */
+  byDistrict?: Array<{ label: string; bank: number | string; community: number | string }>
   priceBuckets: Array<{ label: string; value: number }>
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
 }

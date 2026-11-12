@@ -348,6 +348,8 @@ export interface Stats {
   community: number
   districts: number
   brands: Array<{ label: string; value: number }>
+  /** 区域维度：每区银行数与小区数 */
+  byDistrict: Array<{ label: string; bank: number; community: number }>
   priceBuckets: Array<{ label: string; value: number }>
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
 }
@@ -405,6 +407,19 @@ export function buildStats(pois: Poi[]): Stats {
       lat: cell.lat,
     }))
 
+  // 区域维度：每区银行数 / 小区数
+  const districtMap = new Map<string, { bank: number; community: number }>()
+  for (const poi of pois) {
+    if (!poi.district) continue
+    const entry = districtMap.get(poi.district) ?? { bank: 0, community: 0 }
+    if (poi.type === 'bank') entry.bank += 1
+    else entry.community += 1
+    districtMap.set(poi.district, entry)
+  }
+  const byDistrict = [...districtMap.entries()]
+    .map(([label, value]) => ({ label, bank: value.bank, community: value.community }))
+    .sort((a, b) => b.bank - a.bank || b.community - a.community)
+
   return {
     total: pois.length,
     bank: banks.length,
@@ -413,6 +428,7 @@ export function buildStats(pois: Poi[]): Stats {
     community: communities.length,
     districts: new Set(pois.map((p) => p.district)).size,
     brands,
+    byDistrict,
     priceBuckets,
     gridTop,
   }
@@ -476,7 +492,19 @@ export async function listFeedback(): Promise<FeedbackRecord[]> {
 export async function statsFromServer(): Promise<Stats | null> {
   if (!(await isServerMode())) return null
   try {
-    return await fetchStatsRemote()
+    const remote = await fetchStatsRemote()
+    // JDBC 的 SUM() 会以字符串返回，统一转数字；旧后端没有 byDistrict 时给空数组
+    return {
+      ...remote,
+      brands: remote.brands ?? [],
+      priceBuckets: remote.priceBuckets ?? [],
+      gridTop: remote.gridTop ?? [],
+      byDistrict: (remote.byDistrict ?? []).map((item) => ({
+        label: item.label,
+        bank: Number(item.bank) || 0,
+        community: Number(item.community) || 0,
+      })),
+    }
   } catch {
     return null
   }

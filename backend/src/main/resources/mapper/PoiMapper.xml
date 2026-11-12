@@ -84,6 +84,15 @@
         GROUP BY type, branch_type
     </select>
 
+    <select id="countsByDistrict" resultType="java.util.Map">
+        SELECT district AS label,
+               SUM(type = 'bank')      AS bank,
+               SUM(type = 'community') AS community
+        FROM v_poi
+        WHERE district &lt;&gt; ''
+        GROUP BY district
+        ORDER BY bank DESC, community DESC
+    </select>
     <select id="districtCount" resultType="int">
         SELECT COUNT(DISTINCT district) FROM v_poi WHERE district &lt;&gt; ''
     </select>
