@@ -1,5 +1,3 @@
-import { saveFeedbackRecord } from '@/lib/feedbackHistory'
-import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 import {
   apiRequest,
   fetchAllPois,
@@ -10,6 +8,8 @@ import {
   postFeedback,
   probeServer,
 } from './server'
+import { saveFeedbackRecord } from '@/lib/feedbackHistory'
+import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 
 let serverMode: boolean | null = null
 let probing: Promise<boolean> | null = null
@@ -547,5 +547,44 @@ export async function liveNearby(): Promise<LiveResult> {
   return {
     enabled: false,
     reason: '未配置高德 Key：实时层已降级，当前仅展示本地库数据（符合 L2 仅展示约束）',
+  }
+}
+
+/** 存量住宅用地（宗地级，政府开放数据） */
+export interface LandParcel {
+  id: string
+  districtStreet: string
+  location: string
+  areaHa: number | null
+  housingType: string
+  buildStatus: string
+  developer: string
+  projectName: string
+  supplyDate: string | null
+}
+
+export async function fetchLandParcels(
+  district = '',
+  limit = 100,
+): Promise<{ total: number; items: LandParcel[] }> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (district) params.set('district', district)
+  const data = await apiRequest<{
+    total: number
+    items: Array<Record<string, unknown>>
+  }>(`/land-parcels?${params.toString()}`)
+  return {
+    total: data.total ?? 0,
+    items: (data.items ?? []).map((row) => ({
+      id: String(row.id ?? ''),
+      districtStreet: String(row.district_street ?? ''),
+      location: String(row.location ?? ''),
+      areaHa: row.area_ha === null || row.area_ha === undefined ? null : Number(row.area_ha),
+      housingType: String(row.housing_type ?? ''),
+      buildStatus: String(row.build_status ?? ''),
+      developer: String(row.developer ?? ''),
+      projectName: String(row.project_name ?? ''),
+      supplyDate: row.supply_date ? String(row.supply_date) : null,
+    })),
   }
 }

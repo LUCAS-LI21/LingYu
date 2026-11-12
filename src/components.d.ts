@@ -17,6 +17,7 @@ declare module 'vue' {
     DetailPanel: typeof import('./components/DetailPanel.vue')['default']
     FeedbackDialog: typeof import('./components/FeedbackDialog.vue')['default']
     FilterPanel: typeof import('./components/FilterPanel.vue')['default']
+    LandParcelPanel: typeof import('./components/admin/LandParcelPanel.vue')['default']
     MapCanvas: typeof import('./components/MapCanvas.vue')['default']
     MobileSheet: typeof import('./components/MobileSheet.vue')['default']
     PoiCard: typeof import('./components/PoiCard.vue')['default']

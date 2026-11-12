@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import AgentPanel from '@/components/admin/AgentPanel.vue'
+import LandParcelPanel from '@/components/admin/LandParcelPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
 import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
@@ -20,7 +21,8 @@ import { isServerMode } from '@/api/pois'
 import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
-type Tab = 'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs' | 'compliance'
+type Tab =
+  'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs' | 'land' | 'compliance'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -91,6 +93,7 @@ const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'behavior', label: '查询行为' },
   { key: 'correction', label: '数据纠错' },
   { key: 'jobs', label: '抓取任务' },
+  { key: 'land', label: '存量用地' },
   { key: 'compliance', label: '数据说明' },
 ]
 
@@ -772,6 +775,11 @@ onBeforeUnmount(() => {
       <!-- Agent 建议：运行数据接入 Agent 并人工采纳 -->
       <div v-else-if="tab === 'agent'">
         <AgentPanel @unauthorized="onUnauthorized" />
+      </div>
+
+      <!-- 存量住宅用地：政府开放数据（宗地级），只读 -->
+      <div v-else-if="tab === 'land'">
+        <LandParcelPanel />
       </div>
 
       <!-- 查询行为：query_log 实时聚合 + 热点重算 -->
