@@ -588,3 +588,20 @@ export async function fetchLandParcels(
     })),
   }
 }
+
+/** 最近的 N 家银行（小区详情用） */
+export interface NearestBank {
+  id: string
+  name: string
+  brand: string
+  address: string
+  branchType: string
+  distance: number
+}
+
+export async function fetchNearestBanks(id: string, limit = 3): Promise<NearestBank[]> {
+  const data = await apiRequest<{ items: NearestBank[] }>(
+    `/pois/${encodeURIComponent(id)}/nearest-banks?limit=${limit}`,
+  )
+  return data.items ?? []
+}

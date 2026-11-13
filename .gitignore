@@ -50,3 +50,5 @@ data/ccb-probe/
 .dsh-tmp/
 scripts/probe-out/
 data/raw/
+
+data/pm-scan-progress.json

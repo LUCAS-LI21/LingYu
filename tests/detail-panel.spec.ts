@@ -11,10 +11,17 @@ const liveMocks = vi.hoisted(() => ({
 
 vi.mock('@/api/live', () => liveMocks)
 
-const poiApi = vi.hoisted(() => ({ fieldSourcesFromServer: vi.fn() }))
+const poiApi = vi.hoisted(() => ({
+  fieldSourcesFromServer: vi.fn(),
+  fetchNearestBanks: vi.fn(async () => []),
+}))
 vi.mock('@/api/pois', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/pois')>()
-  return { ...actual, fieldSourcesFromServer: poiApi.fieldSourcesFromServer }
+  return {
+    ...actual,
+    fieldSourcesFromServer: poiApi.fieldSourcesFromServer,
+    fetchNearestBanks: poiApi.fetchNearestBanks,
+  }
 })
 
 const bank = (over: Partial<BankPoi> = {}): BankPoi => ({
@@ -193,5 +200,52 @@ describe('小区配套与字段来源', () => {
     const empty = mount(DetailPanel, { props: { poi: community(), nearby: [] } })
     await flushPromises()
     expect(empty.find('[data-testid="field-sources"]').exists()).toBe(false)
+  })
+})
+
+describe('周边最近银行 Top3', () => {
+  it('小区展示最近 3 家银行与距离', async () => {
+    poiApi.fetchNearestBanks.mockResolvedValueOnce([
+      {
+        id: 'b1',
+        name: '平安银行深圳创业路支行',
+        brand: '平安银行',
+        address: '',
+        branchType: 'branch',
+        distance: 577,
+      },
+      {
+        id: 'b2',
+        name: '中国农业银行深圳新安支行',
+        brand: '中国农业银行',
+        address: '',
+        branchType: 'branch',
+        distance: 580,
+      },
+      {
+        id: 'b3',
+        name: '深圳农商银行创业支行',
+        brand: '深圳农商银行',
+        address: '',
+        branchType: 'branch',
+        distance: 590,
+      },
+    ])
+    const wrapper = mount(DetailPanel, { props: { poi: community(), nearby: [] } })
+    await flushPromises()
+    const box = wrapper.find('[data-testid="nearest-banks"]')
+    expect(box.exists()).toBe(true)
+    const rows = box.findAll('li')
+    expect(rows).toHaveLength(3)
+    expect(rows[0]?.text()).toContain('平安银行深圳创业路支行')
+    expect(rows[0]?.text()).toContain('577 m')
+  })
+
+  it('银行点位不请求最近银行，区块不出现', async () => {
+    poiApi.fetchNearestBanks.mockClear()
+    const wrapper = mount(DetailPanel, { props: { poi: bank(), nearby: [] } })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="nearest-banks"]').exists()).toBe(false)
+    expect(poiApi.fetchNearestBanks).not.toHaveBeenCalled()
   })
 })

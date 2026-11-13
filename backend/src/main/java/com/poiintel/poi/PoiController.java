@@ -110,6 +110,39 @@ public class PoiController {
     }
 
     /**
+     * 最近 N 家银行：小区详情页用，按球面距离升序。
+     * 半径默认 5km，找不到就返回空列表（不编造"附近"）。
+     */
+    @GetMapping("/pois/{id}/nearest-banks")
+    public ApiResult<Map<String, Object>> nearestBanks(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "3") int limit,
+            @RequestParam(defaultValue = "5000") double radius) {
+        PoiRow poi = poiService.detail(id);
+        if (poi == null) {
+            throw new IllegalArgumentException("点位不存在");
+        }
+        int safeLimit = Math.min(Math.max(limit, 1), 10);
+        List<PoiService.NearbyItem> items = poiService.nearby(poi.getLng(), poi.getLat(), radius, "all", safeLimit);
+        List<Map<String, Object>> list = new java.util.ArrayList<>();
+        for (PoiService.NearbyItem item : items) {
+            PoiRow bank = item.poi();
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("id", bank.getId());
+            row.put("name", bank.getName());
+            row.put("brand", bank.getBrand());
+            row.put("address", bank.getAddress());
+            row.put("branchType", bank.getBranchType());
+            row.put("distance", Math.round(item.distance()));
+            list.add(row);
+        }
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("poiId", id);
+        result.put("items", list);
+        return ApiResult.ok(result);
+    }
+
+    /**
      * 存量住宅用地（宗地级）：政府开放数据接入的旁证，和 POI 是两套语义，单独查询。
      */
     @GetMapping("/land-parcels")

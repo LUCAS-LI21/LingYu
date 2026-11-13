@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 import type { NearbyItem } from '@/api/pois'
-import { fieldSourcesFromServer } from '@/api/pois'
+import { fetchNearestBanks, fieldSourcesFromServer, type NearestBank } from '@/api/pois'
 import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
 import type { FieldSource } from '@/api/server'
 import type { BankPoi, Poi } from '@/types/poi'
@@ -44,6 +44,22 @@ watch(
     if (!id) return
     const rows = await fieldSourcesFromServer(props.poi)
     if (rows) fieldSources.value = rows
+  },
+  { immediate: true },
+)
+
+/** 最近的 3 家银行：只对小区有意义，后端按球面距离算，取不到就整块隐藏 */
+const nearestBanks = ref<NearestBank[]>([])
+watch(
+  () => props.poi?.id,
+  async () => {
+    nearestBanks.value = []
+    if (props.poi?.type !== 'community') return
+    try {
+      nearestBanks.value = await fetchNearestBanks(props.poi.id, 3)
+    } catch {
+      nearestBanks.value = []
+    }
   },
   { immediate: true },
 )
@@ -407,6 +423,31 @@ function changeRadius(value: number): void {
           高德没有返回该坐标的地址，建议补充地址让运营核实。
         </p>
       </section>
+
+      <div
+        v-if="nearestBanks.length"
+        data-testid="nearest-banks"
+        class="rounded-soft border border-line bg-surface-soft px-3 py-2.5"
+      >
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-medium text-ink-700">最近的银行</p>
+          <span class="text-[10px] text-ink-400">球面距离</span>
+        </div>
+        <ol class="mt-1.5 space-y-1">
+          <li
+            v-for="(item, index) in nearestBanks"
+            :key="item.id"
+            class="flex items-baseline gap-2 text-[11px]"
+          >
+            <span class="w-3 shrink-0 text-ink-400">{{ index + 1 }}</span>
+            <span class="min-w-0 flex-1 truncate text-ink-700" :title="item.name">
+              {{ item.name }}
+            </span>
+            <span class="shrink-0 tabular-nums text-ink-500">{{ item.distance }} m</span>
+          </li>
+        </ol>
+        <p class="mt-1.5 text-[10px] leading-relaxed text-ink-400">按直线距离排序，不含步行路径</p>
+      </div>
 
       <div
         v-if="amenities.length"
