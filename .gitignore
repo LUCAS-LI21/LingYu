@@ -52,3 +52,6 @@ scripts/probe-out/
 data/raw/
 
 data/pm-scan-progress.json
+
+data/pm-scan/
+data/community-pending.sql
