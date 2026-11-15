@@ -224,3 +224,42 @@ CREATE TABLE IF NOT EXISTS poi_field_source (
   updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (poi_type, poi_id, field)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '字段级来源（谁最后写了这个字段）';
+
+-- 待定位小区（有名称地址、缺坐标）；坐标由用户/管理员标注后写入并转正
+CREATE TABLE IF NOT EXISTS community_pending (
+  id             VARCHAR(64)  NOT NULL PRIMARY KEY,
+  name           VARCHAR(128) NOT NULL,
+  address        VARCHAR(255) NOT NULL DEFAULT '',
+  district       VARCHAR(32)  NOT NULL DEFAULT '',
+  street         VARCHAR(64)  NOT NULL DEFAULT '',
+  village_num    VARCHAR(32)  NOT NULL DEFAULT '',
+  attribute      VARCHAR(32)  NOT NULL DEFAULT '',
+  source         VARCHAR(64)  NOT NULL DEFAULT '深圳市政府数据开放平台-物业管理区域基础信息',
+  status         VARCHAR(16)  NOT NULL DEFAULT 'pending' COMMENT 'pending/geocoded/rejected',
+  lng            DOUBLE       NULL COMMENT '经度(WGS-84)',
+  lat            DOUBLE       NULL COMMENT '纬度(WGS-84)',
+  geocode_source VARCHAR(32)  NOT NULL DEFAULT '' COMMENT 'admin/user',
+  geocoded_at    DATETIME     NULL,
+  poi_id         VARCHAR(64)  NOT NULL DEFAULT '',
+  created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_cp_status (status),
+  KEY idx_cp_district (district)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '待定位小区（缺坐标）';
+
+-- 用户提交的坐标，管理员审核后才转正
+CREATE TABLE IF NOT EXISTS coordinate_submission (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  pending_id VARCHAR(64)  NOT NULL,
+  lng        DOUBLE       NOT NULL,
+  lat        DOUBLE       NOT NULL,
+  source     VARCHAR(16)  NOT NULL DEFAULT 'user',
+  submitter  VARCHAR(64)  NOT NULL DEFAULT '',
+  note       VARCHAR(200) NOT NULL DEFAULT '',
+  status     VARCHAR(16)  NOT NULL DEFAULT 'pending',
+  reviewer   VARCHAR(64)  NOT NULL DEFAULT '',
+  reviewed_at DATETIME    NULL,
+  poi_id     VARCHAR(64)  NOT NULL DEFAULT '',
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_cs_status (status),
+  KEY idx_cs_pending (pending_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '用户提交的小区坐标（待审）';

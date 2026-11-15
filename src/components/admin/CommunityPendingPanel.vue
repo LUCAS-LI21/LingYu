@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { fetchCommunityPending, type PendingCommunity } from '@/api/pois'
+import CoordinatePicker from '@/components/admin/CoordinatePicker.vue'
+import { apiRequest } from '@/api/server'
 import { SHENZHEN_DISTRICTS } from '@/types/poi'
 
 const items = ref<PendingCommunity[]>([])
@@ -53,7 +55,86 @@ function amapUrl(item: PendingCommunity): string {
   return `https://uri.amap.com/search?keyword=${encodeURIComponent(query)}&city=${encodeURIComponent('深圳')}&src=poi-intel`
 }
 
-onMounted(load)
+// ---------- 标注位置（众包坐标） ----------
+const pickerOpen = ref(false)
+const pickerTarget = ref<PendingCommunity | null>(null)
+const pickerHint = ref<{ lng: number; lat: number } | null>(null)
+const toast = ref('')
+
+interface SubmissionRow {
+  id: number
+  pending_id: string
+  name: string
+  address: string
+  district: string
+  lng: number
+  lat: number
+  submitter: string
+}
+
+const submissions = ref<SubmissionRow[]>([])
+
+function flash(message: string): void {
+  toast.value = message
+  setTimeout(() => (toast.value = ''), 2500)
+}
+
+async function loadSubmissions(): Promise<void> {
+  try {
+    submissions.value = await apiRequest<SubmissionRow[]>(
+      '/admin/coordinate-submissions?status=pending&limit=20',
+    )
+  } catch {
+    submissions.value = []
+  }
+}
+
+async function openPicker(item: PendingCommunity): Promise<void> {
+  pickerTarget.value = item
+  pickerHint.value = null
+  try {
+    pickerHint.value = await apiRequest<{ lng: number; lat: number }>(
+      `/community-pending/hint?district=${encodeURIComponent(item.district)}`,
+    )
+  } catch {
+    pickerHint.value = null
+  }
+  pickerOpen.value = true
+}
+
+async function submitCoordinate(payload: { lng: number; lat: number }): Promise<void> {
+  if (!pickerTarget.value) return
+  try {
+    await apiRequest(
+      `/admin/community-pending/${encodeURIComponent(pickerTarget.value.id)}/locate`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, note: '管理员标注' }),
+      },
+    )
+    pickerOpen.value = false
+    flash('已标注并转正，地图上可搜到该小区')
+    await load()
+  } catch (cause) {
+    flash(cause instanceof Error ? cause.message : '标注失败')
+  }
+}
+
+async function reviewSubmission(id: number, action: 'approve' | 'reject'): Promise<void> {
+  try {
+    await apiRequest(`/admin/coordinate-submissions/${id}/${action}`, { method: 'POST' })
+    flash(action === 'approve' ? '已通过并转正' : '已驳回')
+    await loadSubmissions()
+    if (action === 'approve') await load()
+  } catch (cause) {
+    flash(cause instanceof Error ? cause.message : '操作失败')
+  }
+}
+
+onMounted(() => {
+  void load()
+  void loadSubmissions()
+})
 </script>
 
 <template>
@@ -105,6 +186,47 @@ onMounted(load)
 
     <p v-if="error" class="mt-3 text-xs text-red-500">{{ error }}</p>
 
+    <p
+      v-if="toast"
+      data-testid="locate-toast"
+      class="mt-3 rounded-md border border-brand-200 bg-brand-50 px-3 py-1.5 text-[11px] text-brand-700"
+    >
+      {{ toast }}
+    </p>
+
+    <!-- 用户提交的坐标待审 -->
+    <div
+      v-if="submissions.length"
+      class="mt-4 rounded-soft border border-amber-200 bg-amber-50/60 p-3"
+    >
+      <p class="text-[11px] font-medium text-amber-700">
+        待审坐标 {{ submissions.length }} 条（用户提交，通过后转正进地图）
+      </p>
+      <ul class="mt-2 space-y-1.5">
+        <li
+          v-for="item in submissions"
+          :key="item.id"
+          class="flex flex-wrap items-center gap-2 text-[11px] text-ink-600"
+        >
+          <span class="font-medium text-ink-800">{{ item.name }}</span>
+          <span class="truncate text-ink-500">{{ item.address }}</span>
+          <span class="tabular-nums text-ink-400">{{ item.lng }}, {{ item.lat }}</span>
+          <button
+            class="rounded border border-brand-300 px-2 py-0.5 text-brand-700 transition hover:bg-brand-50"
+            @click="reviewSubmission(item.id, 'approve')"
+          >
+            通过
+          </button>
+          <button
+            class="rounded border border-line px-2 py-0.5 text-ink-500 transition hover:bg-surface"
+            @click="reviewSubmission(item.id, 'reject')"
+          >
+            驳回
+          </button>
+        </li>
+      </ul>
+    </div>
+
     <div class="mt-4 overflow-x-auto">
       <table class="w-full min-w-[760px] text-left text-xs">
         <thead class="text-[11px] text-ink-400">
@@ -136,13 +258,22 @@ onMounted(load)
             </td>
             <td class="whitespace-nowrap py-2 pr-3">{{ item.attribute || '—' }}</td>
             <td class="whitespace-nowrap py-2">
-              <a
-                :href="amapUrl(item)"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-brand-600 hover:underline"
-                >高德查看</a
-              >
+              <div class="flex items-center gap-2">
+                <button
+                  data-testid="pick-location"
+                  class="rounded border border-brand-300 px-2 py-0.5 text-brand-700 transition hover:bg-brand-50"
+                  @click="openPicker(item)"
+                >
+                  标注位置
+                </button>
+                <a
+                  :href="amapUrl(item)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-ink-500 hover:text-brand-600 hover:underline"
+                  >高德查看</a
+                >
+              </div>
             </td>
           </tr>
         </tbody>
@@ -168,5 +299,15 @@ onMounted(load)
         </button>
       </div>
     </div>
+
+    <CoordinatePicker
+      :open="pickerOpen"
+      :name="pickerTarget?.name ?? ''"
+      :address="pickerTarget?.address ?? ''"
+      :district="pickerTarget?.district ?? ''"
+      :hint="pickerHint"
+      @close="pickerOpen = false"
+      @submit="submitCoordinate"
+    />
   </section>
 </template>

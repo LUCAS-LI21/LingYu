@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +24,7 @@ public class PoiController {
 
     private final PoiService poiService;
     private final QueryLogService queryLogService;
+    private final CommunityLocateService locateService;
     private final JdbcTemplate jdbcTemplate;
 
     @GetMapping("/health")
@@ -151,6 +154,37 @@ public class PoiController {
         result.put("size", safeSize);
         result.put("items", items);
         return ApiResult.ok(result);
+    }
+
+    /** 待定位小区的地图初始中心（按区给一个近似中心，含 GCJ 版） */
+    @GetMapping("/community-pending/hint")
+    public ApiResult<Map<String, Object>> communityPendingHint(
+            @RequestParam(required = false) String district) {
+        return ApiResult.ok(locateService.hint(district));
+    }
+
+    /**
+     * 用户提交坐标（众包）：进入待审队列，管理员通过后才转正。
+     * 小程序/网页都能调，无需登录；管理员标注走 /admin 下的同名接口（直接生效）。
+     */
+    @PostMapping("/community-pending/{id}/locate")
+    public ApiResult<Map<String, Object>> locate(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        double lng = number(body.get("lng"));
+        double lat = number(body.get("lat"));
+        String note = body.get("note") == null ? "" : String.valueOf(body.get("note"));
+        return ApiResult.ok(locateService.submit(id, lng, lat, "user", "web", note));
+    }
+
+    private double number(Object value) {
+        if (value instanceof Number n) {
+            return n.doubleValue();
+        }
+        if (value == null) {
+            throw new IllegalArgumentException("缺少坐标");
+        }
+        return Double.parseDouble(String.valueOf(value));
     }
 
     /**

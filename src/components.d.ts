@@ -14,6 +14,7 @@ declare module 'vue' {
     AgentPanel: typeof import('./components/admin/AgentPanel.vue')['default']
     CommunityPendingPanel: typeof import('./components/admin/CommunityPendingPanel.vue')['default']
     ComplianceDoc: typeof import('./components/ComplianceDoc.vue')['default']
+    CoordinatePicker: typeof import('./components/admin/CoordinatePicker.vue')['default']
     CorrectionComposer: typeof import('./components/CorrectionComposer.vue')['default']
     DetailPanel: typeof import('./components/DetailPanel.vue')['default']
     FeedbackDialog: typeof import('./components/FeedbackDialog.vue')['default']

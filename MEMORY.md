@@ -1139,3 +1139,46 @@ https://uri.amap.com/search?keyword=<地址>&city=深圳&src=poi-intel
 
 - **用户众包补坐标**（4 941 条待定位小区）：闭环的"用户补充"目前只支持已有 POI 的字段纠错，
   不支持"给没有坐标的点位标位置"
+
+## 第二十七轮：众包补坐标（闭环的最后一环）（2026-11-16）
+
+### 为什么要自己做
+
+4 941 个待定位小区只有名称与地址。公开数据里没有小区级坐标（见 `docs/design/数据源矩阵.md` 的排查），
+商业地图坐标又禁止落库（高德协议 3.5）。唯一合规路径：**用户/管理员在地图上点一下，坐标就是自己产生的一手数据**。
+
+### 数据模型
+
+- `community_pending` 增加 `lng/lat/geocode_source/geocoded_at/poi_id`
+- 新表 `coordinate_submission`：用户提交的坐标先入队，管理员审核通过才转正
+
+### 接口
+
+| 接口                                                      | 权限    | 行为                                    |
+| --------------------------------------------------------- | ------- | --------------------------------------- |
+| `POST /api/v1/community-pending/{id}/locate`              | 公开    | 用户提交 → `coordinate_submission` 待审 |
+| `GET /api/v1/community-pending/hint?district=`            | 公开    | 给地图初始中心（含 GCJ 版）             |
+| `POST /api/v1/admin/community-pending/{id}/locate`        | 管理员  | 直接转正                                |
+| `GET /api/v1/admin/coordinate-submissions?status=pending` | 管理员  | 待审列表                                |
+| `POST /api/v1/admin/coordinate-submissions/{id}/approve   | reject` | 管理员                                  | 审核 |
+
+转正时写 `poi_community`（来源「用户贡献」/「管理员标注」）+ `poi_field_source` 逐字段留痕
+（name/address/district/lng/lat 全部标注来源），并回写 `community_pending.poi_id` 防止重复转正。
+
+### 前端
+
+后台「待定位小区」每行新增「标注位置」：弹窗内嵌 Leaflet（OSM 底图，点击即打点），
+确认后直接转正；顶部出现「待审坐标 N 条」区块，支持通过/驳回。
+
+### 实测（端到端）
+
+1. 用户提交 `TCL大厦` 坐标 → `status: pending`
+2. 管理员审核 → 生成 `cp-4403050070040043`，`source=用户贡献`
+3. 字段来源接口返回 5 条记录（name/address/district/lng/lat ← 用户贡献）
+4. 管理员标注 `万悦山璟庭` → `community_pending.status=geocoded`，`poi_community` 新增一行（管理员标注）
+5. 测试数据已全部回滚（4 941 条待定位、0 条已定位）
+
+### 坐标约定
+
+存储与会话统一 **WGS-84**；前端高德/腾讯跳转用后端算好的 `gcjLng/gcjLat`。
+小程序若用 `wx.getLocation({type:'gcj02'})`，提交前需转 WGS-84（契约文档已写明）。

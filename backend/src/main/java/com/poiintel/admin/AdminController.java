@@ -26,6 +26,7 @@ public class AdminController {
     private final IngestService ingestService;
     private final ImportService importService;
     private final PendingBankService pendingBankService;
+    private final com.poiintel.poi.CommunityLocateService communityLocateService;
     private final AuthService authService;
 
     /** 审核人必须来自 token 主体，不能信请求体（否则可伪造审核记录） */
@@ -121,6 +122,43 @@ public class AdminController {
             @RequestParam double lat,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         return ApiResult.ok(pendingBankService.promote(id, lng, lat, reviewerOf(authorization)));
+    }
+
+    // ---------- 待定位小区：众包坐标 ----------
+
+    /** 管理员直接标注坐标：立即转正成 poi_community（用户提交则走下面的审核队列） */
+    @PostMapping("/community-pending/{id}/locate")
+    public ApiResult<Map<String, Object>> locateCommunity(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        double lng = Double.parseDouble(String.valueOf(body.get("lng")));
+        double lat = Double.parseDouble(String.valueOf(body.get("lat")));
+        String note = body.get("note") == null ? "" : String.valueOf(body.get("note"));
+        return ApiResult.ok(communityLocateService.submit(id, lng, lat, "admin",
+                reviewerOf(authorization), note));
+    }
+
+    /** 用户提交的坐标（默认只看待审） */
+    @GetMapping("/coordinate-submissions")
+    public ApiResult<List<Map<String, Object>>> coordinateSubmissions(
+            @RequestParam(required = false, defaultValue = "pending") String status,
+            @RequestParam(defaultValue = "50") int limit) {
+        return ApiResult.ok(communityLocateService.submissions(status, limit));
+    }
+
+    @PostMapping("/coordinate-submissions/{id}/approve")
+    public ApiResult<Map<String, Object>> approveCoordinate(
+            @PathVariable long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return ApiResult.ok(communityLocateService.approve(id, reviewerOf(authorization)));
+    }
+
+    @PostMapping("/coordinate-submissions/{id}/reject")
+    public ApiResult<Map<String, Object>> rejectCoordinate(
+            @PathVariable long id,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return ApiResult.ok(communityLocateService.reject(id, reviewerOf(authorization)));
     }
 
     @GetMapping("/jobs")
