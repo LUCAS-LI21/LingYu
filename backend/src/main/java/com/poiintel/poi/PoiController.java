@@ -110,6 +110,50 @@ public class PoiController {
     }
 
     /**
+     * 待定位小区名录（有名称地址、缺坐标）。
+     *
+     * 定位靠「高德地图查看」外链：把地址交给用户在浏览器里打开，
+     * 我们不解析、不存储坐标（高德协议禁止存储，见 docs/design/数据源矩阵.md）。
+     */
+    @GetMapping("/community-pending")
+    public ApiResult<Map<String, Object>> communityPending(
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = Math.max(page, 1);
+        List<Object> args = new java.util.ArrayList<>();
+        StringBuilder where = new StringBuilder(" WHERE status = 'pending' ");
+        if (district != null && !district.isBlank()) {
+            where.append(" AND district = ? ");
+            args.add(district.trim());
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            where.append(" AND (name LIKE ? OR address LIKE ?) ");
+            String like = "%" + keyword.trim() + "%";
+            args.add(like);
+            args.add(like);
+        }
+        String base = " FROM community_pending " + where;
+        Integer total = jdbcTemplate.queryForObject("SELECT COUNT(*)" + base, Integer.class, args.toArray());
+        List<Object> pageArgs = new java.util.ArrayList<>(args);
+        pageArgs.add(safeSize);
+        pageArgs.add((safePage - 1) * safeSize);
+        List<Map<String, Object>> items = jdbcTemplate.queryForList(
+                "SELECT id, name, address, district, street, attribute" + base
+                        + " ORDER BY district, name LIMIT ? OFFSET ?",
+                pageArgs.toArray());
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("total", total == null ? 0 : total);
+        result.put("page", safePage);
+        result.put("size", safeSize);
+        result.put("items", items);
+        return ApiResult.ok(result);
+    }
+
+    /**
      * 最近 N 家银行：小区详情页用，按球面距离升序。
      * 半径默认 5km，找不到就返回空列表（不编造"附近"）。
      */

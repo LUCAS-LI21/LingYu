@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import AgentPanel from '@/components/admin/AgentPanel.vue'
 import LandParcelPanel from '@/components/admin/LandParcelPanel.vue'
+import CommunityPendingPanel from '@/components/admin/CommunityPendingPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
 import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
@@ -22,7 +23,15 @@ import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
 type Tab =
-  'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs' | 'land' | 'compliance'
+  | 'overview'
+  | 'feedback'
+  | 'agent'
+  | 'behavior'
+  | 'correction'
+  | 'jobs'
+  | 'land'
+  | 'pending'
+  | 'compliance'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -94,6 +103,7 @@ const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'correction', label: '数据纠错' },
   { key: 'jobs', label: '抓取任务' },
   { key: 'land', label: '存量用地' },
+  { key: 'pending', label: '待定位小区' },
   { key: 'compliance', label: '数据说明' },
 ]
 
@@ -780,6 +790,11 @@ onBeforeUnmount(() => {
       <!-- 存量住宅用地：政府开放数据（宗地级），只读 -->
       <div v-else-if="tab === 'land'">
         <LandParcelPanel />
+      </div>
+
+      <!-- 待定位小区：有名称地址、缺坐标，用高德外链定位（不存坐标） -->
+      <div v-else-if="tab === 'pending'">
+        <CommunityPendingPanel />
       </div>
 
       <!-- 查询行为：query_log 实时聚合 + 热点重算 -->

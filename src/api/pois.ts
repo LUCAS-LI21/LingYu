@@ -605,3 +605,46 @@ export async function fetchNearestBanks(id: string, limit = 3): Promise<NearestB
   )
   return data.items ?? []
 }
+
+/** 待定位小区（有名称地址、缺坐标） */
+export interface PendingCommunity {
+  id: string
+  name: string
+  address: string
+  district: string
+  street: string
+  attribute: string
+}
+
+export async function fetchCommunityPending(params: {
+  district?: string
+  keyword?: string
+  page?: number
+  size?: number
+}): Promise<{ total: number; page: number; size: number; items: PendingCommunity[] }> {
+  const query = new URLSearchParams({
+    page: String(params.page ?? 1),
+    size: String(params.size ?? 20),
+  })
+  if (params.district) query.set('district', params.district)
+  if (params.keyword) query.set('keyword', params.keyword)
+  const data = await apiRequest<{
+    total: number
+    page: number
+    size: number
+    items: Array<Record<string, unknown>>
+  }>(`/community-pending?${query.toString()}`)
+  return {
+    total: data.total ?? 0,
+    page: data.page ?? 1,
+    size: data.size ?? 20,
+    items: (data.items ?? []).map((row) => ({
+      id: String(row.id ?? ''),
+      name: String(row.name ?? ''),
+      address: String(row.address ?? ''),
+      district: String(row.district ?? ''),
+      street: String(row.street ?? ''),
+      attribute: String(row.attribute ?? ''),
+    })),
+  }
+}
