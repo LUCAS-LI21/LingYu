@@ -43,6 +43,18 @@
     <view class="filter-clear" bindtap="clearFilters">重置</view>
   </view>
 
+  <view class="filter-row mt-12">
+    <picker mode="selector" range="{{branchTypes}}" value="{{branchTypeIndex}}" bindchange="onBranchTypeChange">
+      <view class="filter-pill">{{branchTypeLabel}} ▾</view>
+    </picker>
+    <picker mode="selector" range="{{priceRanges}}" value="{{priceIndex}}" bindchange="onPriceChange">
+      <view class="filter-pill">{{priceLabel}} ▾</view>
+    </picker>
+    <picker mode="selector" range="{{yearRanges}}" value="{{yearIndex}}" bindchange="onYearChange">
+      <view class="filter-pill">{{yearLabel}} ▾</view>
+    </picker>
+  </view>
+
   <view class="result-line mt-20">
     <text>共 <text class="strong">{{total}}</text> 个点位</text>
     <text class="tiny">{{loading ? '加载中…' : (hasMore ? '上滑加载更多' : '已加载全部')}}</text>

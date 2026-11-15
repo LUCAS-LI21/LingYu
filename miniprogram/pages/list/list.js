@@ -24,6 +24,28 @@ const SORTS = [
   { key: 'yearDesc', label: '建成年份从晚到早' },
 ]
 
+const BRANCH_TYPES = [
+  { key: 'all', label: '全部网点' },
+  { key: 'branch', label: '柜台网点' },
+  { key: 'atm', label: 'ATM' },
+]
+
+const PRICE_RANGES = [
+  { label: '均价不限', minPrice: '', maxPrice: '' },
+  { label: '3 万以下', minPrice: '', maxPrice: '30000' },
+  { label: '3–5 万', minPrice: '30000', maxPrice: '50000' },
+  { label: '5–8 万', minPrice: '50000', maxPrice: '80000' },
+  { label: '8 万以上', minPrice: '80000', maxPrice: '' },
+]
+
+const YEAR_RANGES = [
+  { label: '年份不限', minYear: '', maxYear: '' },
+  { label: '2010 年前', minYear: '', maxYear: '2010' },
+  { label: '2010–2015', minYear: '2010', maxYear: '2015' },
+  { label: '2016–2020', minYear: '2016', maxYear: '2020' },
+  { label: '2021 年后', minYear: '2021', maxYear: '' },
+]
+
 const PAGE_SIZE = 20
 
 Page({
@@ -38,6 +60,16 @@ Page({
       { key: 'community', label: '小区' },
     ],
     type: 'all',
+    branchTypes: BRANCH_TYPES.map((item) => item.label),
+    branchTypeIndex: 0,
+    branchType: 'all',
+    branchTypeLabel: '全部网点',
+    priceRanges: PRICE_RANGES.map((item) => item.label),
+    priceIndex: 0,
+    priceLabel: '均价不限',
+    yearRanges: YEAR_RANGES.map((item) => item.label),
+    yearIndex: 0,
+    yearLabel: '年份不限',
     sortIndex: 0,
     sortLabel: '默认排序',
     sorts: SORTS.map((s) => s.label),
@@ -100,6 +132,8 @@ Page({
     this.loadingRequest = true
 
     try {
+      const price = PRICE_RANGES[this.data.priceIndex]
+      const year = YEAR_RANGES[this.data.yearIndex]
       const data = await get('/pois', {
         page,
         size: PAGE_SIZE,
@@ -111,6 +145,14 @@ Page({
               : 'community',
         keyword: this.data.keyword.trim(),
         district: this.data.district === '全部区域' ? '' : this.data.district,
+        branchType:
+          this.data.type === 'community' || this.data.branchType === 'all'
+            ? ''
+            : this.data.branchType,
+        minPrice: this.data.type === 'bank' ? '' : price.minPrice,
+        maxPrice: this.data.type === 'bank' ? '' : price.maxPrice,
+        minYear: this.data.type === 'bank' ? '' : year.minYear,
+        maxYear: this.data.type === 'bank' ? '' : year.maxYear,
         sort: SORTS[this.data.sortIndex].key,
       })
 
@@ -194,12 +236,41 @@ Page({
     this.fetch(true)
   },
 
+  onBranchTypeChange(e) {
+    const index = Number(e.detail.value)
+    this.setData({
+      branchTypeIndex: index,
+      branchType: BRANCH_TYPES[index].key,
+      branchTypeLabel: BRANCH_TYPES[index].label,
+    })
+    this.fetch(true)
+  },
+
+  onPriceChange(e) {
+    const index = Number(e.detail.value)
+    this.setData({ priceIndex: index, priceLabel: PRICE_RANGES[index].label })
+    this.fetch(true)
+  },
+
+  onYearChange(e) {
+    const index = Number(e.detail.value)
+    this.setData({ yearIndex: index, yearLabel: YEAR_RANGES[index].label })
+    this.fetch(true)
+  },
+
   clearFilters() {
     this.setData({
       keyword: '',
       districtIndex: 0,
       district: '全部区域',
       type: 'all',
+      branchTypeIndex: 0,
+      branchType: 'all',
+      branchTypeLabel: '全部网点',
+      priceIndex: 0,
+      priceLabel: '均价不限',
+      yearIndex: 0,
+      yearLabel: '年份不限',
       sortIndex: 0,
       sortLabel: '默认排序',
     })

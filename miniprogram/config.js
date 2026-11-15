@@ -7,7 +7,7 @@
  */
 const API_BASE = 'http://127.0.0.1:8080'
 
-const REQUEST_TIMEOUT = 15000
+const REQUEST_TIMEOUT = 30000
 const APP_VERSION = '0.1.0'
 
 module.exports = {
