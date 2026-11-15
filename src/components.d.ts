@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AgentPanel: typeof import('./components/admin/AgentPanel.vue')['default']
+    BankPendingPanel: typeof import('./components/admin/BankPendingPanel.vue')['default']
     CommunityPendingPanel: typeof import('./components/admin/CommunityPendingPanel.vue')['default']
     ComplianceDoc: typeof import('./components/ComplianceDoc.vue')['default']
     CoordinatePicker: typeof import('./components/admin/CoordinatePicker.vue')['default']

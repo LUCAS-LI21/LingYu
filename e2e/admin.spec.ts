@@ -76,5 +76,10 @@ test.describe('管理后台', () => {
     // 取消而不是确认：不写库
     await picker.getByRole('button', { name: '取消' }).click()
     await expect(picker).toBeHidden()
+
+    // 待定位网点：闭环最后一环（兴业 50 条 + 用户反馈新增），列表要能加载
+    await page.getByRole('button', { name: '待定位网点', exact: true }).click()
+    await expect(page.getByTestId('pick-bank-location').first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('待定位网点').first()).toBeVisible()
   })
 })
