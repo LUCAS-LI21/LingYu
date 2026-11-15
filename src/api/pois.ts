@@ -129,6 +129,16 @@ function normalize(raw: Record<string, unknown>): Poi | null {
 let cache: Poi[] | null = null
 let loading: Promise<Poi[]> | null = null
 
+/**
+ * 让点位缓存失效。
+ * 管理后台审核/标注/导入之后必须调用，否则列表和地图还是旧数据，
+ * 演示「反馈审核后立即生效」时会看起来没反应。
+ */
+export function invalidatePoiCache(): void {
+  cache = null
+  loading = null
+}
+
 /** 过滤「29栋」「3号楼」这类建筑级命名，小区名应至少有一个非数字字符 */
 function isNoiseName(name: string): boolean {
   const value = name.trim()

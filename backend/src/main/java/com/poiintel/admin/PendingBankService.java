@@ -30,6 +30,29 @@ public class PendingBankService {
     }
 
     @Transactional
+    /**
+     * 从「新增点位」反馈里取出要暂存的网点名称。
+     * 用户填的名字在 new_value，留空时退回 description；都没有就返回 null（不落脏数据）。
+     */
+    public Map<String, Object> feedbackOf(String code) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT new_value, description FROM feedback WHERE code = ? AND type = 'add'", code);
+        if (rows.isEmpty()) {
+            return null;
+        }
+        String name = String.valueOf(rows.get(0).get("new_value"));
+        if (name.isBlank() || "null".equals(name)) {
+            name = String.valueOf(rows.get(0).get("description"));
+        }
+        if (name.isBlank() || "null".equals(name)) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("name", name.length() > 128 ? name.substring(0, 128) : name.trim());
+        result.put("address", "");
+        return result;
+    }
+
     public synchronized Map<String, Object> importRows(Request request) {
         if (request == null || request.rows() == null || request.rows().isEmpty()) {
             throw new IllegalArgumentException("没有可导入的数据行");

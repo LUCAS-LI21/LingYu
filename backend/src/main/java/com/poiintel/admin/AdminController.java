@@ -57,16 +57,38 @@ public class AdminController {
         Map<String, Object> result = adminService.approve(code, reviewerOf(authorization));
 
         // 「新增点位」类反馈：审核通过后自动围绕锚点建一个定向抓取任务（闭环 B）
-        if ("need_refetch".equals(result.get("status")) && result.get("anchorLng") != null) {
-            double lng = ((Number) result.get("anchorLng")).doubleValue();
-            double lat = ((Number) result.get("anchorLat")).doubleValue();
-            double span = 0.012; // 约 1.3km
+        if ("need_refetch".equals(result.get("status"))) {
+            // 1) 先落到待定位暂存表：OSM 里没有的网点只靠重抓是补不回来的，
+            //    落库后后台「待定位」里能看到，可人工补坐标/信息再转正。
             try {
-                long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span);
-                ingestService.runJob(jobId, lat - span, lng - span, lat + span, lng + span);
-                result.put("jobId", jobId);
-            } catch (IllegalStateException busy) {
-                result.put("jobError", busy.getMessage());
+                Map<String, Object> fb = pendingBankService.feedbackOf(code);
+                if (fb != null) {
+                    pendingBankService.importRows(new PendingBankService.Request(
+                            "用户反馈（新增点位）",
+                            "feedback:" + code,
+                            List.of(new PendingBankService.Row(
+                                    String.valueOf(fb.get("name")),
+                                    fb.get("address") == null ? "" : String.valueOf(fb.get("address")),
+                                    "", "", ""))));
+                    result.put("pendingStaged", true);
+                }
+            } catch (Exception ex) {
+                result.put("pendingError", ex.getMessage());
+            }
+
+            // 2) 再围绕锚点重抓一次，补 OSM 里可能存在的邻居点位
+            if (result.get("anchorLng") != null) {
+                double lng = ((Number) result.get("anchorLng")).doubleValue();
+                double lat = ((Number) result.get("anchorLat")).doubleValue();
+                double span = 0.012; // 约 1.3km
+                try {
+                    long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span);
+                    ingestService.runJob(jobId, lat - span, lng - span, lat + span, lng + span);
+                    result.put("jobId", jobId);
+                } catch (IllegalStateException busy) {
+                    // 抓取任务被占用不算失败：点位已进暂存表，可稍后重试审核
+                    result.put("jobError", busy.getMessage());
+                }
             }
         }
         return ApiResult.ok(result);

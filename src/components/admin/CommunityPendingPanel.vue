@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { fetchCommunityPending, type PendingCommunity } from '@/api/pois'
 import CoordinatePicker from '@/components/admin/CoordinatePicker.vue'
 import { apiRequest } from '@/api/server'
+import { invalidatePoiCache } from '@/api/pois'
 import { SHENZHEN_DISTRICTS } from '@/types/poi'
 
 const items = ref<PendingCommunity[]>([])
@@ -113,6 +114,7 @@ async function submitCoordinate(payload: { lng: number; lat: number }): Promise<
       },
     )
     pickerOpen.value = false
+    invalidatePoiCache()
     flash('已标注并转正，地图上可搜到该小区')
     await load()
   } catch (cause) {
@@ -123,6 +125,7 @@ async function submitCoordinate(payload: { lng: number; lat: number }): Promise<
 async function reviewSubmission(id: number, action: 'approve' | 'reject'): Promise<void> {
   try {
     await apiRequest(`/admin/coordinate-submissions/${id}/${action}`, { method: 'POST' })
+    invalidatePoiCache()
     flash(action === 'approve' ? '已通过并转正' : '已驳回')
     await loadSubmissions()
     if (action === 'approve') await load()
