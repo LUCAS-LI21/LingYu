@@ -91,10 +91,16 @@
 }
 
 /* ---------------- Leaflet 定制 ---------------- */
-/* 底图去饱和：OSM 原生瓦片偏彩色，用滤镜压成浅灰，贴合白净的界面风格 */
-.leaflet-tile-pane {
+/* 只有「浅灰」底图才做去饱和；彩色/卫星必须保持原色，否则切换没意义 */
+.leaflet-container[data-basemap='basemap-light'] .leaflet-tile-pane {
   filter: grayscale(1) brightness(1.08) contrast(0.82);
   opacity: 0.88;
+}
+
+.leaflet-container[data-basemap='basemap-color'] .leaflet-tile-pane,
+.leaflet-container[data-basemap='basemap-satellite'] .leaflet-tile-pane {
+  filter: none;
+  opacity: 1;
 }
 
 .leaflet-container {

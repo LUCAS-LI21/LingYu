@@ -7,6 +7,8 @@ import type { Poi } from '@/types/poi'
 const props = defineProps<{
   pois: Poi[]
   selectedId?: string | null
+  /** 底图：浅灰（默认）/ 彩色 / 卫星 */
+  baseMap?: 'light' | 'color' | 'satellite'
 }>()
 
 const emit = defineEmits<{
@@ -183,21 +185,82 @@ function scheduleRender(): void {
   }, 160)
 }
 
+/**
+ * 底图源。
+ *
+ * 为什么是 Esri 而不是 CARTO/OSM：
+ * - CARTO 的栅格底图现在返回「API KEY REQUIRED」占位图（200 但内容是水印）
+ * - 本机网络下 tile.openstreetmap.org 不可达（000），OSM 官方瓦片只能作为远端兜底
+ * - Esri 的三个服务实测都是真 JPEG：浅灰 / 街道 / 影像
+ *
+ * 署名必须保留（Esri 的条款要求显示版权信息）。
+ */
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services'
+const BASE_MAPS = {
+  light: {
+    url: `${ESRI}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
+    overlay: `${ESRI}/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+    className: 'basemap-light',
+  },
+  color: {
+    url: `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+    className: 'basemap-color',
+  },
+  satellite: {
+    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+    className: 'basemap-satellite',
+  },
+} as const
+
+let baseLayer: L.TileLayer | null = null
+let overlayLayer: L.TileLayer | null = null
+
 function initTileLayer(target: L.Map): void {
-  // OSM 标准瓦片：免 Key，遵守使用政策；用 CSS 滤镜压成浅灰底图以贴合白净风格
-  const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  applyBaseMap(target, props.baseMap ?? 'light')
+}
+
+/** 换底图：先摘旧层再挂新层，失败计数重置 */
+function applyBaseMap(target: L.Map, kind: keyof typeof BASE_MAPS): void {
+  const config = BASE_MAPS[kind] ?? BASE_MAPS.light
+  if (baseLayer) {
+    target.removeLayer(baseLayer)
+    baseLayer = null
+  }
+  if (overlayLayer) {
+    target.removeLayer(overlayLayer)
+    overlayLayer = null
+  }
+  tileErrors = 0
+  const layer = L.tileLayer(config.url, {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution: config.attribution,
     crossOrigin: true,
   })
   layer.on('tileerror', () => {
     tileErrors += 1
-    if (tileErrors >= 10 && map?.hasLayer(layer)) {
+    if (tileErrors >= 10 && baseLayer === layer && map?.hasLayer(layer)) {
       map.removeLayer(layer)
+      baseLayer = null
       tilesFailed.value = true
     }
   })
   layer.addTo(target)
+  baseLayer = layer
+
+  // 浅灰底图不含注记，叠一层 reference（道路/地名标签）
+  if ('overlay' in config && config.overlay) {
+    overlayLayer = L.tileLayer(config.overlay, {
+      maxZoom: 19,
+      crossOrigin: true,
+      pane: 'overlayPane',
+    })
+    overlayLayer.addTo(target)
+  }
+  container.value?.setAttribute('data-basemap', config.className)
+  tilesFailed.value = false
 }
 
 function setBoxMode(enabled: boolean): void {
@@ -274,6 +337,13 @@ onBeforeUnmount(() => {
   map = null
   markerLayer = null
 })
+
+watch(
+  () => props.baseMap,
+  (kind) => {
+    if (map) applyBaseMap(map, kind ?? 'light')
+  },
+)
 
 watch(
   () => props.pois,
