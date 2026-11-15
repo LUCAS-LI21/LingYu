@@ -68,10 +68,19 @@ public class AuthController {
         }
     }
 
+    /**
+     * 取真实客户端 IP。
+     * 只信 X-Forwarded-For 的**最后一段**（最近代理追加的那段）；
+     * 第一段可以随意伪造，用它做限流等于没限流。
+     */
     private String clientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+            String[] parts = forwarded.split(",");
+            String last = parts[parts.length - 1].trim();
+            if (!last.isEmpty()) {
+                return last;
+            }
         }
         return request.getRemoteAddr() == null ? "unknown" : request.getRemoteAddr();
     }

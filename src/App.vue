@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 import ToastHost from '@/components/ToastHost.vue'
+import { backendOnline } from '@/api/pois'
 
 const route = useRoute()
 
@@ -65,6 +66,15 @@ const version = __APP_VERSION__
         </div>
       </div>
     </header>
+
+    <!-- 后端不可用时必须显式提示：之前是静默回退本地种子，用户以为看到的是全量数据 -->
+    <div
+      v-if="backendOnline === false"
+      data-testid="offline-banner"
+      class="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-[11px] text-amber-700"
+    >
+      后端未连接：当前展示的是内置示例数据（约 339 条，非全量）。请启动后端或检查网络后刷新。
+    </div>
 
     <main class="flex-1">
       <RouterView v-slot="{ Component }">

@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 import {
   apiRequest,
   fetchAllPois,
@@ -12,6 +14,8 @@ import { saveFeedbackRecord } from '@/lib/feedbackHistory'
 import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 
 let serverMode: boolean | null = null
+/** 后端是否在线：null 未知 / true 在线 / false 离线（供页面提示降级用） */
+export const backendOnline = ref<boolean | null>(null)
 let probing: Promise<boolean> | null = null
 
 /** 后端在线则走真实接口，否则整体降级到本地种子数据（离线也能演示） */

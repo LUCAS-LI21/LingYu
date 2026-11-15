@@ -567,7 +567,7 @@ function changeRadius(value: number): void {
           {{ poi.source }}<span v-if="poi.license"> · {{ poi.license }}</span>
           <template v-if="poi.type === 'community' && poi.demoAttributes">
             <br />
-            <span class="text-amber-600">均价/年份为演示数据，不构成投资建议</span>
+            <span class="text-amber-600">均价/建成年份/物业费均为演示数据，不构成投资建议</span>
           </template>
         </p>
         <ul

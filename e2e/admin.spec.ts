@@ -48,9 +48,14 @@ test.describe('管理后台', () => {
     // 反馈审核：找到刚才那条并驳回
     await page.getByRole('button', { name: /反馈审核/ }).click()
     await expect(page.getByText(code)).toBeVisible({ timeout: 15_000 })
-    // 反馈是卡片列表（listitem），不是表格行
-    await page.locator('li', { hasText: code }).getByRole('button', { name: '驳回' }).click()
-    await expect(page.getByText(/已驳回|驳回成功/)).toBeVisible({ timeout: 10_000 })
+    // 反馈是卡片列表（listitem），不是表格行；exact 避免命中「已驳回」筛选按钮
+    const card = page.locator('li', { hasText: code })
+    await expect(card).toHaveCount(1, { timeout: 10_000 })
+    await card.getByRole('button', { name: '驳回', exact: true }).click()
+
+    // 断言「状态真的变了」而不是看 toast（toast 2.6s 后消失，容易 flaky）
+    await page.getByRole('button', { name: '已驳回', exact: true }).click()
+    await expect(page.getByText(code)).toBeVisible({ timeout: 15_000 })
 
     // 待定位小区：列表能加载，且能打开坐标选择器
     await page.getByRole('button', { name: '待定位小区', exact: true }).click()

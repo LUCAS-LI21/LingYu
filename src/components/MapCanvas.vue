@@ -132,7 +132,12 @@ function renderMarkers(): void {
           fillOpacity: 0.75,
         })
         marker.on('click', () => {
-          map?.setView([lat, lng], Math.min(17, zoom + 2))
+          // 用 marker 当前位置而不是闭包里的 lat/lng：聚合点会随视野变化移动，
+          // 闭包捕获的是创建时的坐标，拖动后点它会跳到旧位置
+          const current = marker?.getLatLng()
+          if (current) {
+            map?.setView(current, Math.min(17, (map?.getZoom() ?? zoom) + 2))
+          }
         })
         marker.addTo(markerLayer)
       } else {

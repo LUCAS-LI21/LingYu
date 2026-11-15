@@ -16,6 +16,8 @@ import { toasts } from '@/lib/toast'
         <div
           v-for="item in toasts"
           :key="item.id"
+          data-testid="toast"
+          :data-toast-type="item.type"
           class="pointer-events-auto flex items-center gap-2 rounded-full border px-4 py-2 text-sm shadow-pop"
           :class="{
             'border-mint-500/30 bg-mint-50 text-mint-600': item.type === 'success',

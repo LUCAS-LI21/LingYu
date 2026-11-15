@@ -38,13 +38,13 @@ pnpm install && pnpm dev
 
 ## 技术栈
 
-| 层   | 选型                                                          |
-| ---- | ------------------------------------------------------------- |
-| 前端 | Vue 3.5 · Vite 8 · TypeScript 5.9 · Tailwind v4 · Leaflet 1.9 |
-| 测试 | Vitest 5（17 单测）· Playwright 1.64（10 E2E）                |
-| 后端 | Spring Boot 3.2.5 · Java 17 · MyBatis-Plus 3.5.5              |
-| 数据 | MySQL 8.0（视图统一查询、`ST_Distance_Sphere`）               |
-| 鉴权 | PBKDF2 口令 + HMAC-SHA256 token（自研，无 Spring Security）   |
+| 层   | 选型                                                             |
+| ---- | ---------------------------------------------------------------- |
+| 前端 | Vue 3.5 · Vite 8 · TypeScript 5.9 · Tailwind v4 · Leaflet 1.9    |
+| 测试 | Vitest 5（76 单测）· Playwright 1.64（12 E2E，桌面 16 / 移动 4） |
+| 后端 | Spring Boot 3.2.5 · Java 17 · MyBatis-Plus 3.5.5                 |
+| 数据 | MySQL 8.0（视图统一查询、`ST_Distance_Sphere`）                  |
+| 鉴权 | PBKDF2 口令 + HMAC-SHA256 token（自研，无 Spring Security）      |
 
 ## 文档索引
 
