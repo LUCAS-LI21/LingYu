@@ -28,6 +28,9 @@ interface ServerPoi {
   propertyFee?: number | null
   propertyCompany?: string | null
   waterSavingYear?: number | null
+  rentDc?: number | null
+  rentGc?: number | null
+  rentDmd?: number | null
   surroundBankCount?: number | null
   surroundAtmCount?: number | null
   nearbyBrandCount?: number | null
@@ -110,6 +113,9 @@ function toPoi(row: ServerPoi): Poi {
       row.propertyFee === null || row.propertyFee === undefined ? null : Number(row.propertyFee),
     propertyCompany: row.propertyCompany ?? '',
     waterSavingYear: row.waterSavingYear ?? null,
+    rentDc: row.rentDc === null || row.rentDc === undefined ? null : Number(row.rentDc),
+    rentGc: row.rentGc === null || row.rentGc === undefined ? null : Number(row.rentGc),
+    rentDmd: row.rentDmd === null || row.rentDmd === undefined ? null : Number(row.rentDmd),
     surroundBankCount: Number(row.surroundBankCount ?? 0),
     surroundAtmCount: Number(row.surroundAtmCount ?? 0),
     nearbyBrandCount: Number(row.nearbyBrandCount ?? 0),

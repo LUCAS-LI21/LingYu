@@ -35,6 +35,10 @@ export interface CommunityPoi extends BasePoi {
   propertyCompany?: string
   /** 节水型小区获评年度（政府数据集），null 表示未获评或未匹配 */
   waterSavingYear?: number | null
+  /** 政府租赁参考价（元/㎡·月）：多层 / 高层 / 低密度 */
+  rentDc?: number | null
+  rentGc?: number | null
+  rentDmd?: number | null
   /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数、最近银行距离（米） */
   surroundBankCount?: number
   surroundAtmCount?: number

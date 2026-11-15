@@ -281,7 +281,9 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
   const maxYear = filters.yearRange?.[1] ?? null
 
   const result = pois.filter((poi) => {
-    if (!filters.layers.includes(poi.type)) return false
+    // 关键词搜索跨图层：搜「流塘新村」时用户期望找到小区，
+    // 而不是因为默认只勾了银行就返回「没有符合条件的点位」
+    if (!keyword && !filters.layers.includes(poi.type)) return false
     if (filters.district !== '全部区域' && poi.district !== filters.district) return false
     if (bounds) {
       if (poi.lat > bounds.north || poi.lat < bounds.south) return false

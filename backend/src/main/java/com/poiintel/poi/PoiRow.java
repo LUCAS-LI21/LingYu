@@ -30,6 +30,10 @@ public class PoiRow {
     private String propertyCompany;
     /** 节水型小区获评年度（政府数据集），null 表示未获评或未匹配 */
     private Integer waterSavingYear;
+    /** 政府租赁参考价（元/㎡·月）：多层 / 高层 / 低密度，null 表示未匹配上 */
+    private BigDecimal rentDc;
+    private BigDecimal rentGc;
+    private BigDecimal rentDmd;
     /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数，以及最近银行距离（米） */
     private Integer surroundBankCount;
     private Integer surroundAtmCount;

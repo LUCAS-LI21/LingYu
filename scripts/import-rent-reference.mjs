@@ -18,6 +18,7 @@
  * 用法：SZ_KEY=... node scripts/import-rent-reference.mjs [--dry-run]
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
+import proj4 from 'proj4'
 import { curlJson } from './lib/http.mjs'
 
 const API = process.env.API_BASE || 'http://127.0.0.1:8080'
@@ -28,6 +29,11 @@ const args = process.argv.slice(2)
 const DRY = args.includes('--dry-run')
 const BASE = 'https://opendata.sz.gov.cn/api/29200_01903546/1/service.xhtml'
 const ROWS = 500
+// EPSG:4547 = CGCS2000 / 3-degree Gauss-Kruger CM 114E（米制投影）
+proj4.defs(
+  'EPSG:4547',
+  '+proj=tmerc +lat_0=0 +lon_0=114 +k=1 +x_0=500000 +y_0=0 +ellps=GRS80 +units=m +no_defs',
+)
 
 const norm = (s) =>
   String(s || '')
@@ -36,15 +42,54 @@ const norm = (s) =>
     .replace(/^(罗湖区|福田区|南山区|宝安区|龙岗区|盐田区|龙华区|坪山区|光明区|大鹏新区)/, '')
     .replace(/(小区|花园|公寓|大厦|新村|家园|名苑|广场|社区|苑|庭|阁|居|里|城|府|湾)$/, '')
 
-/** GEOM 形如 POINT(113.9 22.5) 或 WKT；解析出经纬度 */
+/**
+ * GEOM 是 **WKB 十六进制**（MultiPolygon，SRID 4547 = CGCS2000 3度带 CM114E 投影坐标，单位米），
+ * 不是 WKT。这里解析外环取平均值作为小区中心，再用 proj4 反算到 WGS-84。
+ */
 function parseGeom(geom) {
   if (!geom) return null
-  const m = String(geom).match(/POINT\s*\(\s*([\d.]+)\s+([\d.]+)\s*\)/i)
-  if (!m) return null
-  const lng = Number(m[1])
-  const lat = Number(m[2])
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-  return { lng, lat }
+  try {
+    const buf = Buffer.from(String(geom), 'hex')
+    let off = 0
+    const u8 = () => buf.readUInt8(off++)
+    const u32 = () => {
+      const v = buf.readUInt32LE(off)
+      off += 4
+      return v
+    }
+    const f64 = () => {
+      const v = buf.readDoubleLE(off)
+      off += 8
+      return v
+    }
+    u8()
+    const type = u32()
+    if ((type & 0x20000000) !== 0) u32() // 跳过 SRID
+    const geomType = type & 0xff
+    if (geomType !== 6) return null
+    const nPoly = u32()
+    let ring = []
+    for (let p = 0; p < nPoly && ring.length === 0; p++) {
+      u8()
+      u32()
+      const nRing = u32()
+      for (let r = 0; r < nRing; r++) {
+        const nPts = u32()
+        const pts = []
+        for (let i = 0; i < nPts; i++) pts.push([f64(), f64()])
+        if (ring.length === 0) ring = pts
+      }
+    }
+    if (!ring.length) return null
+    const cx = ring.reduce((s, pt) => s + pt[0], 0) / ring.length
+    const cy = ring.reduce((s, pt) => s + pt[1], 0) / ring.length
+    const [lng, lat] = proj4('EPSG:4547', 'EPSG:4326', [cx, cy])
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
+    if (lng < 113.6 || lng > 114.7 || lat < 22.3 || lat > 22.9) return null
+    return { lng: Number(lng.toFixed(6)), lat: Number(lat.toFixed(6)) }
+  } catch {
+    return null
+  }
 }
 
 console.log('读取本地小区…')
