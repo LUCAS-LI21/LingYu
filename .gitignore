@@ -55,3 +55,8 @@ data/pm-scan-progress.json
 
 data/pm-scan/
 data/community-pending.sql
+
+# 微信小程序（feat/miniprogram 分支）
+miniprogram/node_modules/
+miniprogram/miniprogram_npm/
+miniprogram/project.private.config.json
