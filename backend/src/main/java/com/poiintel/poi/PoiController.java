@@ -33,6 +33,59 @@ public class PoiController {
         return ApiResult.ok(Map.of("status", "ok", "db", one != null && one == 1 ? "up" : "down"));
     }
 
+    /**
+     * 元信息：给小程序/第三方客户端做自描述，避免每次对契约文档。
+     * 只描述常量与接口清单，不含业务数据。
+     */
+    @GetMapping("/meta")
+    public ApiResult<Map<String, Object>> meta() {
+        Map<String, Object> coord = new java.util.LinkedHashMap<>();
+        coord.put("storage", "WGS-84");
+        coord.put("chineseMap", "GCJ-02");
+        coord.put("wgsFields", List.of("lng", "lat"));
+        coord.put("gcjFields", List.of("gcjLng", "gcjLat"));
+
+        Map<String, Object> auth = new java.util.LinkedHashMap<>();
+        auth.put("type", "Bearer");
+        auth.put("login", "POST /api/v1/auth/login");
+        auth.put("adminPrefix", "/api/v1/admin");
+
+        List<Map<String, Object>> endpoints = List.of(
+                ep("GET", "/api/v1/health", "健康检查"),
+                ep("GET", "/api/v1/meta", "元信息（本接口）"),
+                ep("GET", "/api/v1/pois", "列表/地图查询：types,district,keyword,bbox,page,size"),
+                ep("GET", "/api/v1/pois/{id}", "详情"),
+                ep("GET", "/api/v1/pois/nearby", "周边银行：lng,lat,radius,branchType,limit"),
+                ep("GET", "/api/v1/pois/{id}/nearest-banks", "最近 N 家银行"),
+                ep("GET", "/api/v1/pois/{id}/nearby-communities", "某银行周边小区"),
+                ep("GET", "/api/v1/pois/{id}/sources", "字段级来源"),
+                ep("GET", "/api/v1/stats", "统计"),
+                ep("GET", "/api/v1/community-pending", "待定位小区名录"),
+                ep("GET", "/api/v1/community-pending/hint", "待定位小区地图中心"),
+                ep("POST", "/api/v1/community-pending/{id}/locate", "提交坐标（众包，待审）"),
+                ep("GET", "/api/v1/land-parcels", "存量住宅用地"),
+                ep("POST", "/api/v1/feedback", "用户纠错/补充"),
+                ep("GET", "/api/v1/live/address", "L2 实时地址（不落库）"),
+                ep("GET", "/api/v1/live/pois", "L2 实时周边（不落库）"));
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("name", "poi-intel");
+        result.put("version", "0.1.0");
+        result.put("envelope", "{code,message,data}，code=0 表示成功");
+        result.put("coord", coord);
+        result.put("auth", auth);
+        result.put("endpoints", endpoints);
+        return ApiResult.ok(result);
+    }
+
+    private Map<String, Object> ep(String method, String path, String desc) {
+        Map<String, Object> item = new java.util.LinkedHashMap<>();
+        item.put("method", method);
+        item.put("path", path);
+        item.put("desc", desc);
+        return item;
+    }
+
     @GetMapping("/pois")
     public ApiResult<PoiService.PageResult> list(
             @RequestParam(required = false) String types,

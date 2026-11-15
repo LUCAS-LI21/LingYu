@@ -1,0 +1,12 @@
+[out:json][timeout:300];
+area["name:en"="Shenzhen"]->.sz;
+way["landuse"="residential"](area.sz)->.res;
+.res out count;
+way["building"](area.sz)->.bld;
+.bld out count;
+nwr["addr:housenumber"](area.sz)->.addr;
+.addr out count;
+nwr["place"="neighbourhood"](area.sz)->.nb;
+.nb out count;
+way["landuse"="residential"]["name"](area.sz)->.resn;
+.resn out count;

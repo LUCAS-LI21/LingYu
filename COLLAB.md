@@ -173,3 +173,17 @@ pnpm dev --port 5174        # 前端会话
 4. 采纳成功后刷新列表
 
 **注意**：`propose` 一次要 5–15 秒（真实搜索+两次 LLM 调用），按钮要有 loading 态，别让人以为卡死。
+
+---
+
+## 三线并行（2026-11-16 更新）
+
+| worktree            | 分支               | 负责                            | 禁止修改                     |
+| ------------------- | ------------------ | ------------------------------- | ---------------------------- |
+| `BISAI-AGENT`       | `main`             | 后端、脚本、文档、契约          | —                            |
+| `BISAI-FRONTEND`    | `feat/frontend-ui` | Web 前端 `src/` `tests/` `e2e/` | `backend/`、契约文件         |
+| `BISAI-MINIPROGRAM` | `feat/miniprogram` | 微信小程序（`miniprogram/`）    | `backend/`、`src/`、契约文件 |
+
+- 小程序开工必读：[docs/miniprogram/后端契约.md](docs/miniprogram/后端契约.md)、[docs/architecture/文件架构.md](docs/architecture/文件架构.md)
+- 后端新增 `GET /api/v1/meta`：返回坐标约定、鉴权方式、接口清单，小程序可启动时拉一次做自检
+- 契约变更只能由后端线修改，改完先合 `main`，其余两线 rebase
