@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:backend": "mvn -q -f backend/pom.xml test",
+    "test:backend": "mvn -q -f backend/pom.xml test",`n    "smoke:api": "node scripts/smoke-miniprogram.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
