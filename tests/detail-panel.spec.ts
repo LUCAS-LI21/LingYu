@@ -249,3 +249,38 @@ describe('周边最近银行 Top3', () => {
     expect(poiApi.fetchNearestBanks).not.toHaveBeenCalled()
   })
 })
+
+describe('地址导航入口', () => {
+  it('有地址时渲染高德/腾讯链接，有 GCJ 坐标则走导航', () => {
+    const wrapper = mount(DetailPanel, {
+      props: {
+        poi: community({ address: '深圳市福田区深南大道 1 号', gcjLng: 114.06, gcjLat: 22.55 }),
+        nearby: [],
+      },
+    })
+    const block = wrapper.find('[data-testid="nav-links"]')
+    expect(block.exists()).toBe(true)
+    const links = block.findAll('a')
+    expect(links).toHaveLength(2)
+    expect(links[0]?.attributes('href')).toContain('uri.amap.com/navigation')
+    expect(links[0]?.attributes('href')).toContain('114.06,22.55')
+    expect(links[1]?.attributes('href')).toContain('apis.map.qq.com/uri/v1/routeplan')
+    expect(links[1]?.attributes('href')).toContain('22.55,114.06')
+  })
+
+  it('没有坐标时退化为按地址搜索，不拼假坐标', () => {
+    const wrapper = mount(DetailPanel, {
+      props: { poi: bank({ address: '深圳市南山区科技园 1 号' }), nearby: [] },
+    })
+    const links = wrapper.find('[data-testid="nav-links"]').findAll('a')
+    expect(links[0]?.attributes('href')).toContain('uri.amap.com/search')
+    expect(links[0]?.attributes('href')).not.toContain('position=')
+  })
+
+  it('无地址时不显示导航入口', () => {
+    const wrapper = mount(DetailPanel, {
+      props: { poi: community({ address: '' }), nearby: [] },
+    })
+    expect(wrapper.find('[data-testid="nav-links"]').exists()).toBe(false)
+  })
+})

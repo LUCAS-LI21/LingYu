@@ -9,6 +9,9 @@ export interface BasePoi {
   address: string
   lng: number
   lat: number
+  /** GCJ-02 坐标（高德/腾讯导航用）；后端算好，前端不要自己转 */
+  gcjLng?: number | null
+  gcjLat?: number | null
   district: string
   source: string
   license?: string

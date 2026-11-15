@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.poiintel.common.GeoCoord;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,6 +26,7 @@ public class PoiService {
     public PageResult list(PoiQuery query) {
         long total = poiMapper.count(query);
         List<PoiRow> items = total == 0 ? List.of() : poiMapper.query(query);
+        items.forEach(this::fillGcj);
         int page = query.getOffset() / Math.max(1, query.getSize()) + 1;
         return new PageResult(items, total, page, query.getSize());
     }
@@ -33,7 +36,21 @@ public class PoiService {
         if (row == null) {
             throw new IllegalArgumentException("POI 不存在：" + id);
         }
+        fillGcj(row);
         return row;
+    }
+
+    /**
+     * 补 GCJ-02 坐标：库里存 WGS-84，高德/腾讯导航要 GCJ-02。
+     * 前端做「导航」跳转时直接用 gcjLng/gcjLat，不要自己拿 lng/lat 拼链接。
+     */
+    private void fillGcj(PoiRow row) {
+        if (row == null || row.getLng() == null || row.getLat() == null) {
+            return;
+        }
+        double[] gcj = GeoCoord.wgs84ToGcj02(row.getLng(), row.getLat());
+        row.setGcjLng(Math.round(gcj[0] * 1e6) / 1e6);
+        row.setGcjLat(Math.round(gcj[1] * 1e6) / 1e6);
     }
 
     public List<NearbyItem> nearby(double lng, double lat, double radius, String branchType, int limit) {

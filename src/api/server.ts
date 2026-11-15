@@ -21,6 +21,8 @@ interface ServerPoi {
   branchType?: 'branch' | 'atm' | null
   phone?: string | null
   openingHours?: string | null
+  gcjLng?: number | null
+  gcjLat?: number | null
   builtYear?: number | null
   avgPrice?: number | null
   propertyFee?: number | null
@@ -83,6 +85,8 @@ function toPoi(row: ServerPoi): Poi {
     district: row.district ?? '',
     lng: Number(row.lng),
     lat: Number(row.lat),
+    gcjLng: row.gcjLng === null || row.gcjLng === undefined ? null : Number(row.gcjLng),
+    gcjLat: row.gcjLat === null || row.gcjLat === undefined ? null : Number(row.gcjLat),
     source: row.source ?? 'OpenStreetMap',
     license: row.license ?? undefined,
     sourceLevel: 'L1' as const,

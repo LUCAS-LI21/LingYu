@@ -16,6 +16,9 @@ public class PoiRow {
     private String district;
     private Double lng;
     private Double lat;
+    /** GCJ-02 坐标：高德/腾讯等国内地图用，前端导航跳转直接取这两个值（WGS-84 直接喂给高德会偏 500 米） */
+    private Double gcjLng;
+    private Double gcjLat;
     private String brand;
     private String branchType;
     private String phone;

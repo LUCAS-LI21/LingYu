@@ -1064,3 +1064,47 @@ https://uri.amap.com/search?keyword=<地址>&city=深圳&src=poi-intel
 `GET /api/v1/community-pending?district=&keyword=&page=&size=`
 → `{ total, page, size, items[{id,name,address,district,street,attribute}] }`
 `status='pending'` 过滤，关键词同时匹配名称与地址。
+
+## 第二十五轮：地址可点击跳转导航 + 小程序后端契约（2026-11-15）
+
+### 需求
+
+用户要在网站点「地址」就能跳高德/腾讯导航；并准备做小程序端与网站共用同一个后端，
+两边都要展示完整详细地址。
+
+### 关键前提：坐标系
+
+库里存 WGS-84，高德/腾讯/微信地图要 **GCJ-02**，直接喂会偏 500 米。
+
+- 后端 `PoiRow` 新增 `gcjLng / gcjLat`，在 `PoiService.list/detail` 里用 `GeoCoord.wgs84ToGcj02` 算好返回
+- 实测：WGS (113.881756, 22.582274) → GCJ (113.886647, 22.579233)，偏移约 526m/300m，符合深圳规律
+
+### 导航链接（`src/lib/nav.ts`）
+
+| 场景       | 高德                                      | 腾讯                                                 |
+| ---------- | ----------------------------------------- | ---------------------------------------------------- |
+| 点位标记   | `uri.amap.com/marker?position=lng,lat`    | `apis.map.qq.com/uri/v1/marker?marker=coord:lat,lng` |
+| 驾车导航   | `uri.amap.com/navigation?to=lng,lat,name` | `/uri/v1/routeplan?tocoord=lat,lng`                  |
+| 无坐标兜底 | `uri.amap.com/search?keyword=<地址>`      | `/uri/v1/search?keyword=<地址>`                      |
+
+**坐标顺序相反**：高德 `lng,lat`、腾讯 `lat,lng`，写反会跳到海里——单测已锁死这两条。
+
+### 前端
+
+- 详情页地址变成可点链接（高德 marker），下方新增「高德导航 / 腾讯导航」两个按钮
+- 无坐标时按钮文案自动变「搜索」，且不拼假坐标
+- 新增 `tests/nav.spec.ts` 5 条用例 + detail-panel 3 条用例，前端 **74 用例**通过
+
+### 小程序后端契约
+
+新增 [docs/miniprogram/后端契约.md](docs/miniprogram/后端契约.md)：响应信封、鉴权、9 组接口、
+坐标系对照（`lng/lat` 算距离、`gcjLng/gcjLat` 上地图）、`wx.openLocation` 示例、错误码、
+页面与接口映射，以及"小程序不需要 CORS、但必须 HTTPS + 域名白名单"的提醒。
+
+### 地址完整度现状（小程序要展示详细地址，这块是短板）
+
+| 类型       |        有地址 |               占比 |
+| ---------- | ------------: | -----------------: |
+| 银行       | 1 119 / 1 581 |                71% |
+| 小区       | 2 282 / 3 601 |                63% |
+| 待定位小区 |         4 941 | 100%（但不在地图） |

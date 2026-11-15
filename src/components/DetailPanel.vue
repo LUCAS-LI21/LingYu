@@ -5,6 +5,7 @@ import type { NearbyItem } from '@/api/pois'
 import { fetchNearestBanks, fieldSourcesFromServer, type NearestBank } from '@/api/pois'
 import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
 import type { FieldSource } from '@/api/server'
+import { amapMarkerUrl, amapNavigationUrl, canNavigate, tencentNavigationUrl } from '@/lib/nav'
 import type { BankPoi, Poi } from '@/types/poi'
 
 const props = defineProps<{
@@ -49,6 +50,13 @@ watch(
 )
 
 /** 最近的 3 家银行：只对小区有意义，后端按球面距离算，取不到就整块隐藏 */
+const navTarget = computed(() => ({
+  name: props.poi?.name ?? '',
+  address: props.poi?.address ?? '',
+  gcjLng: props.poi?.gcjLng ?? null,
+  gcjLat: props.poi?.gcjLat ?? null,
+}))
+
 const nearestBanks = ref<NearestBank[]>([])
 watch(
   () => props.poi?.id,
@@ -272,7 +280,16 @@ function changeRadius(value: number): void {
             :class="{ 'text-ink-400': row.value === '暂无' || row.value === '待核实' }"
           >
             <template v-if="row.label === '地址'">
-              <span v-if="hasAddress">{{ row.value }}</span>
+              <a
+                v-if="hasAddress"
+                data-testid="address-link"
+                :href="amapMarkerUrl(navTarget)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-ink-700 underline decoration-line-strong/60 underline-offset-2 transition hover:text-brand-600"
+                :title="`在高德地图查看：${row.value}`"
+                >{{ row.value }}</a
+              >
               <span
                 v-else
                 data-testid="address-missing"
@@ -286,6 +303,29 @@ function changeRadius(value: number): void {
           </dd>
         </div>
       </dl>
+
+      <!-- 导航入口：高德 / 腾讯。有 GCJ 坐标走导航，没有坐标退化成按地址搜索 -->
+      <div
+        v-if="hasAddress"
+        data-testid="nav-links"
+        class="flex flex-wrap items-center gap-2 text-[11px]"
+      >
+        <span class="text-ink-400">{{ canNavigate(navTarget) ? '导航到' : '按地址搜索' }}</span>
+        <a
+          :href="amapNavigationUrl(navTarget)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-2 py-1 text-ink-700 transition hover:border-brand-300 hover:text-brand-600"
+          >高德{{ canNavigate(navTarget) ? '导航' : '搜索' }}</a
+        >
+        <a
+          :href="tencentNavigationUrl(navTarget)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 rounded-md border border-line bg-surface px-2 py-1 text-ink-700 transition hover:border-brand-300 hover:text-brand-600"
+          >腾讯{{ canNavigate(navTarget) ? '导航' : '搜索' }}</a
+        >
+      </div>
 
       <!-- 地址入口分层：主操作「查实时地址」+ 次操作「补充地址」，避免两个同级文字链 -->
       <section
