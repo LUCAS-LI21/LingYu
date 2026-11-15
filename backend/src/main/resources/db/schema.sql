@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS poi_community (
   surround_atm_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内 ATM 数',
   nearest_bank_m      INT         NOT NULL DEFAULT 0 COMMENT '最近银行距离(米)',
   nearby_brand_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内银行品牌数',
+  rent_dc          DECIMAL(8, 2) NULL COMMENT '多层租金(元/㎡·月，政府租赁参考价)',
+  rent_gc          DECIMAL(8, 2) NULL COMMENT '高层租金',
+  rent_dmd         DECIMAL(8, 2) NULL COMMENT '低密度租金',
   demo_attributes  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '字段是否为演示数据',
   source           VARCHAR(64)  NOT NULL DEFAULT 'OpenStreetMap',
   license          VARCHAR(32)  NOT NULL DEFAULT 'ODbL',
@@ -278,3 +281,4 @@ CREATE TABLE IF NOT EXISTS land_parcel (
   source          VARCHAR(64)   NOT NULL DEFAULT '深圳市政府数据开放平台-存量住宅用地',
   updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '存量住宅用地（宗地级，非小区级）';
+
