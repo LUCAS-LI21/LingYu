@@ -108,7 +108,7 @@ public class ReferencePriceService {
             String key = normalizeDistrict(district);
             filtered = items.stream().filter(i -> normalizeDistrict(i.district()).equals(key)).toList();
         }
-        int from = Math.min((page - 1) * size, filtered.size());
+        int from = (int) Math.min((long) (Math.max(page, 1) - 1) * size, filtered.size());
         int to = Math.min(from + size, filtered.size());
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("total", filtered.size());

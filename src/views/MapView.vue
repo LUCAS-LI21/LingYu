@@ -127,6 +127,12 @@ function locate(poi: Poi): void {
   trackPoiQuery(poi)
 }
 
+/** 地图气泡上的「周边1km」：选中该点并真正发起周边查询（之前错接到 locate，只移动地图） */
+function onMapNearby(poi: Poi): void {
+  locate(poi)
+  void handleNearby({ poi, radius: 1000, branchType: 'all' })
+}
+
 async function handleNearby(payload: {
   poi: Poi
   radius: number
@@ -157,7 +163,7 @@ function closeDetail(): void {
       :selected-id="selectedId"
       class="absolute inset-0"
       @select="onSelect"
-      @nearby="(poi) => locate(poi)"
+      @nearby="onMapNearby"
       @bounds="onBoxSelect"
     />
 

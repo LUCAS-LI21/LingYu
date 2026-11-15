@@ -263,3 +263,18 @@ CREATE TABLE IF NOT EXISTS coordinate_submission (
   KEY idx_cs_status (status),
   KEY idx_cs_pending (pending_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '用户提交的小区坐标（待审）';
+
+-- 存量住宅用地（宗地级，政府开放数据）
+CREATE TABLE IF NOT EXISTS land_parcel (
+  id              VARCHAR(32)   NOT NULL PRIMARY KEY COMMENT '宗地号',
+  district_street VARCHAR(64)   NOT NULL DEFAULT '',
+  location        VARCHAR(255)  NOT NULL DEFAULT '',
+  area_ha         DECIMAL(10, 4) NULL,
+  housing_type    VARCHAR(32)   NOT NULL DEFAULT '',
+  build_status    VARCHAR(32)   NOT NULL DEFAULT '',
+  developer       VARCHAR(128)  NOT NULL DEFAULT '',
+  project_name    VARCHAR(128)  NOT NULL DEFAULT '',
+  supply_date     DATE          NULL,
+  source          VARCHAR(64)   NOT NULL DEFAULT '深圳市政府数据开放平台-存量住宅用地',
+  updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '存量住宅用地（宗地级，非小区级）';

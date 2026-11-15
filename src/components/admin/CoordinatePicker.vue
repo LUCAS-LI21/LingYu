@@ -53,7 +53,13 @@ watch(
       picked.value = null
       await initMap()
       map?.invalidateSize()
+      return
     }
+    // 关闭时必须销毁 Leaflet 实例，否则第二次打开时 initMap 会因 map 已存在直接 return，
+    // 结果是一个只剩灰色空白的容器，点击也落不了点。
+    map?.remove()
+    map = null
+    marker = null
   },
 )
 

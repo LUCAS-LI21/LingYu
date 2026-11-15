@@ -121,7 +121,9 @@ public class PoiController {
         // 上限 20000：小区已扩到 3600+，加上银行超过 5000，卡太低会导致前端静默丢点位
         int safeSize = Math.min(Math.max(size, 1), 20000);
         query.setSize(safeSize);
-        query.setOffset(Math.max(0, (Math.max(page, 1) - 1) * safeSize));
+        // 页码上限 + long 运算：page 传极大值时 (page-1)*size 会整型溢出成负数
+        int safePage = Math.min(Math.max(page, 1), 100_000);
+        query.setOffset((int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE));
 
         long started = System.currentTimeMillis();
         PoiService.PageResult result = poiService.list(query);
@@ -143,6 +145,13 @@ public class PoiController {
             @RequestParam(required = false, defaultValue = "all") String branchType,
             @RequestParam(defaultValue = "50") int limit) {
 
+        // NaN/Infinity 会一路传到 SQL 变 500，这里先挡掉；半径也给个上限
+        if (!Double.isFinite(lng) || !Double.isFinite(lat) || !Double.isFinite(radius)) {
+            throw new IllegalArgumentException("经纬度/半径必须是有效数字");
+        }
+        if (radius <= 0 || radius > 20000) {
+            throw new IllegalArgumentException("半径需在 0~20000 米之间");
+        }
         long started = System.currentTimeMillis();
         List<PoiService.NearbyItem> items = poiService.nearby(lng, lat, radius, branchType,
                 Math.min(Math.max(limit, 1), 200));
@@ -178,7 +187,7 @@ public class PoiController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         int safeSize = Math.min(Math.max(size, 1), 100);
-        int safePage = Math.max(page, 1);
+        int safePage = Math.min(Math.max(page, 1), 100_000);
         List<Object> args = new java.util.ArrayList<>();
         StringBuilder where = new StringBuilder(" WHERE status = 'pending' ");
         if (district != null && !district.isBlank()) {
@@ -195,7 +204,7 @@ public class PoiController {
         Integer total = jdbcTemplate.queryForObject("SELECT COUNT(*)" + base, Integer.class, args.toArray());
         List<Object> pageArgs = new java.util.ArrayList<>(args);
         pageArgs.add(safeSize);
-        pageArgs.add((safePage - 1) * safeSize);
+        pageArgs.add((int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE));
         List<Map<String, Object>> items = jdbcTemplate.queryForList(
                 "SELECT id, name, address, district, street, attribute" + base
                         + " ORDER BY district, name LIMIT ? OFFSET ?",

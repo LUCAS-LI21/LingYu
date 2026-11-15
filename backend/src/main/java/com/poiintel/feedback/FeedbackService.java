@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -26,6 +27,13 @@ public class FeedbackService {
 
     private final JdbcTemplate jdbcTemplate;
     private final AdminService adminService;
+
+    /**
+     * 是否允许匿名反馈直接改主表。默认关闭：匿名输入 + 自动生效 = 任何人都能改数据，
+     * 演示/公网都不可接受；需要时用 app.feedback.auto-apply=true 显式打开。
+     */
+    @Value("${app.feedback.auto-apply:false}")
+    private boolean autoApplyEnabled;
 
     /** 低风险字段：可由系统直接采纳生效；坐标/名称/关闭状态与新增点位必须人工审核 */
     private static final Set<String> LOW_RISK_FIELDS = Set.of("电话", "营业时间", "均价", "物业费", "建成年份");
@@ -62,8 +70,10 @@ public class FeedbackService {
         String code = "FB" + LocalDate.now().format(DAY) + "-" + String.format("%04d", id);
         jdbcTemplate.update("UPDATE feedback SET code = ? WHERE id = ?", code, id);
 
-        // 低风险字段走「系统自动审核」：复用同一套生效逻辑，保证版本留痕一致
-        boolean autoApply = !"add".equals(request.type())
+        // 低风险字段走「系统自动审核」：复用同一套生效逻辑，保证版本留痕一致。
+        // 默认关闭（app.feedback.auto-apply），匿名请求不能直接改主表。
+        boolean autoApply = autoApplyEnabled
+                && !"add".equals(request.type())
                 && LOW_RISK_FIELDS.contains(request.field())
                 && request.newValue() != null
                 && !request.newValue().isBlank();

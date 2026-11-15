@@ -111,7 +111,14 @@ public class AdminService {
     public Map<String, Object> approve(String code, String reviewer) {
         Map<String, Object> feedback = jdbcTemplate.queryForMap("SELECT * FROM feedback WHERE code = ?", code);
         String currentStatus = String.valueOf(feedback.get("status"));
-        if (!"pending".equals(currentStatus)) {
+        if ("need_refetch".equals(currentStatus)) {
+            // 上次重抓因任务占用失败，允许再点一次审核重试；否则反馈会永久卡在 need_refetch
+            int reset = jdbcTemplate.update(
+                    "UPDATE feedback SET status = 'pending' WHERE code = ? AND status = 'need_refetch'", code);
+            if (reset == 0) {
+                throw new IllegalStateException("反馈状态已变更，请刷新后重试");
+            }
+        } else if (!"pending".equals(currentStatus)) {
             throw new IllegalStateException("该反馈已处理，当前状态：" + currentStatus);
         }
         long feedbackId = ((Number) feedback.get("id")).longValue();

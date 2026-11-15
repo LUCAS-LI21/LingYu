@@ -57,6 +57,7 @@ public class PoiService {
         List<PoiRow> rows = poiMapper.nearby(lng, lat, radius, branchType, limit);
         List<NearbyItem> result = new ArrayList<>(rows.size());
         for (PoiRow row : rows) {
+            fillGcj(row);
             result.add(new NearbyItem(row, distanceMeters(lat, lng, row.getLat(), row.getLng())));
         }
         return result;

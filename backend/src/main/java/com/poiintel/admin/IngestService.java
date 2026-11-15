@@ -357,13 +357,27 @@ public class IngestService {
         if (rows.isEmpty()) {
             return new int[0];
         }
+        // 去重黑名单：dedupe_log 里记录的是「已判定为重复并删除」的点位，
+        // 但 OSM 每次抓取都会把同样的 id 再送回来，不挡住就会无限复活。
+        java.util.Set<String> blocked = new java.util.HashSet<>(
+                jdbcTemplate.queryForList("SELECT id FROM dedupe_log", String.class));
+        if (!blocked.isEmpty()) {
+            rows.removeIf(row -> row.length > 0 && blocked.contains(String.valueOf(row[0])));
+            if (rows.isEmpty()) {
+                return new int[0];
+            }
+        }
         return jdbcTemplate.batchUpdate("""
                 INSERT INTO poi_bank
                     (id, name, brand, branch_type, address, district, lng, lat, phone, opening_hours,
                      source, license, source_level, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OpenStreetMap', 'ODbL', 'L1', NOW())
-                ON DUPLICATE KEY UPDATE name = VALUES(name), address = VALUES(address),
-                    phone = VALUES(phone), opening_hours = VALUES(opening_hours), updated_at = NOW()
+                ON DUPLICATE KEY UPDATE name = VALUES(name),
+                    -- 空值不覆盖：OSM 常常没电话/营业时间，直接覆盖会把人工/官网补的值抹掉
+                    address = IF(VALUES(address) = '', address, VALUES(address)),
+                    phone = IF(VALUES(phone) = '', phone, VALUES(phone)),
+                    opening_hours = IF(VALUES(opening_hours) = '', opening_hours, VALUES(opening_hours)),
+                    updated_at = NOW()
                 """, rows);
     }
 
