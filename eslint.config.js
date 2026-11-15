@@ -17,6 +17,8 @@ export default tseslint.config(
       'src/auto-imports.d.ts',
       'src/components.d.ts',
       'stats.html',
+      // 微信小程序是独立运行时（wx/Page 全局、WXML/WXSS），不参与 Web 的 ESLint
+      'miniprogram/**',
       // 侦察/验证产物与抓取快照，不是源码
       '.verify_tmp/**',
       '.dsh-tmp/**',

@@ -1,0 +1,121 @@
+<view class="page page-tab">
+  <view class="profile-hero">
+    <view class="row gap-16">
+      <view class="logo profile-logo">邻</view>
+      <view class="grow">
+        <text class="profile-title">访客模式</text>
+        <text class="profile-sub">本机档案 · 无需登录即可纠错与查看数据</text>
+      </view>
+      <view class="status status-mint">在线</view>
+    </view>
+
+    <view class="profile-form mt-20">
+      <view class="row gap-12">
+        <view class="grow">
+          <text class="label">昵称（选填）</text>
+          <input
+            class="input profile-input"
+            value="{{nickname}}"
+            placeholder="本机访客"
+            placeholder-class="input-placeholder"
+            bindinput="onNickname"
+          />
+        </view>
+        <view class="grow">
+          <text class="label">联系方式（选填）</text>
+          <input
+            class="input profile-input"
+            value="{{contact}}"
+            placeholder="邮箱 / 手机"
+            placeholder-class="input-placeholder"
+            bindinput="onContact"
+          />
+        </view>
+      </view>
+      <button class="btn btn-primary btn-block mt-16" bindtap="saveProfile">
+        {{saved ? '已保存' : '保存本机档案'}}
+      </button>
+    </view>
+  </view>
+
+  <view class="feedback-summary mt-20">
+    <view class="summary-item" bindtap="onQuickAction" data-key="history">
+      <text class="summary-value">{{feedbackCount}}</text>
+      <text class="summary-label">本机反馈</text>
+    </view>
+    <view class="summary-item" bindtap="onQuickAction" data-key="history">
+      <text class="summary-value amber-text">{{pendingCount}}</text>
+      <text class="summary-label">待审核</text>
+    </view>
+    <view class="summary-item" bindtap="goStats">
+      <text class="summary-value">洞察</text>
+      <text class="summary-label">数据看板</text>
+    </view>
+    <view class="summary-item" bindtap="goMap">
+      <text class="summary-value">地图</text>
+      <text class="summary-label">附近点位</text>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <text class="section-title">我的服务</text>
+    <text class="section-sub">与 Web 端同一后端</text>
+  </view>
+  <view class="quick-grid">
+    <view
+      wx:for="{{quickActions}}"
+      wx:key="key"
+      class="quick-card card"
+      data-key="{{item.key}}"
+      bindtap="onQuickAction"
+    >
+      <view class="quick-icon">{{item.icon}}</view>
+      <text class="quick-title">{{item.label}}</text>
+      <text class="quick-hint">{{item.hint}}</text>
+      <text class="quick-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="section-head">
+    <text class="section-title">数据与合规</text>
+    <text class="section-sub">开放数据 · 可追溯</text>
+  </view>
+  <view class="data-list card">
+    <view
+      wx:for="{{dataLinks}}"
+      wx:key="key"
+      class="data-row"
+      data-key="{{item.key}}"
+      bindtap="onDataLink"
+    >
+      <view class="data-icon">{{item.icon}}</view>
+      <view class="grow">
+        <text class="data-title">{{item.label}}</text>
+        <text class="data-hint">{{item.hint}}</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+    <view class="data-row" data-key="compliance" bindtap="onQuickAction">
+      <view class="data-icon">源</view>
+      <view class="grow">
+        <text class="data-title">数据来源说明</text>
+        <text class="data-hint">OSM / 政府开放数据 / 用户反馈</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <view class="about-card card card-pad mt-20">
+    <view class="between">
+      <text class="section-title">关于</text>
+      <text class="tag tag-gray">v{{version}}</text>
+    </view>
+    <text class="about-line">邻域 POI 情报系统 · 微信小程序端</text>
+    <text class="about-line">银行网点与住宅小区查询、洞察、反馈闭环</text>
+    <text class="about-line mono">API {{apiBase}}</text>
+    <view class="about-actions">
+      <text class="link" bindtap="goMap">打开地图</text>
+      <text class="link" bindtap="onQuickAction" data-key="compliance">数据说明</text>
+    </view>
+  </view>
+</view>

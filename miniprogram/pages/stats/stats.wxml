@@ -1,0 +1,165 @@
+<view class="page page-tab">
+  <view>
+    <text class="h1">数据洞察</text>
+    <text class="muted">基于本地库实时聚合，随采集与反馈自动更新</text>
+  </view>
+
+  <view class="card card-pad mt-20 search-card">
+    <view class="row between">
+      <text class="section-title">带着条件去看数据</text>
+      <text class="tiny">查询会进入热点统计</text>
+    </view>
+    <view class="search-box mt-16">
+      <text class="search-icon">⌕</text>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="关键词：招商、车公庙、万科…"
+        placeholder-class="input-placeholder"
+        confirm-type="search"
+        bindinput="onKeywordInput"
+        bindconfirm="goSearch"
+      />
+    </view>
+    <view class="row gap-12 mt-12">
+      <picker class="grow" mode="selector" range="{{districts}}" value="{{districtIndex}}" bindchange="onDistrictChange">
+        <view class="filter-pill">{{district}} ▾</view>
+      </picker>
+      <view class="segmented grow">
+        <view
+          wx:for="{{types}}"
+          wx:key="key"
+          class="segmented-item {{type === item.key ? 'segmented-active' : ''}}"
+          data-type="{{item.key}}"
+          bindtap="setType"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+    <button class="btn btn-primary btn-block mt-16" bindtap="goSearch">搜索点位</button>
+  </view>
+
+  <view wx:if="{{loading}}" class="mt-20">
+    <view class="card card-pad">
+      <view class="skeleton" style="width: 40%"></view>
+      <view class="skeleton mt-16" style="height: 140rpx"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">!</view>
+      <text class="empty-title">{{error}}</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="retry">重新加载</button>
+      </view>
+    </view>
+  </view>
+
+  <block wx:else>
+    <view class="metric-grid mt-20">
+      <view wx:for="{{cards}}" wx:key="label" class="metric stat-metric">
+        <view class="row between">
+          <text class="metric-label">{{item.label}}</text>
+          <view class="dot {{item.tone === 'mint' ? 'dot-mint' : (item.tone === 'amber' ? 'dot-amber' : '')}}"></view>
+        </view>
+        <text class="metric-value stat-value">{{item.value}}</text>
+        <text class="metric-hint">{{item.hint}}</text>
+      </view>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="section-head">
+        <text class="section-title">品牌分布</text>
+        <text class="section-sub">Top 6</text>
+      </view>
+      <view wx:for="{{brands}}" wx:key="label" class="bar-row" data-brand="{{item.label}}" bindtap="searchBrand">
+        <view class="between mb-8">
+          <text class="bar-label">{{item.label}}</text>
+          <text class="bar-value">{{item.value}}</text>
+        </view>
+        <view class="bar">
+          <view class="bar-fill" style="width: {{item.width}}%"></view>
+        </view>
+      </view>
+      <view wx:if="{{!brands.length}}" class="empty">暂无品牌数据</view>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="section-head">
+        <text class="section-title">小区均价分布</text>
+        <text class="section-sub">样本量</text>
+      </view>
+      <view wx:for="{{priceBuckets}}" wx:key="label" class="bar-row">
+        <view class="between mb-8">
+          <text class="bar-label">{{item.label}}</text>
+          <text class="bar-value">{{item.value}}</text>
+        </view>
+        <view class="bar">
+          <view class="bar-fill bar-fill-amber" style="width: {{item.width}}%"></view>
+        </view>
+      </view>
+      <view wx:if="{{!priceBuckets.length}}" class="empty">暂无均价分布数据</view>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="section-head">
+        <text class="section-title">区域对比</text>
+        <text class="section-sub">
+          <text class="brand-text">银行</text> / <text class="amber-text">小区</text>
+        </text>
+      </view>
+      <view wx:for="{{byDistrict}}" wx:key="label" class="district-row">
+        <view class="between mb-8">
+          <text class="bar-label">{{item.label}}</text>
+          <text class="tiny">{{item.bankText}} / {{item.communityText}}</text>
+        </view>
+        <view class="bar slim-bar">
+          <view class="bar-fill" style="width: {{item.bankWidth}}%"></view>
+        </view>
+        <view class="bar slim-bar mt-6">
+          <view class="bar-fill bar-fill-amber" style="width: {{item.communityWidth}}%"></view>
+        </view>
+      </view>
+      <view wx:if="{{!byDistrict.length}}" class="empty">暂无区域维度数据</view>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="section-head">
+        <text class="section-title">热点网格</text>
+        <text class="section-sub">用户查询最多</text>
+      </view>
+      <view wx:for="{{gridTop}}" wx:key="label" class="hot-row">
+        <view class="hot-rank">{{index + 1}}</view>
+        <view class="grow">
+          <text class="hot-label">{{item.label}}</text>
+          <text class="tiny">查询 {{item.value}} 次</text>
+        </view>
+        <view class="hot-badge">优先更新</view>
+      </view>
+      <view wx:if="{{!gridTop.length}}" class="empty">暂无查询热点</view>
+    </view>
+
+    <view class="data-links mt-20">
+      <view class="data-link card" bindtap="openPending">
+        <view class="thumb thumb-community">待</view>
+        <view class="grow">
+          <text class="data-link-title">待定位小区</text>
+          <text class="tiny">有地址、缺坐标，等待实地确认</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+      <view class="data-link card" bindtap="openLand">
+        <view class="thumb">地</view>
+        <view class="grow">
+          <text class="data-link-title">存量住宅用地</text>
+          <text class="tiny">政府开放数据 · 宗地级</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
+    </view>
+
+    <text class="stats-note">数据口径：银行与小区均来自本地库；实时层只展示、不落库。统计随数据更新自动变化，不代表投资建议。</text>
+  </block>
+</view>

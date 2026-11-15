@@ -1,0 +1,154 @@
+.detail-page {
+  padding-bottom: calc(150rpx + env(safe-area-inset-bottom));
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  left: -80rpx;
+  top: -100rpx;
+  width: 280rpx;
+  height: 280rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.09), transparent 70%);
+}
+
+.detail-title {
+  display: block;
+  font-size: 38rpx;
+  font-weight: 650;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.address-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+  padding: 18rpx;
+  border-radius: 16rpx;
+  background: #f8fafc;
+  border: 1rpx solid #eef2f7;
+  color: #475569;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.detail-pin {
+  color: #2563eb;
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rpx;
+}
+
+.nearby-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.nearby-row:last-child {
+  border-bottom: none;
+}
+
+.nearby-icon {
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 16rpx;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 22rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nearby-name {
+  display: block;
+  color: #334155;
+  font-size: 25rpx;
+  font-weight: 500;
+}
+
+.nearby-address {
+  display: block;
+  margin-top: 2rpx;
+  color: #94a3b8;
+  font-size: 21rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-distance {
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+.live-list {
+  border-top: 1rpx solid #eef2f7;
+  padding-top: 8rpx;
+}
+
+.live-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 10rpx 0;
+}
+
+.live-name {
+  display: block;
+  color: #334155;
+  font-size: 23rpx;
+}
+
+.live-address {
+  display: block;
+  color: #94a3b8;
+  font-size: 20rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.source-row:last-child {
+  border-bottom: none;
+}
+
+.source-field {
+  width: 120rpx;
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 22rpx;
+}
+
+.source-name {
+  display: block;
+  color: #475569;
+  font-size: 23rpx;
+}
+
+.page-bottom-space {
+  height: 30rpx;
+}

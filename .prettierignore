@@ -11,6 +11,9 @@ docs/.vitepress/dist
 src/auto-imports.d.ts
 src/components.d.ts
 
+# 原生小程序代码有自己的格式约定，不参与 Web Prettier
+miniprogram
+
 # 生成/构建产物
 public/data/pois.json
 backend/src/main/resources/seed/pois.json

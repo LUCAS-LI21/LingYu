@@ -1,0 +1,114 @@
+<view class="page page-tab">
+  <view class="between">
+    <view>
+      <text class="h1">列表查询</text>
+      <text class="muted">银行网点与住宅小区，按条件筛选</text>
+    </view>
+    <button class="btn btn-sm btn-ghost" bindtap="goMap">地图</button>
+  </view>
+
+  <view class="search-box mt-20">
+    <text class="search-icon">⌕</text>
+    <input
+      class="search-input"
+      value="{{keyword}}"
+      placeholder="搜名称、地址、品牌"
+      placeholder-class="input-placeholder"
+      confirm-type="search"
+      bindinput="onKeywordInput"
+      bindconfirm="onSearch"
+    />
+    <button class="btn btn-sm btn-primary" bindtap="onSearch">搜索</button>
+  </view>
+
+  <view class="segmented mt-16">
+    <view
+      wx:for="{{types}}"
+      wx:key="key"
+      class="segmented-item {{type === item.key ? 'segmented-active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="setType"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view class="filter-row mt-16">
+    <picker mode="selector" range="{{districts}}" value="{{districtIndex}}" bindchange="onDistrictChange">
+      <view class="filter-pill">{{district}} ▾</view>
+    </picker>
+    <picker mode="selector" range="{{sorts}}" value="{{sortIndex}}" bindchange="onSortChange">
+      <view class="filter-pill">{{sortLabel}} ▾</view>
+    </picker>
+    <view class="filter-clear" bindtap="clearFilters">重置</view>
+  </view>
+
+  <view class="result-line mt-20">
+    <text>共 <text class="strong">{{total}}</text> 个点位</text>
+    <text class="tiny">{{loading ? '加载中…' : (hasMore ? '上滑加载更多' : '已加载全部')}}</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="list-skeleton">
+    <view wx:for="{{skeletons}}" wx:key="*this" class="card card-pad skeleton-card">
+      <view class="row gap-16">
+        <view class="skeleton" style="width: 76rpx; height: 76rpx; border-radius: 22rpx"></view>
+        <view class="grow">
+          <view class="skeleton" style="width: 58%"></view>
+          <view class="skeleton mt-12" style="width: 36%"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">!</view>
+      <text class="empty-title">{{error}}</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="onSearch">重新加载</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!items.length}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">⌕</view>
+      <text class="empty-title">没有找到匹配点位</text>
+      <text class="tiny">试试更换关键词、区域或类型</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-ghost" bindtap="clearFilters">清空筛选</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="list">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="card poi-row"
+      data-id="{{item.id}}"
+      bindtap="openDetail"
+    >
+      <view class="thumb {{item.type === 'community' ? 'thumb-community' : ''}}">{{item.thumb}}</view>
+      <view class="poi-main">
+        <view class="between gap-12">
+          <text class="poi-name">{{item.name}}</text>
+          <text class="arrow">›</text>
+        </view>
+        <view class="row gap-8 mt-8">
+          <text class="tag {{item.tagClass}}">{{item.typeText}}</text>
+          <text class="tag tag-gray">{{item.district || '深圳'}}</text>
+        </view>
+        <text class="poi-address">{{item.address || '地址待补充'}}</text>
+        <view class="between mt-12">
+          <text class="poi-meta">{{item.meta}}</text>
+          <text class="tiny">{{item.extra}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loadingMore}}" class="load-more">加载中…</view>
+    <view wx:elif="{{hasMore}}" class="load-more">上滑加载更多</view>
+    <view wx:else class="load-more">已经到底了</view>
+  </view>
+</view>

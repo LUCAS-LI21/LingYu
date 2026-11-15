@@ -1,0 +1,460 @@
+<view wx:if="{{!authed}}" class="page">
+  <view class="login-hero">
+    <view class="logo login-logo">邻</view>
+    <text class="login-title">管理后台</text>
+    <text class="login-sub">与 Web 运营后台共用同一后端与 Bearer 鉴权</text>
+  </view>
+
+  <view class="card card-pad login-card">
+    <text class="label">账号</text>
+    <input
+      class="input"
+      value="{{username}}"
+      placeholder="operator"
+      placeholder-class="input-placeholder"
+      bindinput="onUsername"
+    />
+
+    <text class="label mt-20">密码</text>
+    <input
+      class="input"
+      value="{{password}}"
+      password="{{true}}"
+      placeholder="请输入密码"
+      placeholder-class="input-placeholder"
+      confirm-type="done"
+      bindinput="onPassword"
+      bindconfirm="login"
+    />
+
+    <view wx:if="{{loginError}}" class="notice notice-red mt-16">{{loginError}}</view>
+
+    <button
+      class="btn btn-primary btn-block mt-24 {{loggingIn ? 'btn-disabled' : ''}}"
+      disabled="{{loggingIn}}"
+      bindtap="login"
+    >
+      {{loggingIn ? '登录中…' : '登录'}}
+    </button>
+
+    <view class="login-hint mt-20">
+      <text class="tiny">演示账号：operator / operator123</text>
+      <text class="tiny">登录后可审核反馈、查看 Agent 建议与抓取任务</text>
+    </view>
+  </view>
+
+  <view class="notice notice-brand mt-20">
+    <text>管理操作会写入审计与版本记录；请勿在公共设备保存登录状态。</text>
+  </view>
+</view>
+
+<view wx:else class="page">
+  <view class="between">
+    <view>
+      <text class="h1">管理后台</text>
+      <text class="muted">反馈审核 · Agent · 任务 · 查询热点</text>
+    </view>
+    <view class="row gap-12">
+      <text class="status status-mint">已登录</text>
+      <text class="link" bindtap="logout">退出</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-x="{{true}}" class="admin-tabs-wrap mt-16" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <view class="admin-tabs">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="admin-tab {{tab === item.key ? 'admin-tab-active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="switchTab"
+      >
+        {{item.label}}
+        <text wx:if="{{item.key === 'feedback' && overview && overview.pendingFeedback}}" class="admin-badge">
+          {{overview.pendingFeedback}}
+        </text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{loading}}" class="card card-pad mt-16">
+    <view class="skeleton" style="width: 45%"></view>
+    <view class="skeleton mt-16" style="height: 120rpx"></view>
+  </view>
+
+  <block wx:else>
+    <block wx:if="{{tab === 'overview'}}">
+      <view class="metric-grid mt-16">
+        <view wx:for="{{kpis}}" wx:key="label" class="metric admin-metric">
+          <view class="between">
+            <text class="metric-label">{{item.label}}</text>
+            <view class="dot {{item.tone === 'amber' ? 'dot-amber' : (item.tone === 'mint' ? 'dot-mint' : '')}}"></view>
+          </view>
+          <text class="metric-value">{{item.value}}</text>
+          <text class="metric-hint">{{item.hint}}</text>
+        </view>
+      </view>
+
+      <view class="card card-pad mt-16">
+        <view class="section-head">
+          <text class="section-title">快捷操作</text>
+          <text class="section-sub">与 Web 后台一致</text>
+        </view>
+        <view class="admin-actions">
+          <button class="btn btn-sm btn-primary" bindtap="triggerJob">触发抓取</button>
+          <button class="btn btn-sm btn-ghost" bindtap="recomputeHotspots">
+            {{busy === 'hotspots' ? '重算中…' : '重算热点'}}
+          </button>
+          <button class="btn btn-sm btn-ghost" bindtap="loadOverview">刷新概览</button>
+        </view>
+        <view class="admin-actions mt-12">
+          <button class="btn btn-sm btn-ghost" bindtap="goFeedback">代录纠错</button>
+          <button class="btn btn-sm btn-ghost" bindtap="goPending">待定位小区</button>
+          <button class="btn btn-sm btn-ghost" bindtap="goLand">存量用地</button>
+          <button class="btn btn-sm btn-ghost" bindtap="goCompliance">数据说明</button>
+        </view>
+      </view>
+
+      <view class="card card-pad mt-16">
+        <view class="section-head">
+          <text class="section-title">运营提示</text>
+          <text class="section-sub">数据新鲜度</text>
+        </view>
+        <view class="kv-row">
+          <text class="kv-key">待审核反馈</text>
+          <text class="kv-value">{{overview.pendingFeedback || 0}} 条等待处理</text>
+        </view>
+        <view class="kv-row">
+          <text class="kv-key">运行中任务</text>
+          <text class="kv-value">{{overview.runningJobs || 0}} 个</text>
+        </view>
+        <view class="kv-row">
+          <text class="kv-key">热点区域</text>
+          <text class="kv-value">{{overview.hotRegions || 0}} 个网格</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'feedback'}}">
+      <scroll-view scroll-x="{{true}}" class="status-scroll mt-16" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="chip-row">
+          <view
+            wx:for="{{feedbackStatuses}}"
+            wx:key="key"
+            class="chip {{feedbackStatus === item.key ? 'chip-active' : ''}}"
+            data-status="{{item.key}}"
+            bindtap="setFeedbackStatus"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </scroll-view>
+
+      <view wx:if="{{!feedback.length}}" class="card card-pad mt-16">
+        <view class="empty">
+          <view class="empty-icon">✓</view>
+          <text class="empty-title">这个状态下没有反馈</text>
+        </view>
+      </view>
+
+      <view wx:else class="admin-list">
+        <view wx:for="{{feedback}}" wx:key="code" class="card card-pad">
+          <view class="between">
+            <view class="row gap-8">
+              <text class="tag tag-gray">{{item.typeLabel}}</text>
+              <text class="status {{item.statusClass}}">{{item.statusLabel}}</text>
+            </view>
+            <text class="mono tiny">{{item.code}}</text>
+          </view>
+          <text class="admin-item-title mt-12">{{item.poiName}}</text>
+          <view class="kv-row">
+            <text class="kv-key">字段 / 新值</text>
+            <text class="kv-value">{{item.field}} → {{item.newValue || '未填写'}}</text>
+          </view>
+          <view class="kv-row">
+            <text class="kv-key">说明</text>
+            <text class="kv-value">{{item.description || '—'}}</text>
+          </view>
+          <view class="kv-row">
+            <text class="kv-key">联系方式</text>
+            <text class="kv-value">{{item.contact || '—'}}</text>
+          </view>
+          <view class="between mt-12">
+            <text class="tiny">{{item.createdAt}}</text>
+            <view wx:if="{{item.status === 'pending'}}" class="row gap-12">
+              <button
+                class="btn btn-sm btn-danger"
+                data-code="{{item.code}}"
+                disabled="{{busy === item.code}}"
+                bindtap="reject"
+              >
+                驳回
+              </button>
+              <button
+                class="btn btn-sm btn-primary"
+                data-code="{{item.code}}"
+                disabled="{{busy === item.code}}"
+                bindtap="approve"
+              >
+                采纳
+              </button>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="pager mt-16">
+        <button class="btn btn-sm btn-ghost" disabled="{{feedbackPage <= 1}}" bindtap="feedbackPrev">上一页</button>
+        <text class="tiny">{{feedbackPage}} / {{feedbackPages}} · 共 {{feedbackTotal}} 条</text>
+        <button class="btn btn-sm btn-ghost" disabled="{{feedbackPage >= feedbackPages}}" bindtap="feedbackNext">下一页</button>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'agent'}}">
+      <view class="card card-pad mt-16">
+        <view class="section-head">
+          <text class="section-title">发起 Agent 建议</text>
+          <text class="section-sub">5–15 秒 · 只生成建议不写库</text>
+        </view>
+
+        <view wx:if="{{!agentSelected}}" class="search-box">
+          <text class="search-icon">⌕</text>
+          <input
+            class="search-input"
+            value="{{agentKeyword}}"
+            placeholder="搜索点位，例如：招商银行"
+            placeholder-class="input-placeholder"
+            bindinput="onAgentKeyword"
+          />
+          <text wx:if="{{agentSearching}}" class="tiny">搜索中…</text>
+        </view>
+
+        <view wx:if="{{agentResults.length}}" class="agent-search-results">
+          <view
+            wx:for="{{agentResults}}"
+            wx:key="id"
+            class="agent-search-row"
+            data-index="{{index}}"
+            bindtap="selectAgentPoi"
+          >
+            <view class="grow">
+              <text class="result-name">{{item.name}}</text>
+              <text class="result-address">{{item.address || '地址待补充'}} · {{item.district || '深圳'}}</text>
+            </view>
+            <text class="tiny">选择</text>
+          </view>
+        </view>
+
+        <view wx:if="{{agentSelected}}" class="selected-poi mt-12">
+          <view class="grow">
+            <text class="result-name">{{agentSelected.name}}</text>
+            <text class="result-address">{{agentSelected.address || '地址待补充'}} · {{agentSelected.type}}</text>
+          </view>
+          <text class="link" bindtap="clearAgentPoi">换一个</text>
+        </view>
+
+        <view wx:if="{{agentSelected}}" class="row gap-12 mt-16">
+          <picker
+            class="grow"
+            mode="selector"
+            range="{{agentFields}}"
+            range-key="label"
+            value="{{agentFieldIndex}}"
+            bindchange="onAgentField"
+          >
+            <view class="input picker-value">
+              <text>{{agentFieldLabel}}</text>
+              <text class="tiny">▾</text>
+            </view>
+          </picker>
+          <button class="btn btn-primary" disabled="{{busy === 'propose'}}" bindtap="runAgentPropose">
+            {{busy === 'propose' ? '运行中…' : '运行 Agent'}}
+          </button>
+        </view>
+
+        <view wx:if="{{agentResult}}" class="agent-result mt-16">
+          <view class="between">
+            <text class="status {{agentResult.status === 'ready' ? 'status-mint' : (agentResult.status === 'needs_review' ? 'status-amber' : 'status-brand')}}">
+              {{agentResult.statusLabel}}
+            </text>
+            <text wx:if="{{agentResult.confidence}}" class="tiny">置信度 {{agentResult.confidence}}</text>
+          </view>
+          <text class="agent-value mt-12">{{agentResult.value}}</text>
+          <text wx:if="{{agentResult.evidence}}" class="agent-evidence mt-12">{{agentResult.evidence}}</text>
+          <view wx:if="{{agentResult.problems}}" class="notice mt-12">{{agentResult.problems}}</view>
+          <view class="row gap-12 mt-12">
+            <text wx:if="{{agentResult.sourceUrl}}" class="link" data-url="{{agentResult.sourceUrl}}" bindtap="copySource">复制来源</text>
+            <button
+              wx:if="{{agentResult.status === 'ready' && agentResult.runId}}"
+              class="btn btn-sm btn-primary"
+              disabled="{{busy === 'proposal-apply'}}"
+              bindtap="applyProposal"
+            >
+              采纳建议
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view class="between mt-16">
+        <text class="section-title">Agent 运行记录</text>
+        <button class="btn btn-sm btn-ghost" bindtap="loadAgent">刷新</button>
+      </view>
+
+      <view wx:if="{{!agentRuns.length}}" class="card card-pad mt-16">
+        <view class="empty">
+          <view class="empty-icon">AI</view>
+          <text class="empty-title">暂无 Agent 运行记录</text>
+          <text class="tiny">在 Web 后台发起建议后，这里可审核与采纳</text>
+        </view>
+      </view>
+
+      <view wx:else class="admin-list">
+        <view wx:for="{{agentRuns}}" wx:key="id" class="card card-pad">
+          <view class="between">
+            <text class="status {{item.statusClass}}">{{item.statusLabel}}</text>
+            <text class="mono tiny">#{{item.id}}</text>
+          </view>
+          <text class="admin-item-title mt-12">{{item.entityType}} · {{item.field}}</text>
+          <text class="admin-item-sub">{{item.entityId}}</text>
+          <view class="agent-value mt-12">{{item.value}}</view>
+          <view wx:if="{{item.evidence}}" class="agent-evidence mt-12">{{item.evidence}}</view>
+          <view wx:if="{{item.problems}}" class="notice mt-12">{{item.problems}}</view>
+          <view class="between mt-12">
+            <view class="row gap-12">
+              <text wx:if="{{item.confidence}}" class="tiny">置信度 {{item.confidence}}</text>
+              <text wx:if="{{item.sourceUrl}}" class="link" data-url="{{item.sourceUrl}}" bindtap="copySource">复制来源</text>
+            </view>
+            <button
+              wx:if="{{item.status === 'ready'}}"
+              class="btn btn-sm btn-primary"
+              data-id="{{item.id}}"
+              disabled="{{busy === item.applyKey}}"
+              bindtap="applyAgent"
+            >
+              采纳
+            </button>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'jobs'}}">
+      <view class="between mt-16">
+        <text class="section-title">抓取任务</text>
+        <button class="btn btn-sm btn-primary" disabled="{{busy === 'job'}}" bindtap="triggerJob">
+          {{busy === 'job' ? '创建中…' : '触发抓取'}}
+        </button>
+      </view>
+
+      <view wx:if="{{!jobs.length}}" class="card card-pad mt-16">
+        <view class="empty">
+          <view class="empty-icon">⟳</view>
+          <text class="empty-title">暂无任务</text>
+        </view>
+      </view>
+
+      <view wx:else class="admin-list">
+        <view wx:for="{{jobs}}" wx:key="id" class="card card-pad">
+          <view class="between">
+            <view class="row gap-8">
+              <text class="tag tag-gray">{{item.sourceCode}}</text>
+              <text class="status {{item.statusClass}}">{{item.statusLabel}}</text>
+            </view>
+            <text class="mono tiny">#{{item.id}}</text>
+          </view>
+          <view class="job-metrics mt-12">
+            <view class="job-metric"><text class="job-value">{{item.fetched}}</text><text class="tiny">抓取</text></view>
+            <view class="job-metric"><text class="job-value">{{item.inserted}}</text><text class="tiny">新增</text></view>
+            <view class="job-metric"><text class="job-value">{{item.updated}}</text><text class="tiny">更新</text></view>
+            <view class="job-metric"><text class="job-value red-text">{{item.failed}}</text><text class="tiny">失败</text></view>
+          </view>
+          <text class="tiny mt-12">{{item.createdAt}}{{item.finishedAt ? ' → ' + item.finishedAt : ''}}</text>
+          <text wx:if="{{item.errorSummary}}" class="job-error">{{item.errorSummary}}</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'hotspots'}}">
+      <view class="between mt-16">
+        <text class="section-title">查询热点</text>
+        <button class="btn btn-sm btn-ghost" disabled="{{busy === 'hotspots'}}" bindtap="recomputeHotspots">
+          {{busy === 'hotspots' ? '重算中…' : '重算'}}
+        </button>
+      </view>
+
+      <view wx:if="{{!hotspots.length}}" class="card card-pad mt-16">
+        <view class="empty">
+          <view class="empty-icon">热</view>
+          <text class="empty-title">暂无热点数据</text>
+          <text class="tiny">用户查询后会自动聚合到这里</text>
+        </view>
+      </view>
+
+      <view wx:else class="card mt-16">
+        <view wx:for="{{hotspots}}" wx:key="grid" class="hotspot-row">
+          <view class="hotspot-rank">{{index + 1}}</view>
+          <view class="grow">
+            <text class="hotspot-grid">{{item.grid}}</text>
+            <text class="tiny">{{item.statDate}} · 更新 {{item.updatedAt}}</text>
+          </view>
+          <view class="hotspot-nums">
+            <text class="hotspot-count">{{item.queryCount}}</text>
+            <text class="tiny">查询 · 零结果 {{item.zeroCount}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <block wx:elif="{{tab === 'coordinates'}}">
+      <view class="between mt-16">
+        <text class="section-title">待审坐标</text>
+        <button class="btn btn-sm btn-ghost" bindtap="loadCoordinates">刷新</button>
+      </view>
+      <text class="tiny mt-8">用户/管理员提交的待定位小区坐标；通过后转正进地图。</text>
+
+      <view wx:if="{{!coordinateSubmissions.length}}" class="card card-pad mt-16">
+        <view class="empty">
+          <view class="empty-icon">⌖</view>
+          <text class="empty-title">暂无待审坐标</text>
+        </view>
+      </view>
+
+      <view wx:else class="admin-list">
+        <view wx:for="{{coordinateSubmissions}}" wx:key="id" class="card card-pad">
+          <view class="between">
+            <text class="admin-item-title">{{item.name}}</text>
+            <text class="tag tag-amber">待审</text>
+          </view>
+          <text class="admin-item-sub">{{item.district}} · {{item.address || '地址待补充'}}</text>
+          <view class="notice notice-brand mt-12">
+            <text class="mono">WGS-84 {{item.lng}}, {{item.lat}}</text>
+          </view>
+          <view class="between mt-12">
+            <text class="tiny">{{item.submitter}}</text>
+            <view class="row gap-12">
+              <button
+                class="btn btn-sm btn-danger"
+                data-id="{{item.id}}"
+                data-action="reject"
+                disabled="{{busy === item.busyKey}}"
+                bindtap="reviewCoordinate"
+              >
+                驳回
+              </button>
+              <button
+                class="btn btn-sm btn-primary"
+                data-id="{{item.id}}"
+                data-action="approve"
+                disabled="{{busy === item.busyKey}}"
+                bindtap="reviewCoordinate"
+              >
+                通过
+              </button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </block>
+</view>

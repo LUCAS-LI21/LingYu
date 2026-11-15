@@ -1,0 +1,39 @@
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.history-name {
+  display: block;
+  color: #0f172a;
+  font-size: 29rpx;
+  font-weight: 600;
+}
+
+.history-meta {
+  display: block;
+  margin-top: 6rpx;
+  color: #94a3b8;
+  font-size: 21rpx;
+}
+
+.history-desc {
+  display: block;
+  margin-top: 12rpx;
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 23rpx;
+  line-height: 1.55;
+}
+
+.history-note {
+  display: block;
+  padding: 10rpx 6rpx;
+  color: #94a3b8;
+  font-size: 20rpx;
+  text-align: center;
+}

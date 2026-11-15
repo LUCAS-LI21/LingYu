@@ -1,0 +1,274 @@
+.login-hero {
+  padding: 40rpx 10rpx 30rpx;
+  text-align: center;
+}
+
+.login-logo {
+  width: 92rpx;
+  height: 92rpx;
+  margin: 0 auto 18rpx;
+  border-radius: 26rpx;
+  font-size: 44rpx;
+}
+
+.login-title {
+  display: block;
+  color: #0f172a;
+  font-size: 40rpx;
+  font-weight: 650;
+}
+
+.login-sub {
+  display: block;
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 22rpx;
+}
+
+.login-card {
+  margin-top: 10rpx;
+}
+
+.login-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  text-align: center;
+}
+
+.admin-tabs-wrap {
+  white-space: nowrap;
+  margin-top: 18rpx;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 8rpx;
+  padding: 6rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  border: 1rpx solid #e6eaf0;
+}
+
+.admin-tab {
+  position: relative;
+  flex-shrink: 0;
+  padding: 16rpx 18rpx;
+  border-radius: 14rpx;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.admin-tab-active {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.admin-badge {
+  position: absolute;
+  top: 2rpx;
+  right: 2rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  padding: 0 6rpx;
+  border-radius: 999rpx;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 17rpx;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.admin-metric {
+  min-width: calc(50% - 7rpx);
+  background: #fff;
+  border: 1rpx solid #e6eaf0;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 16rpx;
+}
+
+.admin-item-title {
+  display: block;
+  color: #0f172a;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.admin-item-sub {
+  display: block;
+  margin-top: 2rpx;
+  color: #94a3b8;
+  font-size: 20rpx;
+}
+
+.agent-value {
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: #f8fafc;
+  border: 1rpx solid #eef2f7;
+  color: #0f172a;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.agent-search-results {
+  margin-top: 12rpx;
+  border-top: 1rpx solid #eef2f7;
+}
+
+.agent-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.agent-search-row:last-child {
+  border-bottom: none;
+}
+
+.selected-poi {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 16rpx;
+  border: 1rpx solid #bfdbfe;
+  border-radius: 16rpx;
+  background: #f5f9ff;
+}
+
+.result-name {
+  display: block;
+  color: #0f172a;
+  font-size: 24rpx;
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-address {
+  display: block;
+  margin-top: 2rpx;
+  color: #94a3b8;
+  font-size: 19rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  line-height: 74rpx;
+  font-size: 23rpx;
+}
+
+.agent-result {
+  padding: 16rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid #e6eaf0;
+  background: #fbfcfe;
+}
+
+
+.agent-evidence {
+  color: #64748b;
+  font-size: 22rpx;
+  line-height: 1.55;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-scroll {
+  white-space: nowrap;
+}
+
+.job-metrics {
+  display: flex;
+  gap: 10rpx;
+}
+
+.job-metric {
+  flex: 1;
+  min-width: 0;
+  padding: 12rpx;
+  border-radius: 14rpx;
+  background: #f8fafc;
+}
+
+.job-value {
+  display: block;
+  color: #0f172a;
+  font-size: 27rpx;
+  font-weight: 650;
+}
+
+.job-error {
+  display: block;
+  margin-top: 10rpx;
+  color: #b91c1c;
+  font-size: 21rpx;
+  line-height: 1.5;
+}
+
+.hotspot-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #eef2f7;
+}
+
+.hotspot-row:last-child {
+  border-bottom: none;
+}
+
+.hotspot-rank {
+  width: 38rpx;
+  height: 38rpx;
+  flex-shrink: 0;
+  border-radius: 12rpx;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 20rpx;
+  font-weight: 600;
+  text-align: center;
+  line-height: 38rpx;
+}
+
+.hotspot-grid {
+  display: block;
+  color: #334155;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.hotspot-nums {
+  text-align: right;
+}
+
+.hotspot-count {
+  display: block;
+  color: #2563eb;
+  font-size: 29rpx;
+  font-weight: 650;
+}

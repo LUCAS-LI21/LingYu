@@ -1,0 +1,36 @@
+<view class="page">
+  <view class="between">
+    <view>
+      <text class="h1">我的反馈</text>
+      <text class="muted">本机提交记录 · 多端不会自动同步</text>
+    </view>
+    <button wx:if="{{hasItems}}" class="btn btn-sm btn-ghost" bindtap="clearAll">清空</button>
+  </view>
+
+  <view wx:if="{{!hasItems}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">记</view>
+      <text class="empty-title">还没有反馈记录</text>
+      <text class="tiny">发现数据有误？提交纠错后会在这里留档</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="goFeedback">去纠错</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="history-list">
+    <view wx:for="{{items}}" wx:key="code" class="card card-pad">
+      <view class="between">
+        <view class="row gap-8">
+          <text class="tag tag-gray">{{item.typeLabel}}</text>
+          <text class="status {{item.statusClass}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="mono tiny">{{item.code}}</text>
+      </view>
+      <text class="history-name mt-12">{{item.poiName}}</text>
+      <text class="history-meta">字段：{{item.field}} · {{item.createdAt}}</text>
+      <text wx:if="{{item.description}}" class="history-desc">{{item.description}}</text>
+    </view>
+    <text class="history-note">状态由运营审核更新；小程序端仅保存提交摘要。</text>
+  </view>
+</view>

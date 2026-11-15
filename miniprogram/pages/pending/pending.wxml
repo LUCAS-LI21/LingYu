@@ -1,0 +1,95 @@
+<view class="page">
+  <view>
+    <text class="h1">待定位小区</text>
+    <text class="muted">有名称与地址、缺坐标，暂不进入地图</text>
+  </view>
+
+  <view class="notice mt-16">
+    <text>坐标只能靠实地确认产生。点击「在地图上选点」，选到小区门口后提交；审核通过即转正。</text>
+  </view>
+
+  <view class="pending-kpis mt-16">
+    <view class="pending-kpi">
+      <text class="pending-value">{{totalText}}</text>
+      <text class="pending-label">待定位总数</text>
+    </view>
+    <view class="pending-kpi">
+      <text class="pending-value">{{items.length}}</text>
+      <text class="pending-label">当前列表</text>
+    </view>
+    <view class="pending-kpi">
+      <text class="pending-value">政府</text>
+      <text class="pending-label">物业管理区域数据</text>
+    </view>
+  </view>
+
+  <view class="search-box mt-16">
+    <text class="search-icon">⌕</text>
+    <input
+      class="search-input"
+      value="{{keyword}}"
+      placeholder="搜索小区名 / 地址"
+      placeholder-class="input-placeholder"
+      confirm-type="search"
+      bindinput="onKeywordInput"
+      bindconfirm="onSearch"
+    />
+    <button class="btn btn-sm btn-primary" bindtap="onSearch">查询</button>
+  </view>
+
+  <view class="row between mt-12">
+    <picker mode="selector" range="{{districts}}" value="{{districtIndex}}" bindchange="onDistrictChange">
+      <view class="filter-pill">{{district}} ▾</view>
+    </picker>
+    <text class="tiny">共 {{total}} 个 · 上滑加载更多</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="mt-20">
+    <view wx:for="{{skeletons}}" wx:key="*this" class="card card-pad mt-12">
+      <view class="skeleton" style="width: 52%"></view>
+      <view class="skeleton mt-12" style="width: 82%"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">!</view>
+      <text class="empty-title">{{error}}</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="onSearch">重试</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!items.length}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">待</view>
+      <text class="empty-title">没有待定位小区</text>
+      <text class="tiny">换个区域或关键词试试</text>
+    </view>
+  </view>
+
+  <view wx:else class="pending-list">
+    <view wx:for="{{items}}" wx:key="id" class="card card-pad">
+      <view class="between">
+        <text class="pending-name">{{item.name}}</text>
+        <text wx:if="{{item.isSubmitted}}" class="tag tag-amber">已提交</text>
+        <text wx:else class="tag tag-gray">{{item.district || '深圳'}}</text>
+      </view>
+      <text class="pending-address">{{item.address || '地址待补充'}}</text>
+      <view class="row between mt-12">
+        <text class="tiny">{{item.street || item.district}} · {{item.attribute || '住宅小区'}}</text>
+        <text class="mono tiny">{{item.shortId}}</text>
+      </view>
+      <button
+        class="btn btn-sm btn-primary btn-block mt-16 {{item.isSubmitted || submittingId === item.id ? 'btn-disabled' : ''}}"
+        data-id="{{item.id}}"
+        disabled="{{item.isSubmitted || submittingId === item.id}}"
+        bindtap="chooseCoordinate"
+      >
+        {{submittingId === item.id ? '提交中…' : (item.isSubmitted ? '已提交，等待审核' : '在地图上选点')}}
+      </button>
+    </view>
+    <view class="load-more">{{loadingMore ? '加载中…' : (hasMore ? '上滑加载更多' : '已经到底了')}}</view>
+  </view>
+</view>

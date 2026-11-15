@@ -1,0 +1,66 @@
+<view class="page">
+  <view>
+    <text class="h1">数据来源与合规</text>
+    <text class="muted">严格区分「可入库」与「仅展示」；每条 POI 都能追溯来源</text>
+  </view>
+
+  <view class="card card-pad mt-20">
+    <text class="section-title">三级授权模型</text>
+    <view class="level-list mt-16">
+      <view wx:for="{{levels}}" wx:key="code" class="level-item {{item.className}}">
+        <view class="level-code">{{item.code}}</view>
+        <view class="grow">
+          <text class="level-title">{{item.title}}</text>
+          <text class="level-text">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">数据来源清单</text>
+      <text class="section-sub">{{sources.length}} 类来源</text>
+    </view>
+    <view wx:for="{{sources}}" wx:key="name" class="source-card">
+      <view class="between gap-12">
+        <text class="source-title">{{item.name}}</text>
+        <text class="tag {{item.levelClass}}">{{item.level}}</text>
+      </view>
+      <text class="source-scope">{{item.scope}}</text>
+      <view class="between mt-8">
+        <text class="tiny">许可：{{item.license}}</text>
+        <text class="tiny">{{item.note}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card card-pad mt-20">
+    <text class="section-title">明确不采集</text>
+    <view class="forbid-list mt-14">
+      <view wx:for="{{forbidden}}" wx:key="name" class="forbid-row">
+        <view class="forbid-icon">×</view>
+        <view class="grow">
+          <text class="forbid-name">{{item.name}}</text>
+          <text class="forbid-reason">{{item.reason}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card card-pad mt-20">
+    <text class="section-title">免责声明</text>
+    <view class="disclaimer-list mt-12">
+      <view wx:for="{{disclaimers}}" wx:key="*this" class="disclaimer-row">
+        <view class="disclaimer-dot"></view>
+        <text class="grow">{{item}}</text>
+      </view>
+    </view>
+    <text class="tiny mt-16">最后更新：2026-11-05 · 数据版本 v0.3</text>
+  </view>
+
+  <view class="notice notice-brand mt-20">
+    <text class="grow">发现数据问题？欢迎通过纠错入口提交，并附上可核对的依据。</text>
+    <text class="link" bindtap="goFeedback">去纠错</text>
+  </view>
+</view>

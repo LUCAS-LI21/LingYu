@@ -1,0 +1,90 @@
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.filter-pill {
+  min-height: 58rpx;
+  padding: 0 20rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #e6eaf0;
+  background: #fff;
+  color: #475569;
+  font-size: 23rpx;
+  line-height: 56rpx;
+}
+
+.filter-clear {
+  margin-left: auto;
+  color: #2563eb;
+  font-size: 23rpx;
+  padding: 0 6rpx;
+}
+
+.result-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 23rpx;
+}
+
+.list {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.skeleton-card {
+  margin-bottom: 16rpx;
+}
+
+.poi-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18rpx;
+  padding: 24rpx;
+}
+
+.poi-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.poi-name {
+  color: #0f172a;
+  font-size: 29rpx;
+  font-weight: 650;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poi-address {
+  display: block;
+  margin-top: 10rpx;
+  color: #64748b;
+  font-size: 23rpx;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.poi-meta {
+  color: #475569;
+  font-size: 22rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.load-more {
+  padding: 28rpx 0 12rpx;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 22rpx;
+}
