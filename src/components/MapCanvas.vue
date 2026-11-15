@@ -25,6 +25,14 @@ let boxStart: L.LatLng | null = null
 let boxMode = false
 let tileErrors = 0
 
+/** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建（5000+ 点位会卡） */
+const rendered = new Map<string, L.Marker | L.CircleMarker>()
+let renderTimer: number | null = null
+
+/** zoom 低于此值时按网格聚合，否则画单点 */
+const CLUSTER_MAX_ZOOM = 14
+const CLUSTER_GRID = 0.008 // 约 800m
+
 // 福田中心区，初始视野聚焦以便看清点位
 const SHENZHEN_CENTER: L.LatLngTuple = [22.5412, 114.0579]
 const INITIAL_ZOOM = 14
@@ -83,25 +91,96 @@ function openPopup(marker: L.Marker, poi: Poi): void {
   })
 }
 
-/** 只渲染当前视野内的点：1600 个点全量渲染会糊成一团，也拖慢交互 */
+/** 只渲染当前视野内的点；低 zoom 时按网格聚合成带数字的圆点 */
 function renderMarkers(): void {
   if (!map || !markerLayer) return
-  markerLayer.clearLayers()
+  const zoom = map.getZoom()
   const bounds = map.getBounds().pad(0.12)
-  for (const poi of props.pois) {
-    const inside = bounds.contains([poi.lat, poi.lng])
-    if (!inside && poi.id !== props.selectedId) continue
-    const marker = L.marker([poi.lat, poi.lng], {
-      icon: pinIcon(poi, poi.id === props.selectedId),
-      title: poi.name,
-      riseOnHover: true,
-    })
-    marker.on('click', () => {
-      emit('select', poi)
-      openPopup(marker, poi)
-    })
-    marker.addTo(markerLayer)
+  const next = new Map<string, L.Marker | L.CircleMarker>()
+
+  if (zoom <= CLUSTER_MAX_ZOOM) {
+    // 聚合：同网格合并成一个圆点，点击放大
+    const cells = new Map<string, { lat: number; lng: number; count: number }>()
+    for (const poi of props.pois) {
+      if (!bounds.contains([poi.lat, poi.lng])) continue
+      const gx = Math.floor(poi.lng / CLUSTER_GRID)
+      const gy = Math.floor(poi.lat / CLUSTER_GRID)
+      const key = `${gx}:${gy}`
+      const cell = cells.get(key)
+      if (cell) {
+        cell.count += 1
+        cell.lat += poi.lat
+        cell.lng += poi.lng
+      } else {
+        cells.set(key, { lat: poi.lat, lng: poi.lng, count: 1 })
+      }
+    }
+    for (const [key, cell] of cells) {
+      const markerKey = `cluster:${key}`
+      const lat = cell.lat / cell.count
+      const lng = cell.lng / cell.count
+      const radius = Math.min(26, 10 + Math.log2(cell.count + 1) * 4)
+      let marker = rendered.get(markerKey) as L.CircleMarker | undefined
+      if (!marker) {
+        marker = L.circleMarker([lat, lng], {
+          radius,
+          weight: 1,
+          color: '#2563eb',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.75,
+        })
+        marker.on('click', () => {
+          map?.setView([lat, lng], Math.min(17, zoom + 2))
+        })
+        marker.addTo(markerLayer)
+      } else {
+        marker.setLatLng([lat, lng])
+        marker.setRadius(radius)
+      }
+      marker.bindTooltip(`${cell.count} 个点位`, { direction: 'top' })
+      next.set(markerKey, marker)
+    }
+  } else {
+    for (const poi of props.pois) {
+      const inside = bounds.contains([poi.lat, poi.lng])
+      if (!inside && poi.id !== props.selectedId) continue
+      let marker = rendered.get(poi.id) as L.Marker | undefined
+      if (!marker) {
+        marker = L.marker([poi.lat, poi.lng], {
+          icon: pinIcon(poi, poi.id === props.selectedId),
+          title: poi.name,
+          riseOnHover: true,
+        })
+        marker.on('click', () => {
+          emit('select', poi)
+          openPopup(marker as L.Marker, poi)
+        })
+        marker.addTo(markerLayer)
+      } else {
+        marker.setLatLng([poi.lat, poi.lng])
+        marker.setIcon(pinIcon(poi, poi.id === props.selectedId))
+      }
+      next.set(poi.id, marker)
+    }
   }
+
+  // 差量清理：把这次没出现的 marker 从地图上摘掉
+  for (const [key, marker] of rendered) {
+    if (!next.has(key)) {
+      markerLayer.removeLayer(marker)
+    }
+  }
+  rendered.clear()
+  for (const [key, marker] of next) rendered.set(key, marker)
+}
+
+/** moveend/zoomend 会连续触发，防抖后再算，避免拖动时反复重建 */
+function scheduleRender(): void {
+  if (renderTimer !== null) window.clearTimeout(renderTimer)
+  renderTimer = window.setTimeout(() => {
+    renderTimer = null
+    renderMarkers()
+  }, 160)
 }
 
 function initTileLayer(target: L.Map): void {
@@ -180,12 +259,17 @@ onMounted(() => {
     setBoxMode(false)
   })
 
-  map.on('moveend', renderMarkers)
-  map.on('zoomend', renderMarkers)
+  map.on('moveend', scheduleRender)
+  map.on('zoomend', scheduleRender)
   renderMarkers()
 })
 
 onBeforeUnmount(() => {
+  if (renderTimer !== null) {
+    window.clearTimeout(renderTimer)
+    renderTimer = null
+  }
+  rendered.clear()
   map?.remove()
   map = null
   markerLayer = null

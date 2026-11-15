@@ -24,7 +24,8 @@ public class ScheduledIngest {
 
     /** 默认范围：福田中心区，半径约 3km */
     private static final double[] DEFAULT_CENTER = {114.055, 22.541};
-    private static final double HALF_SPAN = 0.03;
+    // 单次抓取范围约 2.2km：早期用 0.03（约 6.6km）时 Overpass 频繁 504，任务大面积 partial
+    private static final double HALF_SPAN = 0.01;
 
     private final JdbcTemplate jdbcTemplate;
     private final IngestService ingestService;

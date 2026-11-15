@@ -398,39 +398,52 @@ public class IngestService {
         HttpClient client = buildClient();
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
         RuntimeException last = null;
-        for (String endpoint : endpoints.split(",")) {
-            String url = endpoint.trim();
-            if (url.isEmpty()) {
-                continue;
-            }
-            try {
-                HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-                        .header("User-Agent", userAgent)
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(HttpRequest.BodyPublishers.ofString(body))
-                        .timeout(timeout)
-                        .build();
-                // 用 sendAsync + orTimeout 做硬上限：代理 CONNECT 阶段挂住时，
-                // HttpRequest.timeout 不一定生效，sync send 会永久阻塞（实测卡死 12 分钟以上）
-                HttpResponse<String> response = client
-                        .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                        .orTimeout(timeout.toSeconds() + 15, TimeUnit.SECONDS)
-                        .join();
-                if (response.statusCode() == 200) {
-                    return objectMapper.readTree(response.body());
+        String[] hosts = endpoints.split(",");
+        // 两轮：第一轮按顺序试所有镜像，全挂则退避后重来一次。
+        // 公共实例 504/限流是常态，一次失败就放弃会让定时任务大面积 failed（实测成功率 8/352）。
+        for (int round = 1; round <= 2; round++) {
+            for (String endpoint : hosts) {
+                String url = endpoint.trim();
+                if (url.isEmpty()) {
+                    continue;
                 }
-                last = new IllegalStateException(url + " -> HTTP " + response.statusCode());
-            } catch (Exception ex) {
-                Throwable cause = ex instanceof java.util.concurrent.CompletionException && ex.getCause() != null
-                        ? ex.getCause()
-                        : ex;
-                last = cause instanceof RuntimeException re ? re : new IllegalStateException(cause);
+                try {
+                    HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                            .header("User-Agent", userAgent)
+                            .header("Content-Type", "application/x-www-form-urlencoded")
+                            .POST(HttpRequest.BodyPublishers.ofString(body))
+                            .timeout(timeout)
+                            .build();
+                    // 用 sendAsync + orTimeout 做硬上限：代理 CONNECT 阶段挂住时，
+                    // HttpRequest.timeout 不一定生效，sync send 会永久阻塞（实测卡死 12 分钟以上）
+                    HttpResponse<String> response = client
+                            .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                            .orTimeout(timeout.toSeconds() + 15, TimeUnit.SECONDS)
+                            .join();
+                    if (response.statusCode() == 200) {
+                        return objectMapper.readTree(response.body());
+                    }
+                    last = new IllegalStateException(url + " -> HTTP " + response.statusCode());
+                } catch (Exception ex) {
+                    Throwable cause = ex instanceof java.util.concurrent.CompletionException && ex.getCause() != null
+                            ? ex.getCause()
+                            : ex;
+                    last = cause instanceof RuntimeException re ? re : new IllegalStateException(cause);
+                }
+                try {
+                    Thread.sleep(1200);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw last == null ? new IllegalStateException("抓取被中断") : last;
+                }
             }
-            try {
-                Thread.sleep(1200);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                break;
+            if (round == 1) {
+                try {
+                    Thread.sleep(3000L * round);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
         }
         throw last == null ? new IllegalStateException("没有可用的 Overpass 端点") : last;

@@ -175,6 +175,13 @@ public class AdminService {
                 jdbcTemplate.update("UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ?",
                         value, poiId);
                 applied.add(column + "=" + value);
+                // 字段级来源要跟着改：否则审核完用户改的电话，详情页还显示「银行官网」
+                jdbcTemplate.update("""
+                        INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url),
+                            updated_at = NOW()
+                        """, poiType, poiId, column, "用户反馈（审核:" + reviewer + "）", "feedback:" + code);
             }
         }
 
