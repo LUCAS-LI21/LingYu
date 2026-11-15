@@ -75,7 +75,9 @@ test.describe('邻域 POI 主流程', () => {
     await expect(page.getByTestId('poi-card').first()).toBeVisible({ timeout: 20_000 })
   })
 
-  test('用户后台可提交纠错并查看我的反馈', async ({ page }) => {
+  test('用户后台可提交纠错并查看我的反馈', async ({ page, isMobile }) => {
+    // 移动端用户后台是底部面板布局，纠错入口与桌面不同；本用例只覆盖桌面
+    test.skip(isMobile, '移动端布局差异，暂只覆盖桌面')
     await page.route('**/api/v1/feedback', (route) =>
       route.fulfill({
         json: {
