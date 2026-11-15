@@ -154,6 +154,39 @@ public class PoiController {
     }
 
     /**
+     * 反向关联：某银行网点周边的小区（赛题「查询某银行服务范围内的小区信息」）。
+     * 与「小区周边银行」互为镜像，同样按球面距离升序。
+     */
+    @GetMapping("/pois/{id}/nearby-communities")
+    public ApiResult<Map<String, Object>> nearbyCommunities(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "1000") double radius,
+            @RequestParam(defaultValue = "10") int limit) {
+        PoiRow poi = poiService.detail(id);
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+        List<PoiService.NearbyItem> items =
+                poiService.nearbyCommunities(poi.getLng(), poi.getLat(), radius, safeLimit);
+        List<Map<String, Object>> list = new java.util.ArrayList<>();
+        for (PoiService.NearbyItem item : items) {
+            PoiRow community = item.poi();
+            Map<String, Object> row = new java.util.LinkedHashMap<>();
+            row.put("id", community.getId());
+            row.put("name", community.getName());
+            row.put("address", community.getAddress());
+            row.put("district", community.getDistrict());
+            row.put("distance", Math.round(item.distance()));
+            row.put("avgPrice", community.getAvgPrice());
+            row.put("builtYear", community.getBuiltYear());
+            list.add(row);
+        }
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("poiId", id);
+        result.put("radius", radius);
+        result.put("items", list);
+        return ApiResult.ok(result);
+    }
+
+    /**
      * 最近 N 家银行：小区详情页用，按球面距离升序。
      * 半径默认 5km，找不到就返回空列表（不编造"附近"）。
      */

@@ -76,6 +76,19 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 反向关联：某银行网点周边的住宅小区（赛题三.3「某银行服务范围内的小区」） -->
+    <select id="nearbyCommunities" resultType="com.poiintel.poi.PoiRow">
+        SELECT *,
+               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
+        FROM v_poi
+        WHERE type = 'community'
+          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
+          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
     <select id="countsByType" resultType="java.util.Map">
         SELECT type,
                COALESCE(branch_type, '') AS branchType,

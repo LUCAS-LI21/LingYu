@@ -62,6 +62,17 @@ public class PoiService {
         return result;
     }
 
+    /** 反向关联：某银行网点周边的小区（与「小区周边银行」互为镜像） */
+    public List<NearbyItem> nearbyCommunities(double lng, double lat, double radius, int limit) {
+        List<PoiRow> rows = poiMapper.nearbyCommunities(lng, lat, radius, limit);
+        List<NearbyItem> result = new ArrayList<>(rows.size());
+        for (PoiRow row : rows) {
+            fillGcj(row);
+            result.add(new NearbyItem(row, distanceMeters(lat, lng, row.getLat(), row.getLng())));
+        }
+        return result;
+    }
+
     public Map<String, Object> stats() {
         int bank = 0;
         int atm = 0;

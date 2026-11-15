@@ -648,3 +648,25 @@ export async function fetchCommunityPending(params: {
     })),
   }
 }
+
+/** 某银行网点周边的小区（赛题「某银行服务范围内的小区」） */
+export interface NearbyCommunity {
+  id: string
+  name: string
+  address: string
+  district: string
+  distance: number
+  avgPrice: number | null
+  builtYear: number | null
+}
+
+export async function fetchNearbyCommunities(
+  id: string,
+  radius = 1000,
+  limit = 5,
+): Promise<NearbyCommunity[]> {
+  const data = await apiRequest<{ items: NearbyCommunity[] }>(
+    `/pois/${encodeURIComponent(id)}/nearby-communities?radius=${radius}&limit=${limit}`,
+  )
+  return data.items ?? []
+}

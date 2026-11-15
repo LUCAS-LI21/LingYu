@@ -2,7 +2,13 @@
 import { computed, ref, watch } from 'vue'
 
 import type { NearbyItem } from '@/api/pois'
-import { fetchNearestBanks, fieldSourcesFromServer, type NearestBank } from '@/api/pois'
+import {
+  fetchNearestBanks,
+  fetchNearbyCommunities,
+  fieldSourcesFromServer,
+  type NearbyCommunity,
+  type NearestBank,
+} from '@/api/pois'
 import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
 import type { FieldSource } from '@/api/server'
 import { amapMarkerUrl, amapNavigationUrl, canNavigate, tencentNavigationUrl } from '@/lib/nav'
@@ -56,6 +62,21 @@ const navTarget = computed(() => ({
   gcjLng: props.poi?.gcjLng ?? null,
   gcjLat: props.poi?.gcjLat ?? null,
 }))
+
+const nearbyCommunities = ref<NearbyCommunity[]>([])
+watch(
+  () => props.poi?.id,
+  async () => {
+    nearbyCommunities.value = []
+    if (props.poi?.type !== 'bank') return
+    try {
+      nearbyCommunities.value = await fetchNearbyCommunities(props.poi.id, 1000, 5)
+    } catch {
+      nearbyCommunities.value = []
+    }
+  },
+  { immediate: true },
+)
 
 const nearestBanks = ref<NearestBank[]>([])
 watch(
@@ -463,6 +484,36 @@ function changeRadius(value: number): void {
           高德没有返回该坐标的地址，建议补充地址让运营核实。
         </p>
       </section>
+
+      <!-- 反向关联：银行的「1km 内小区」 -->
+      <div
+        v-if="nearbyCommunities.length"
+        data-testid="nearby-communities"
+        class="rounded-soft border border-line bg-surface-soft px-3 py-2.5"
+      >
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] font-medium text-ink-700">1km 内的小区</p>
+          <span class="text-[10px] text-ink-400">共 {{ nearbyCommunities.length }} 个</span>
+        </div>
+        <ul class="mt-1.5 space-y-1">
+          <li
+            v-for="item in nearbyCommunities"
+            :key="item.id"
+            class="flex items-baseline gap-2 text-[11px]"
+          >
+            <span class="min-w-0 flex-1 truncate text-ink-700" :title="item.address || item.name">
+              {{ item.name }}
+            </span>
+            <span v-if="item.avgPrice" class="shrink-0 text-[10px] text-ink-400"
+              >{{ Math.round(item.avgPrice / 1000) }}k/㎡</span
+            >
+            <span class="shrink-0 tabular-nums text-ink-500">{{ item.distance }} m</span>
+          </li>
+        </ul>
+        <p class="mt-1.5 text-[10px] leading-relaxed text-ink-400">
+          按直线距离排序，反映该网点服务的住宅范围
+        </p>
+      </div>
 
       <div
         v-if="nearestBanks.length"

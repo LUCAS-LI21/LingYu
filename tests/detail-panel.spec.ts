@@ -14,6 +14,7 @@ vi.mock('@/api/live', () => liveMocks)
 const poiApi = vi.hoisted(() => ({
   fieldSourcesFromServer: vi.fn(),
   fetchNearestBanks: vi.fn(async () => []),
+  fetchNearbyCommunities: vi.fn(async () => []),
 }))
 vi.mock('@/api/pois', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/pois')>()
@@ -21,6 +22,7 @@ vi.mock('@/api/pois', async (importOriginal) => {
     ...actual,
     fieldSourcesFromServer: poiApi.fieldSourcesFromServer,
     fetchNearestBanks: poiApi.fetchNearestBanks,
+    fetchNearbyCommunities: poiApi.fetchNearbyCommunities,
   }
 })
 
@@ -282,5 +284,46 @@ describe('地址导航入口', () => {
       props: { poi: community({ address: '' }), nearby: [] },
     })
     expect(wrapper.find('[data-testid="nav-links"]').exists()).toBe(false)
+  })
+})
+
+describe('银行 → 周边小区（反向关联）', () => {
+  it('银行详情展示 1km 内小区与距离', async () => {
+    poiApi.fetchNearbyCommunities.mockResolvedValueOnce([
+      {
+        id: 'c1',
+        name: '咸田一区',
+        address: '福永街道怀德社区',
+        district: '宝安区',
+        distance: 469,
+        avgPrice: 134340,
+        builtYear: 2009,
+      },
+      {
+        id: 'c2',
+        name: '怀德峰景',
+        address: '',
+        district: '宝安区',
+        distance: 561,
+        avgPrice: 82576,
+        builtYear: 2016,
+      },
+    ])
+    const wrapper = mount(DetailPanel, { props: { poi: bank(), nearby: [] } })
+    await flushPromises()
+    const box = wrapper.find('[data-testid="nearby-communities"]')
+    expect(box.exists()).toBe(true)
+    const rows = box.findAll('li')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.text()).toContain('咸田一区')
+    expect(rows[0]?.text()).toContain('469 m')
+    expect(rows[0]?.text()).toContain('134k/㎡')
+  })
+
+  it('小区详情不请求周边小区', async () => {
+    poiApi.fetchNearbyCommunities.mockClear()
+    mount(DetailPanel, { props: { poi: community(), nearby: [] } })
+    await flushPromises()
+    expect(poiApi.fetchNearbyCommunities).not.toHaveBeenCalled()
   })
 })

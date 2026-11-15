@@ -33,4 +33,10 @@ public interface PoiMapper {
 
     /** 区域维度：每个区的银行数与小区数，供洞察页画图 */
     List<Map<String, Object>> countsByDistrict();
+
+    /** 反向关联：某个银行网点周边的住宅小区（赛题三.3） */
+    List<PoiRow> nearbyCommunities(@Param("lng") double lng,
+                                   @Param("lat") double lat,
+                                   @Param("radius") double radius,
+                                   @Param("limit") int limit);
 }
