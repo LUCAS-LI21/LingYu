@@ -105,7 +105,13 @@ const subtitle = computed(() => {
           #{{ poi.id.slice(-4) }}
         </span>
         <span v-if="subtitle" class="truncate">{{ subtitle }}</span>
-        <span v-if="poi.type === 'community' && poi.demoAttributes" class="shrink-0 text-amber-600">
+        <!-- 均价已有官方参考价时不再标「演示属性」，否则会误导；其余字段的演示标识在详情页说明 -->
+        <span
+          v-if="
+            poi.type === 'community' && poi.demoAttributes && poi.avgPriceSource !== 'gov_reference'
+          "
+          class="shrink-0 text-amber-600"
+        >
           演示属性
         </span>
       </span>

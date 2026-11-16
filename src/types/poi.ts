@@ -30,6 +30,8 @@ export interface CommunityPoi extends BasePoi {
   type: 'community'
   builtYear: number | null
   avgPrice: number | null
+  /** demo=哈希演示值 / gov_reference=政府成交参考价（2021 官方表） */
+  avgPriceSource?: string
   propertyFee: number | null
   /** 物业公司（政府物业项目库匹配所得，可能为空） */
   propertyCompany?: string

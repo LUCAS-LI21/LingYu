@@ -203,7 +203,10 @@ const rows = computed(() => {
   return [
     { label: '地址', value: poi.address || '暂无' },
     { label: '建成年份', value: poi.builtYear ? `${poi.builtYear} 年` : '暂无' },
-    { label: '参考均价', value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无' },
+    {
+      label: poi.avgPriceSource === 'gov_reference' ? '成交参考价' : '参考均价',
+      value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无',
+    },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
     // 政府租赁参考价：真实数据，命中不到就不显示（不要给个假的）
     ...(rentText(poi) ? [{ label: '参考租金', value: rentText(poi) }] : []),
@@ -583,9 +586,13 @@ function changeRadius(value: number): void {
           {{ poi.source }}<span v-if="poi.license"> · {{ poi.license }}</span>
           <template v-if="poi.type === 'community' && poi.demoAttributes">
             <br />
-            <span class="text-amber-600"
-              >均价为演示数据，建成年份按竣工备案年份，不构成投资建议</span
-            >
+            <span class="text-amber-600">
+              {{
+                poi.avgPriceSource === 'gov_reference'
+                  ? '成交参考价来自官方发布表，建成年份按竣工备案年份，不构成投资建议'
+                  : '均价为演示值（该小区未匹配到官方参考价），不构成投资建议'
+              }}
+            </span>
             <span class="text-ink-400">
               （建成年份/建设单位/物业费/租金若下方「数据来源」列出，则为公示来源）
             </span>

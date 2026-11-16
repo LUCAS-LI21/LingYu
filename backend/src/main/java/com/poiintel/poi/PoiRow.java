@@ -25,6 +25,8 @@ public class PoiRow {
     private String openingHours;
     private Integer builtYear;
     private Integer avgPrice;
+    /** demo=演示值 / gov_reference=政府成交参考价 */
+    private String avgPriceSource;
     private BigDecimal propertyFee;
     /** 物业公司（政府物业项目库） */
     private String propertyCompany;

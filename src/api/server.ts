@@ -25,6 +25,7 @@ interface ServerPoi {
   gcjLat?: number | null
   builtYear?: number | null
   avgPrice?: number | null
+  avgPriceSource?: string
   propertyFee?: number | null
   propertyCompany?: string | null
   waterSavingYear?: number | null
@@ -110,6 +111,7 @@ function toPoi(row: ServerPoi): Poi {
     type: 'community',
     builtYear: row.builtYear ?? null,
     avgPrice: row.avgPrice ?? null,
+    avgPriceSource: row.avgPriceSource ?? 'demo',
     propertyFee:
       row.propertyFee === null || row.propertyFee === undefined ? null : Number(row.propertyFee),
     propertyCompany: row.propertyCompany ?? '',
