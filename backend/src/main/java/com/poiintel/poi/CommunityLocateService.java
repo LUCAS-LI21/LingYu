@@ -161,12 +161,28 @@ public class CommunityLocateService {
 
         String poiId = "cp-" + pendingId;
         String source = operator.startsWith("admin") ? "管理员标注" : "用户贡献";
+        // 待定位小区若已挂官方成交参考价，转正时一并带入，避免转正后价格又变成演示值
+        Object price = pending.get("avg_price");
+        Object priceSource = pending.get("avg_price_source");
         jdbcTemplate.update("""
                 INSERT INTO poi_community (id, name, address, district, lng, lat, property_company,
+                                           avg_price, avg_price_source,
                                            demo_attributes, source, license, source_level, status)
-                VALUES (?, ?, ?, ?, ?, ?, '', 1, ?, '用户确认坐标（已审核）', 'L1', 'active')
+                VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, 1, ?, '用户确认坐标（已审核）', 'L1', 'active')
                 ON DUPLICATE KEY UPDATE lng = VALUES(lng), lat = VALUES(lat), updated_at = NOW()
-                """, poiId, name, address, district, lng, lat, source);
+                """, poiId, name, address, district, lng, lat,
+                price instanceof Number ? ((Number) price).intValue() : null,
+                priceSource == null || String.valueOf(priceSource).isBlank() ? "demo" : String.valueOf(priceSource),
+                source);
+
+        if (price instanceof Number) {
+            jdbcTemplate.update("""
+                    INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                    VALUES ('community', ?, 'avg_price', '深圳市住宅小区二手住房成交参考价格表（2021）',
+                            'https://zjj.sz.gov.cn/gkmlpt/content/8/8545/mpost_8545737.html')
+                    ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url)
+                    """, poiId);
+        }
 
         for (String field : List.of("name", "address", "district", "lng", "lat")) {
             jdbcTemplate.update("""

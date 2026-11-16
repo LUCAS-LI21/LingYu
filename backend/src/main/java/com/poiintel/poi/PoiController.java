@@ -206,7 +206,7 @@ public class PoiController {
         pageArgs.add(safeSize);
         pageArgs.add((int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE));
         List<Map<String, Object>> items = jdbcTemplate.queryForList(
-                "SELECT id, name, address, district, street, attribute" + base
+                "SELECT id, name, address, district, street, attribute, avg_price" + base
                         + " ORDER BY district, name LIMIT ? OFFSET ?",
                 pageArgs.toArray());
 

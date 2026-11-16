@@ -630,6 +630,8 @@ export interface PendingCommunity {
   district: string
   street: string
   attribute: string
+  /** 官方成交参考价（已匹配到的才有），转正时会带入 */
+  avg_price?: number | null
 }
 
 export async function fetchCommunityPending(params: {

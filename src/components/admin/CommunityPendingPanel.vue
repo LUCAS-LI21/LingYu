@@ -237,16 +237,17 @@ onMounted(() => {
             <th class="py-2 pr-3 font-medium">小区名称</th>
             <th class="py-2 pr-3 font-medium">地址</th>
             <th class="py-2 pr-3 font-medium">区 / 街道</th>
+            <th class="py-2 pr-3 font-medium">参考价</th>
             <th class="py-2 pr-3 font-medium">类型</th>
             <th class="py-2 font-medium">定位</th>
           </tr>
         </thead>
         <tbody class="text-ink-600">
           <tr v-if="loading">
-            <td colspan="5" class="py-6 text-center text-ink-400">加载中…</td>
+            <td colspan="6" class="py-6 text-center text-ink-400">加载中…</td>
           </tr>
           <tr v-else-if="items.length === 0">
-            <td colspan="5" class="py-6 text-center text-ink-400">没有匹配的待定位小区</td>
+            <td colspan="6" class="py-6 text-center text-ink-400">没有匹配的待定位小区</td>
           </tr>
           <tr v-for="item in items" v-else :key="item.id" class="border-b border-line/60">
             <td class="max-w-[160px] truncate py-2 pr-3 text-ink-800" :title="item.name">
@@ -258,6 +259,12 @@ onMounted(() => {
             <td class="whitespace-nowrap py-2 pr-3">
               {{ item.district
               }}<span v-if="item.street" class="text-ink-400"> / {{ item.street }}</span>
+            </td>
+            <td class="whitespace-nowrap py-2 pr-3 tabular-nums">
+              <span v-if="item.avg_price" class="text-ink-700">{{
+                Number(item.avg_price).toLocaleString()
+              }}</span>
+              <span v-else class="text-ink-300">—</span>
             </td>
             <td class="whitespace-nowrap py-2 pr-3">{{ item.attribute || '—' }}</td>
             <td class="whitespace-nowrap py-2">
