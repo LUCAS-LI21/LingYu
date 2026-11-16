@@ -67,9 +67,13 @@ for (const row of rows) {
       developer: (row.CONST_NAME || '').trim(),
     })
   } else {
-    if (year < prev.year) prev.year = year
-    if (!prev.address && row.PRJ_LOCATION) prev.address = String(row.PRJ_LOCATION).trim()
-    if (!prev.developer && row.CONST_NAME) prev.developer = String(row.CONST_NAME).trim()
+    // 同一项目有多期/多标段备案（桩基、主体、装修…）：取**最晚**的备案年份，
+    // 它最接近实际竣工；取最早会得到桩基年份，建成年份会偏小
+    if (year > prev.year) {
+      prev.year = year
+      if (row.PRJ_LOCATION) prev.address = String(row.PRJ_LOCATION).trim()
+      if (row.CONST_NAME) prev.developer = String(row.CONST_NAME).trim()
+    }
   }
 }
 console.log(`按项目去重后 ${byProject.size} 个`)
