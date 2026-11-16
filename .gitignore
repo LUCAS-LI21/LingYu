@@ -62,3 +62,7 @@ miniprogram/miniprogram_npm/
 miniprogram/project.private.config.json
 
 docs/research/tmp-*
+
+# OSM 抓取的中间缓存（体积大、可重跑）
+data/osm-*.json
+data/nominatim-cache.json
