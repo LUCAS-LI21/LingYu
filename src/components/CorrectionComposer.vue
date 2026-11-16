@@ -57,7 +57,12 @@ const typeOptions: Array<{ value: FeedbackPayload['type']; label: string; hint: 
 
 const isAdmin = computed(() => props.mode === 'admin')
 const canSubmit = computed(
-  () => Boolean(selected.value) && Boolean(description.value.trim()) && Boolean(field.value),
+  () =>
+    Boolean(selected.value) &&
+    Boolean(description.value.trim()) &&
+    Boolean(field.value) &&
+    // 「补充/新增」必须给出新点位名称，否则后端只能拿问题说明当名字
+    (type.value !== 'add' || Boolean(newValue.value.trim())),
 )
 
 function poiTypeLabel(poi: Poi): string {
@@ -336,12 +341,14 @@ onBeforeUnmount(() => {
               </select>
             </label>
             <label class="block">
-              <span class="mb-1.5 block text-[11px] font-medium text-ink-400">正确值（选填）</span>
+              <span class="mb-1.5 block text-[11px] font-medium text-ink-400">
+                {{ type === 'add' ? '新点位名称（必填）' : '正确值（选填）' }}
+              </span>
               <input
                 v-model="newValue"
                 :disabled="!selected || type === 'closed'"
                 class="w-full rounded-[10px] border border-line bg-surface px-3 py-2 text-xs text-ink-700 outline-none transition placeholder:text-ink-400 focus:border-brand-500 disabled:bg-surface-soft"
-                placeholder="例如：09:00-18:00"
+                :placeholder="type === 'add' ? '例如：兴业银行深圳科技园支行' : '例如：09:00-18:00'"
               />
             </label>
           </div>
@@ -377,7 +384,8 @@ onBeforeUnmount(() => {
               「已关闭」审核通过后点位会从默认查询中下架；管理员可在后台恢复。
             </p>
             <p v-else-if="type === 'add'">
-              「补充 / 新增」审核通过后会以当前点位为锚点生成定向抓取任务。
+              「补充 / 新增」审核通过后：名称进「待定位网点 /
+              小区」队列，同时以当前点位为锚点生成定向抓取任务。若知道地址，可在问题说明里写「地址：xxx」，会一并带入。
             </p>
             <p v-else>
               字段变更会写入版本记录；名称与坐标类变更必须人工审核，低风险字段可能自动生效。

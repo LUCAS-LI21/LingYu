@@ -34,6 +34,8 @@ public class PoiRow {
     private BigDecimal rentDc;
     private BigDecimal rentGc;
     private BigDecimal rentDmd;
+    /** 建设单位/开发商（竣工验收备案） */
+    private String developer;
     /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数，以及最近银行距离（米） */
     private Integer surroundBankCount;
     private Integer surroundAtmCount;

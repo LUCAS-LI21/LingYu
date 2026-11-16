@@ -31,6 +31,7 @@ interface ServerPoi {
   rentDc?: number | null
   rentGc?: number | null
   rentDmd?: number | null
+  developer?: string
   surroundBankCount?: number | null
   surroundAtmCount?: number | null
   nearbyBrandCount?: number | null
@@ -116,6 +117,7 @@ function toPoi(row: ServerPoi): Poi {
     rentDc: row.rentDc === null || row.rentDc === undefined ? null : Number(row.rentDc),
     rentGc: row.rentGc === null || row.rentGc === undefined ? null : Number(row.rentGc),
     rentDmd: row.rentDmd === null || row.rentDmd === undefined ? null : Number(row.rentDmd),
+    developer: row.developer ?? '',
     surroundBankCount: Number(row.surroundBankCount ?? 0),
     surroundAtmCount: Number(row.surroundAtmCount ?? 0),
     nearbyBrandCount: Number(row.nearbyBrandCount ?? 0),

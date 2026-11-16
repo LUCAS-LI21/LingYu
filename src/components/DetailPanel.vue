@@ -207,6 +207,7 @@ const rows = computed(() => {
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
     // 政府租赁参考价：真实数据，命中不到就不显示（不要给个假的）
     ...(rentText(poi) ? [{ label: '参考租金', value: rentText(poi) }] : []),
+    ...(poi.developer ? [{ label: '建设单位', value: poi.developer }] : []),
     ...(poi.propertyCompany ? [{ label: '物业公司', value: poi.propertyCompany }] : []),
     ...(poi.waterSavingYear ? [{ label: '节水型小区', value: `${poi.waterSavingYear} 年度` }] : []),
   ]

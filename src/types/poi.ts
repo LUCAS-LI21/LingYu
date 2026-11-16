@@ -39,6 +39,8 @@ export interface CommunityPoi extends BasePoi {
   rentDc?: number | null
   rentGc?: number | null
   rentDmd?: number | null
+  /** 建设单位/开发商（竣工验收备案） */
+  developer?: string
   /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数、最近银行距离（米） */
   surroundBankCount?: number
   surroundAtmCount?: number

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS poi_community (
   rent_dc          DECIMAL(8, 2) NULL COMMENT '多层租金(元/㎡·月，政府租赁参考价)',
   rent_gc          DECIMAL(8, 2) NULL COMMENT '高层租金',
   rent_dmd         DECIMAL(8, 2) NULL COMMENT '低密度租金',
+  developer        VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '建设单位/开发商（竣工验收备案）',
   demo_attributes  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '字段是否为演示数据',
   source           VARCHAR(64)  NOT NULL DEFAULT 'OpenStreetMap',
   license          VARCHAR(32)  NOT NULL DEFAULT 'ODbL',
@@ -84,6 +85,7 @@ SELECT id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type
        CAST(NULL AS SIGNED) AS nearest_bank_m, CAST(NULL AS SIGNED) AS nearby_brand_count,
        CAST(NULL AS DECIMAL(8,2)) AS rent_dc, CAST(NULL AS DECIMAL(8,2)) AS rent_gc,
        CAST(NULL AS DECIMAL(8,2)) AS rent_dmd,
+       CAST(NULL AS CHAR(64)) AS developer,
        0 AS demo_attributes, source, license, source_level, updated_at
 FROM poi_bank WHERE status <> 'closed'
 UNION ALL
@@ -92,7 +94,7 @@ SELECT id, 'community' AS type, name, address, district, lng, lat,
        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
        built_year, avg_price, property_fee, property_company, water_saving_year, surround_bank_count, surround_atm_count,
        nearest_bank_m, nearby_brand_count,
-       rent_dc, rent_gc, rent_dmd,
+       rent_dc, rent_gc, rent_dmd, developer,
        demo_attributes, source, license, source_level, updated_at
 FROM poi_community WHERE status <> 'closed';
 

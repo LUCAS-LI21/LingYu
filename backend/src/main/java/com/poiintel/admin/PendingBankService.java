@@ -36,21 +36,37 @@ public class PendingBankService {
      */
     public Map<String, Object> feedbackOf(String code) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT new_value, description FROM feedback WHERE code = ? AND type = 'add'", code);
+                "SELECT poi_type, new_value, description FROM feedback WHERE code = ? AND type = 'add'", code);
         if (rows.isEmpty()) {
             return null;
         }
-        String name = String.valueOf(rows.get(0).get("new_value"));
+        Map<String, Object> row = rows.get(0);
+        String name = String.valueOf(row.get("new_value"));
         if (name.isBlank() || "null".equals(name)) {
-            name = String.valueOf(rows.get(0).get("description"));
+            name = String.valueOf(row.get("description"));
         }
         if (name.isBlank() || "null".equals(name)) {
             return null;
         }
         Map<String, Object> result = new LinkedHashMap<>();
+        result.put("poiType", String.valueOf(row.get("poi_type")));
         result.put("name", name.length() > 128 ? name.substring(0, 128) : name.trim());
         result.put("address", "");
         return result;
+    }
+
+    /** 用户反馈里「新增小区」可能自带地址（写在 description 的「地址：」后面） */
+    public String addressOf(String code) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT description FROM feedback WHERE code = ?", code);
+        if (rows.isEmpty()) {
+            return "";
+        }
+        String desc = String.valueOf(rows.get(0).get("description"));
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("地址[:：]\\s*([^\\n；;]{4,80})")
+                .matcher(desc);
+        return m.find() ? m.group(1).trim() : "";
     }
 
     public synchronized Map<String, Object> importRows(Request request) {

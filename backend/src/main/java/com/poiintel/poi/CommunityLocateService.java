@@ -40,6 +40,32 @@ public class CommunityLocateService {
     }
 
     /**
+     * 把「用户反馈新增小区」暂存进 community_pending，等运营标注坐标后转正。
+     * 与银行那条链路对称：反馈 → 暂存 → 标注 → 转正 → 地图可见。
+     */
+    public String stagePending(String name, String address, String source, String feedbackCode) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("小区名称不能为空");
+        }
+        String id = "fb-" + feedbackCode;
+        String district = "";
+        if (address != null) {
+            for (String d : new String[]{"福田区", "南山区", "罗湖区", "宝安区", "龙岗区", "盐田区", "龙华区", "坪山区", "光明区", "大鹏新区"}) {
+                if (address.contains(d)) {
+                    district = d;
+                    break;
+                }
+            }
+        }
+        jdbcTemplate.update("""
+                INSERT INTO community_pending (id, name, address, district, source, status, attribute)
+                VALUES (?, ?, ?, ?, ?, 'pending', '用户反馈')
+                ON DUPLICATE KEY UPDATE name = VALUES(name), address = VALUES(address), district = VALUES(district)
+                """, id, name.trim(), address == null ? "" : address.trim(), district, source);
+        return id;
+    }
+
+    /**
      * 提交坐标。管理员直接转正并返回 poiId，用户提交进审核队列。
      */
     @Transactional

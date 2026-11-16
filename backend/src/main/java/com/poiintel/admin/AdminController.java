@@ -63,14 +63,21 @@ public class AdminController {
             try {
                 Map<String, Object> fb = pendingBankService.feedbackOf(code);
                 if (fb != null) {
-                    pendingBankService.importRows(new PendingBankService.Request(
-                            "用户反馈（新增点位）",
-                            "feedback:" + code,
-                            List.of(new PendingBankService.Row(
-                                    String.valueOf(fb.get("name")),
-                                    fb.get("address") == null ? "" : String.valueOf(fb.get("address")),
-                                    "", "", ""))));
+                    // 按点位类型分流：银行进 bank_pending，小区进 community_pending，
+                    // 否则小区的「新增」会被误写进银行暂存表
+                    String poiType = String.valueOf(fb.get("poiType"));
+                    String name = String.valueOf(fb.get("name"));
+                    String address = fb.get("address") == null ? "" : String.valueOf(fb.get("address"));
+                    if ("community".equals(poiType)) {
+                        communityLocateService.stagePending(name, pendingBankService.addressOf(code), "用户反馈（新增小区）", code);
+                    } else {
+                        pendingBankService.importRows(new PendingBankService.Request(
+                                "用户反馈（新增点位）",
+                                "feedback:" + code,
+                                List.of(new PendingBankService.Row(name, address, "", "", ""))));
+                    }
                     result.put("pendingStaged", true);
+                    result.put("pendingKind", poiType);
                 }
             } catch (Exception ex) {
                 result.put("pendingError", ex.getMessage());
