@@ -126,6 +126,11 @@ public class AuthService {
     }
 
     private boolean verifyPassword(String raw, String stored) {
+        return matches(raw, stored);
+    }
+
+    /** 校验明文口令与库里存的 base64(salt)$base64(hash) 是否一致（静态版，供 Seeder 复用） */
+    public static boolean matches(String raw, String stored) {
         try {
             String[] parts = stored.split("\\$");
             if (parts.length != 2) {

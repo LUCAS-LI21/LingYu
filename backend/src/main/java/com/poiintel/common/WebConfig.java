@@ -1,5 +1,6 @@
 package com.poiintel.common;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -15,11 +16,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AdminAuthInterceptor adminAuthInterceptor;
 
+    /**
+     * 允许的跨域来源。默认只放开发环境 5173；生产走 Nginx 同源反代（nginx 会剥掉 Origin）。
+     * 独立域名部署时用 CORS_ORIGINS 环境变量覆盖，逗号分隔。
+     */
+    @Value("${app.cors.origins:http://127.0.0.1:5173,http://localhost:5173}")
+    private String allowedOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // 开发期前端跑在 5173，生产由 Nginx 同源反代
         registry.addMapping("/api/**")
-                .allowedOrigins("http://127.0.0.1:5173", "http://localhost:5173")
+                .allowedOrigins(allowedOrigins.split(","))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
