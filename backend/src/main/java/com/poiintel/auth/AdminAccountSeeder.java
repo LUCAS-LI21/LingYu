@@ -45,8 +45,14 @@ public class AdminAccountSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        // 非开发环境拒绝以默认口令启动：评审指出"换个默认值等于没改"，这里直接 fail-fast
-        boolean allowDefaultPassword = "true".equalsIgnoreCase(allowDefaultPasswordRaw == null ? "" : allowDefaultPasswordRaw.trim());
+        // 空口令是最弱的默认值：无论什么环境都拒绝（之前只拦 operator123，空串能直接登录）
+        if (password == null || password.isBlank()) {
+            throw new IllegalStateException(
+                    "OPERATOR_PASSWORD 为空，拒绝启动；请设置为随机强口令（不允许空口令登录）");
+        }
+        // 默认口令：非开发环境 fail-fast（评审指出"换个默认值等于没改"）
+        boolean allowDefaultPassword = "true".equalsIgnoreCase(
+                allowDefaultPasswordRaw == null ? "" : allowDefaultPasswordRaw.trim());
         if (DEFAULT_PASSWORD.equals(password) && !allowDefaultPassword) {
             throw new IllegalStateException(
                     "OPERATOR_PASSWORD 仍是默认值，拒绝启动；请设置随机强口令（开发环境可设 APP_AUTH_ALLOW_DEFAULT_PASSWORD=true 放行）");

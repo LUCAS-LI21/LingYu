@@ -36,7 +36,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResult<Map<String, Object>> login(@RequestBody LoginRequest request, HttpServletRequest http) {
-        if (request == null || request.username() == null || request.password() == null) {
+        if (request == null || request.username() == null || request.password() == null
+                || request.username().isBlank() || request.password().isBlank()) {
             throw new IllegalArgumentException("用户名与口令不能为空");
         }
         String ip = clientIp(http);
