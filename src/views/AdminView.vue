@@ -2,8 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import AgentPanel from '@/components/admin/AgentPanel.vue'
+import { invalidatePoiCache } from '@/api/pois'
 import LandParcelPanel from '@/components/admin/LandParcelPanel.vue'
 import CommunityPendingPanel from '@/components/admin/CommunityPendingPanel.vue'
+import BankPendingPanel from '@/components/admin/BankPendingPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
 import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
@@ -31,6 +33,7 @@ type Tab =
   | 'jobs'
   | 'land'
   | 'pending'
+  | 'pendingBank'
   | 'compliance'
 
 const tab = ref<Tab>('overview')
@@ -104,6 +107,7 @@ const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'jobs', label: '抓取任务' },
   { key: 'land', label: '存量用地' },
   { key: 'pending', label: '待定位小区' },
+  { key: 'pendingBank', label: '待定位网点' },
   { key: 'compliance', label: '数据说明' },
 ]
 
@@ -324,7 +328,16 @@ async function onApprove(row: FeedbackRow): Promise<void> {
   busy.value = row.code
   try {
     const result = await approveFeedback(row.code)
-    toast(result.status === 'approved' ? '已采纳并生效' : '已标记待重抓', 'success')
+    // 审核后数据变了，清缓存保证地图/列表能看到（否则要手动刷新）
+    invalidatePoiCache()
+    const jobError = (result as { jobError?: string }).jobError
+    if (result.status === 'approved') {
+      toast('已采纳并生效', 'success')
+    } else if (jobError) {
+      toast(`已标记待重抓，但抓取任务被占用：${jobError}`, 'error')
+    } else {
+      toast('已标记待重抓（点位已进待定位队列）', 'success')
+    }
     expandedCode.value = ''
     await refresh()
     await syncOverview()
@@ -795,6 +808,11 @@ onBeforeUnmount(() => {
       <!-- 待定位小区：有名称地址、缺坐标，用高德外链定位（不存坐标） -->
       <div v-else-if="tab === 'pending'">
         <CommunityPendingPanel />
+      </div>
+
+      <!-- 待定位网点：兴业 + 用户反馈新增，标注坐标后转正进 poi_bank -->
+      <div v-else-if="tab === 'pendingBank'">
+        <BankPendingPanel />
       </div>
 
       <!-- 查询行为：query_log 实时聚合 + 热点重算 -->

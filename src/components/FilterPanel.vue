@@ -137,7 +137,9 @@ function reset(): void {
       </section>
 
       <section>
-        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-400">小区均价</p>
+        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-400">
+          小区均价<span class="ml-1 text-[10px] font-normal text-amber-600">演示</span>
+        </p>
         <div class="relative">
           <select
             :value="priceKey"

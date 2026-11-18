@@ -30,6 +30,45 @@ public class PendingBankService {
     }
 
     @Transactional
+    /**
+     * 从「新增点位」反馈里取出要暂存的网点名称。
+     * 用户填的名字在 new_value，留空时退回 description；都没有就返回 null（不落脏数据）。
+     */
+    public Map<String, Object> feedbackOf(String code) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT poi_type, new_value, description FROM feedback WHERE code = ? AND type = 'add'", code);
+        if (rows.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> row = rows.get(0);
+        String name = String.valueOf(row.get("new_value"));
+        if (name.isBlank() || "null".equals(name)) {
+            name = String.valueOf(row.get("description"));
+        }
+        if (name.isBlank() || "null".equals(name)) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("poiType", String.valueOf(row.get("poi_type")));
+        result.put("name", name.length() > 128 ? name.substring(0, 128) : name.trim());
+        result.put("address", "");
+        return result;
+    }
+
+    /** 用户反馈里「新增小区」可能自带地址（写在 description 的「地址：」后面） */
+    public String addressOf(String code) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT description FROM feedback WHERE code = ?", code);
+        if (rows.isEmpty()) {
+            return "";
+        }
+        String desc = String.valueOf(rows.get(0).get("description"));
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("地址[:：]\\s*([^\\n；;]{4,80})")
+                .matcher(desc);
+        return m.find() ? m.group(1).trim() : "";
+    }
+
     public synchronized Map<String, Object> importRows(Request request) {
         if (request == null || request.rows() == null || request.rows().isEmpty()) {
             throw new IllegalArgumentException("没有可导入的数据行");

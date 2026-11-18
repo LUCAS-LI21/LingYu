@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 import {
   apiRequest,
   fetchAllPois,
@@ -12,16 +14,26 @@ import { saveFeedbackRecord } from '@/lib/feedbackHistory'
 import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 
 let serverMode: boolean | null = null
+/** 后端是否在线：null 未知 / true 在线 / false 离线（供页面提示降级用） */
+export const backendOnline = ref<boolean | null>(null)
 let probing: Promise<boolean> | null = null
 
 /** 后端在线则走真实接口，否则整体降级到本地种子数据（离线也能演示） */
 export async function isServerMode(): Promise<boolean> {
   if (serverMode !== null) return serverMode
   if (!probing) {
-    probing = probeServer().then((value) => {
-      serverMode = value
-      return value
-    })
+    probing = probeServer()
+      .then((value) => {
+        serverMode = value
+        // 页面横幅依赖这个响应式状态；之前只写了非响应式的 serverMode，横幅永远不出现
+        backendOnline.value = value
+        return value
+      })
+      .catch(() => {
+        serverMode = false
+        backendOnline.value = false
+        return false
+      })
   }
   return probing
 }
@@ -128,6 +140,16 @@ function normalize(raw: Record<string, unknown>): Poi | null {
 
 let cache: Poi[] | null = null
 let loading: Promise<Poi[]> | null = null
+
+/**
+ * 让点位缓存失效。
+ * 管理后台审核/标注/导入之后必须调用，否则列表和地图还是旧数据，
+ * 演示「反馈审核后立即生效」时会看起来没反应。
+ */
+export function invalidatePoiCache(): void {
+  cache = null
+  loading = null
+}
 
 /** 过滤「29栋」「3号楼」这类建筑级命名，小区名应至少有一个非数字字符 */
 function isNoiseName(name: string): boolean {
@@ -267,7 +289,9 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
   const maxYear = filters.yearRange?.[1] ?? null
 
   const result = pois.filter((poi) => {
-    if (!filters.layers.includes(poi.type)) return false
+    // 关键词搜索跨图层：搜「流塘新村」时用户期望找到小区，
+    // 而不是因为默认只勾了银行就返回「没有符合条件的点位」
+    if (!keyword && !filters.layers.includes(poi.type)) return false
     if (filters.district !== '全部区域' && poi.district !== filters.district) return false
     if (bounds) {
       if (poi.lat > bounds.north || poi.lat < bounds.south) return false
@@ -351,6 +375,8 @@ export interface Stats {
   /** 区域维度：每区银行数与小区数 */
   byDistrict: Array<{ label: string; bank: number; community: number }>
   priceBuckets: Array<{ label: string; value: number }>
+  /** 小区总数与其中「有官方参考价」的数量，用于标注价格分布样本口径 */
+  priceSample?: { total: number; real_count: number }
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
 }
 
@@ -614,6 +640,8 @@ export interface PendingCommunity {
   district: string
   street: string
   attribute: string
+  /** 官方成交参考价（已匹配到的才有），转正时会带入 */
+  avg_price?: number | null
 }
 
 export async function fetchCommunityPending(params: {

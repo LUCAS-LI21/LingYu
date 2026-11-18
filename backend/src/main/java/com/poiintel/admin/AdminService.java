@@ -109,7 +109,9 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> approve(String code, String reviewer) {
-        Map<String, Object> feedback = jdbcTemplate.queryForMap("SELECT * FROM feedback WHERE code = ?", code);
+        // FOR UPDATE：并发双审时串行化，第二个请求会看到已变更状态并返回 409，避免双写版本
+        Map<String, Object> feedback = jdbcTemplate.queryForMap(
+                "SELECT * FROM feedback WHERE code = ? FOR UPDATE", code);
         String currentStatus = String.valueOf(feedback.get("status"));
         if ("need_refetch".equals(currentStatus)) {
             // 上次重抓因任务占用失败，允许再点一次审核重试；否则反馈会永久卡在 need_refetch
@@ -175,6 +177,13 @@ public class AdminService {
                 jdbcTemplate.update("UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ?",
                         value, poiId);
                 applied.add(column + "=" + value);
+                // 字段级来源要跟着改：否则审核完用户改的电话，详情页还显示「银行官网」
+                jdbcTemplate.update("""
+                        INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url),
+                            updated_at = NOW()
+                        """, poiType, poiId, column, "用户反馈（审核:" + reviewer + "）", "feedback:" + code);
             }
         }
 
@@ -216,14 +225,16 @@ public class AdminService {
                     toJson(jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId)), reviewer);
             return Map.of("id", poiId, "status", "active", "type", poiType);
         }
-        throw new IllegalArgumentException("POI 不存在：" + poiId);
+        throw new com.poiintel.common.NotFoundException("POI 不存在：" + poiId);
     }
 
     @Transactional
     public Map<String, Object> reject(String code, String reviewer, String note) {
+        // 允许驳回 pending 与 need_refetch：后者是「已标记待重抓」，
+        // 如果抓不到或用户撤诉，运营必须能关掉，否则这条反馈永远悬着（闭环没有出口）
         int updated = jdbcTemplate.update("""
                 UPDATE feedback SET status = 'rejected', reviewer = ?, reviewed_at = NOW(), review_note = ?
-                WHERE code = ? AND status = 'pending'
+                WHERE code = ? AND status IN ('pending', 'need_refetch')
                 """, reviewer, note == null ? "" : note, code);
         if (updated == 0) {
             throw new IllegalStateException("该反馈已处理或不存在，请刷新");

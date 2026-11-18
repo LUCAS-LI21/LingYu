@@ -29,6 +29,9 @@ public interface PoiMapper {
 
     List<Map<String, Object>> priceBuckets();
 
+    /** 小区总数与其中「有官方参考价」的数量，用于在洞察页标注样本口径 */
+    Map<String, Object> priceSampleCount();
+
     List<Map<String, Object>> gridTop(@Param("limit") int limit);
 
     /** 区域维度：每个区的银行数与小区数，供洞察页画图 */

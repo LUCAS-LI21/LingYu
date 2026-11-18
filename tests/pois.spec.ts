@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { buildStats, distanceMeters, filterPois, paginate } from '@/api/pois'
 import {
@@ -190,5 +190,18 @@ describe('buildStats 区域维度', () => {
   it('没有区的点位不计入区域统计', () => {
     const stats = buildStats([bank('b1', { district: '' })])
     expect(stats.byDistrict).toEqual([])
+  })
+})
+
+describe('后端探测状态（离线横幅依赖）', () => {
+  it('探测失败时把 backendOnline 置为 false，触发页面降级提示', async () => {
+    vi.resetModules()
+    const server = await import('@/api/server')
+    const probe = vi.spyOn(server, 'probeServer').mockResolvedValue(false)
+    const pois = await import('@/api/pois')
+    const online = await pois.isServerMode()
+    expect(online).toBe(false)
+    expect(pois.backendOnline.value).toBe(false)
+    probe.mockRestore()
   })
 })

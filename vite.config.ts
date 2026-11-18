@@ -75,6 +75,20 @@ export default defineConfig(({ mode }) => {
     preview: {
       host: '127.0.0.1',
       port: 4173,
+      // 预览也要代理 /api：E2E 跑在 4173，没有代理时后台登录/审核全部 404，
+      // 前端会静默回退本地种子，测出来的不是真实行为
+      proxy: {
+        '/api': {
+          target: env.VITE_API_PROXY || 'http://127.0.0.1:8080',
+          changeOrigin: true,
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('origin')
+              proxyReq.removeHeader('referer')
+            })
+          },
+        },
+      },
     },
     build: {
       target: 'es2022',

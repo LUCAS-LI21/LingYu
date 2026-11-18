@@ -1,0 +1,1254 @@
+{
+  "base": "http://127.0.0.1:18080",
+  "stamp": "2026-11-18 19:26:58",
+  "rows": [
+    {
+      "name": "健康检查",
+      "method": "GET",
+      "path": "/api/v1/health",
+      "status": 200,
+      "ms": 31,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "status": "ok",
+          "db": "up"
+        }
+      }
+    },
+    {
+      "name": "元信息",
+      "method": "GET",
+      "path": "/api/v1/meta",
+      "status": 200,
+      "ms": 4,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "name": "poi-intel",
+          "version": "0.1.0",
+          "envelope": "{code,message,data}，code=0 表示成功",
+          "coord": {
+            "storage": "WGS-84",
+            "chineseMap": "GCJ-02",
+            "wgsFields": ["lng", "lat"],
+            "gcjFields": ["gcjLng", "gcjLat"]
+          },
+          "auth": {
+            "type": "Bearer",
+            "login": "POST /api/v1/auth/login",
+            "adminPrefix": "/api/v1/admin"
+          },
+          "endpoints": [
+            {
+              "method": "GET",
+              "path": "/api/v1/health",
+              "desc": "健康检查"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/meta",
+              "desc": "元信息（本接口）"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois",
+              "desc": "列表/地图查询：types,district,keyword,bbox,page,size"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois/{id}",
+              "desc": "详情"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois/nearby",
+              "desc": "周边银行：lng,lat,radius,branchType,limit"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois/{id}/nearest-banks",
+              "desc": "最近 N 家银行"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois/{id}/nearby-communities",
+              "desc": "某银行周边小区"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/pois/{id}/sources",
+              "desc": "字段级来源"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/stats",
+              "desc": "统计"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/community-pending",
+              "desc": "待定位小区名录"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/community-pending/hint",
+              "desc": "待定位小区地图中心"
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/community-pending/{id}/locate",
+              "desc": "提交坐标（众包，待审）"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/land-parcels",
+              "desc": "存量住宅用地"
+            },
+            {
+              "method": "POST",
+              "path": "/api/v1/feedback",
+              "desc": "用户纠错/补充"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/live/address",
+              "desc": "L2 实时地址（不落库）"
+            },
+            {
+              "method": "GET",
+              "path": "/api/v1/live/pois",
+              "desc": "L2 实时周边（不落库）"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "列表首页",
+      "method": "GET",
+      "path": "/api/v1/pois?size=3&page=1",
+      "status": 200,
+      "ms": 31,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "id": "osm-node-4866753941",
+              "type": "bank",
+              "name": "Bank of China",
+              "address": "",
+              "district": "宝安区",
+              "lng": 113.841718,
+              "lat": 22.604593,
+              "gcjLng": 113.846699,
+              "gcjLat": 22.601611,
+              "brand": "中国银行",
+              "branchType": "atm",
+              "phone": "",
+              "openingHours": "",
+              "demoAttributes": false,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            },
+            {
+              "id": "osm-node-13526829501",
+              "type": "bank",
+              "name": "Bank of China",
+              "address": "",
+              "district": "龙华区",
+              "lng": 114.052335,
+              "lat": 22.649201,
+              "gcjLng": 114.057449,
+              "gcjLat": 22.646488,
+              "brand": "中国银行",
+              "branchType": "atm",
+              "phone": "0755-22223333",
+              "openingHours": "24/7",
+              "demoAttributes": false,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            },
+            {
+              "id": "osm-node-13526827801",
+              "type": "bank",
+              "name": "Bank of Communication",
+              "address": "",
+              "district": "龙华区",
+              "lng": 114.052329,
+              "lat": 22.649166,
+              "gcjLng": 114.057443,
+              "gcjLat": 22.646453,
+              "brand": "交通银行",
+              "branchType": "atm",
+              "phone": "",
+              "openingHours": "24/7",
+              "demoAttributes": false,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            }
+          ],
+          "total": 5104,
+          "page": 1,
+          "size": 3
+        }
+      }
+    },
+    {
+      "name": "列表-按区域筛选",
+      "method": "GET",
+      "path": "/api/v1/pois?district=%E5%8D%97%E5%B1%B1%E5%8C%BA&size=2",
+      "status": 200,
+      "ms": 16,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "id": "osm-node-4815570121",
+              "type": "bank",
+              "name": "street90",
+              "address": "",
+              "district": "南山区",
+              "lng": 113.954325,
+              "lat": 22.548249,
+              "gcjLng": 113.959218,
+              "gcjLat": 22.545256,
+              "brand": "street90",
+              "branchType": "atm",
+              "phone": "",
+              "openingHours": "",
+              "demoAttributes": false,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            },
+            {
+              "id": "osm-node-12058873560",
+              "type": "bank",
+              "name": "上海浦东发展银行",
+              "address": "",
+              "district": "南山区",
+              "lng": 113.936887,
+              "lat": 22.543492,
+              "gcjLng": 113.941757,
+              "gcjLat": 22.540466,
+              "brand": "上海浦东发展银行",
+              "branchType": "branch",
+              "phone": "",
+              "openingHours": "",
+              "demoAttributes": false,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            }
+          ],
+          "total": 999,
+          "page": 1,
+          "size": 2
+        }
+      }
+    },
+    {
+      "name": "列表-小区",
+      "method": "GET",
+      "path": "/api/v1/pois?types=community&size=2",
+      "status": 200,
+      "ms": 15,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "id": "osm-way-1447687402",
+              "type": "community",
+              "name": "21区生资公司宿舍楼",
+              "address": "",
+              "district": "宝安区",
+              "lng": 113.904396,
+              "lat": 22.571583,
+              "gcjLng": 113.909261,
+              "gcjLat": 22.568532,
+              "builtYear": 2014,
+              "avgPriceSource": "demo",
+              "avgPriceDemo": 112875,
+              "propertyFee": 6.4,
+              "propertyCompany": "",
+              "developer": "",
+              "surroundBankCount": 31,
+              "surroundAtmCount": 0,
+              "nearbyBrandCount": 14,
+              "nearestBankM": 218,
+              "demoAttributes": true,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            },
+            {
+              "id": "osm-way-1352001696",
+              "type": "community",
+              "name": "29栋",
+              "address": "",
+              "district": "南山区",
+              "lng": 113.930621,
+              "lat": 22.503318,
+              "gcjLng": 113.935483,
+              "gcjLat": 22.500281,
+              "builtYear": 2008,
+              "avgPriceSource": "demo",
+              "avgPriceDemo": 61427,
+              "propertyFee": 9.2,
+              "propertyCompany": "",
+              "developer": "",
+              "surroundBankCount": 12,
+              "surroundAtmCount": 0,
+              "nearbyBrandCount": 10,
+              "nearestBankM": 447,
+              "demoAttributes": true,
+              "source": "OpenStreetMap",
+              "license": "ODbL",
+              "sourceLevel": "L1"
+            }
+          ],
+          "total": 3576,
+          "page": 1,
+          "size": 2
+        }
+      }
+    },
+    {
+      "name": "统计",
+      "method": "GET",
+      "path": "/api/v1/stats",
+      "status": 200,
+      "ms": 26,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "total": 5104,
+          "bank": 1528,
+          "atm": 43,
+          "branch": 1485,
+          "community": 3576,
+          "districts": 10,
+          "brands": [
+            {
+              "label": "深圳农商银行",
+              "value": 244
+            },
+            {
+              "label": "中国建设银行",
+              "value": 160
+            },
+            {
+              "label": "招商银行",
+              "value": 156
+            },
+            {
+              "label": "中国邮政储蓄银行",
+              "value": 151
+            },
+            {
+              "label": "中国农业银行",
+              "value": 141
+            },
+            {
+              "label": "平安银行",
+              "value": 99
+            },
+            {
+              "label": "中国工商银行",
+              "value": 72
+            },
+            {
+              "label": "中信银行",
+              "value": 71
+            }
+          ],
+          "byDistrict": [
+            {
+              "bank": 335,
+              "label": "福田区",
+              "community": 741
+            },
+            {
+              "bank": 312,
+              "label": "南山区",
+              "community": 687
+            },
+            {
+              "bank": 289,
+              "label": "宝安区",
+              "community": 593
+            },
+            {
+              "bank": 102,
+              "label": "光明区",
+              "community": 476
+            },
+            {
+              "bank": 133,
+              "label": "龙华区",
+              "community": 411
+            },
+            {
+              "bank": 38,
+              "label": "坪山区",
+              "community": 274
+            },
+            {
+              "bank": 174,
+              "label": "龙岗区",
+              "community": 110
+            },
+            {
+              "bank": 23,
+              "label": "盐田区",
+              "community": 177
+            },
+            {
+              "bank": 101,
+              "label": "罗湖区",
+              "community": 67
+            },
+            {
+              "bank": 21,
+              "label": "大鹏新区",
+              "community": 40
+            }
+          ],
+          "priceBuckets": [
+            {
+              "label": "< 5 万",
+              "value": 201
+            },
+            {
+              "label": "5–7 万",
+              "value": 442
+            },
+            {
+              "label": "7–9 万",
+              "value": 284
+            },
+            {
+              "label": "9–11 万",
+              "value": 115
+            },
+            {
+              "label": "≥ 11 万",
+              "value": 51
+            }
+          ],
+          "priceSample": {
+            "total": 3576,
+            "real_count": 1093
+          },
+          "gridTop": [
+            {
+              "label": "114.05, 22.53",
+              "value": 54,
+              "lng": 114.05,
+              "lat": 22.53
+            },
+            {
+              "label": "113.93, 22.53",
+              "value": 52,
+              "lng": 113.93,
+              "lat": 22.53
+            },
+            {
+              "label": "114.09, 22.55",
+              "value": 48,
+              "lng": 114.09,
+              "lat": 22.55
+            },
+            {
+              "label": "113.95, 22.55",
+              "value": 43,
+              "lng": 113.95,
+              "lat": 22.55
+            },
+            {
+              "label": "114.05, 22.55",
+              "value": 36,
+              "lng": 114.05,
+              "lat": 22.55
+            },
+            {
+              "label": "113.89, 22.55",
+              "value": 34,
+              "lng": 113.89,
+              "lat": 22.55
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "周边银行 1km",
+      "method": "GET",
+      "path": "/api/v1/pois/nearby?lng=114.0579&lat=22.5431&radius=1000&limit=5",
+      "status": 200,
+      "ms": 9,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "poi": {
+                "id": "import-249265493",
+                "name": "招商银行深圳时代广场支行",
+                "address": "深圳市福田中心区益田路4068号卓越时代广场一楼",
+                "district": "福田区",
+                "lng": 114.058673,
+                "lat": 22.542872,
+                "gcjLng": 114.063788,
+                "gcjLat": 22.540156,
+                "brand": "招商银行",
+                "branchType": "branch",
+                "phone": "(0755)82996890",
+                "openingHours": "周一至周日 09:00-17:00 / 休息",
+                "source": "招商银行官网",
+                "license": "公开信息（官网网点地图）",
+                "sourceLevel": "L1"
+              },
+              "distance": 83.33610391851838
+            },
+            {
+              "poi": {
+                "id": "import-1518039048",
+                "name": "中信银行深圳分行营业部",
+                "address": "深圳市福田区中心三路8号卓越时代广场二期一层（15A、15-19、34-36、41-43）及五层至十层",
+                "district": "福田区",
+                "lng": 114.059865,
+                "lat": 22.542339,
+                "gcjLng": 114.064981,
+                "gcjLat": 22.539625,
+                "brand": "中信银行",
+                "branchType": "branch",
+                "phone": "(0755)23610522",
+                "openingHours": "工作日：9:00至17:00，周六、周日：9:00至16:00",
+                "source": "中信银行官网",
+                "license": "公开信息（官网网点查询）",
+                "sourceLevel": "L1"
+              },
+              "distance": 218.82657208764678
+            },
+            {
+              "poi": {
+                "id": "import-1042472766",
+                "name": "中国农业银行凤凰支行营业室",
+                "address": "深圳福田区深南大道2008号中国凤凰大厦二栋101、102、103号商铺",
+                "district": "福田区",
+                "lng": 114.060162,
+                "lat": 22.544024,
+                "gcjLng": 114.065279,
+                "gcjLat": 22.541311,
+                "brand": "中国农业银行",
+                "branchType": "branch",
+                "phone": "0755-82715289",
+                "openingHours": "周一至周五 对公：09:00-12:00,14:00-17:00 对私：09:00-17:00",
+                "source": "中国农业银行官网",
+                "license": "公开信息（官网网点查询）",
+                "sourceLevel": "L1"
+              },
+              "distance": 254.0104925815426
+            },
+            {
+              "poi": {
+                "id": "import-2329101",
+                "name": "中国建设银行深圳中心区支行",
+                "address": "深圳市福田区福田街道深南大道岗厦天元花园1-3栋121（卓悦中心北区N101-N103）",
+                "district": "福田区",
+                "lng": 114.060152,
+                "lat": 22.541754,
+                "gcjLng": 114.065268,
+                "gcjLat": 22.539041,
+                "brand": "中国建设银行",
+                "branchType": "branch",
+                "phone": "0755-23989396",
+                "openingHours": "周一至周五 09:00-17:00",
+                "source": "中国建设银行官网",
+                "license": "公开信息（官网网点查询）",
+                "sourceLevel": "L1"
+              },
+              "distance": 275.48210383502857
+            },
+            {
+              "poi": {
+                "id": "osm-node-6544777125",
+                "name": "华夏银行",
+                "address": "",
+                "district": "福田区",
+                "lng": 114.058576,
+                "lat": 22.540362,
+                "gcjLng": 114.063691,
+                "gcjLat": 22.537646,
+                "brand": "华夏银行",
+                "branchType": "branch",
+                "phone": "",
+                "openingHours": "",
+                "source": "OpenStreetMap",
+                "license": "ODbL",
+                "sourceLevel": "L1"
+              },
+              "distance": 312.2669901554107
+            }
+          ],
+          "total": 5
+        }
+      }
+    },
+    {
+      "name": "待定位小区",
+      "method": "GET",
+      "path": "/api/v1/community-pending?size=3",
+      "status": 200,
+      "ms": 11,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "total": 4940,
+          "page": 1,
+          "size": 3,
+          "items": [
+            {
+              "id": "4403090050010006",
+              "name": "上城大厦",
+              "address": "光明区玉塘街道田寮路与年玉路交汇处",
+              "district": "光明区",
+              "street": "玉塘街道",
+              "attribute": "商写一体",
+              "avg_price": null
+            },
+            {
+              "id": "4403090060090006",
+              "name": "上石家村",
+              "address": "深圳市光明区马田街道石家社区上石家村",
+              "district": "光明区",
+              "street": "马田街道",
+              "attribute": "自然村",
+              "avg_price": null
+            },
+            {
+              "id": "4403090020130018",
+              "name": "上辇新村、新村C区、旧村",
+              "address": "深圳市光明区公明街道上村社区",
+              "district": "光明区",
+              "street": "公明街道",
+              "attribute": "自然村",
+              "avg_price": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "存量住宅用地",
+      "method": "GET",
+      "path": "/api/v1/land-parcels?limit=3",
+      "status": 200,
+      "ms": 6,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "total": 526,
+          "items": [
+            {
+              "id": "A221-0215",
+              "district_street": "宝安区福永街道",
+              "location": "福凤路以东，凤凰山大道以北。",
+              "area_ha": 1.7169,
+              "housing_type": "普通商品住房",
+              "build_status": "未动工",
+              "developer": "深圳市凤凰股份合作公司",
+              "project_name": "",
+              "supply_date": "2023-09-28"
+            },
+            {
+              "id": "T204-0148",
+              "district_street": "南山区粤海街道",
+              "location": "白石路以西，学府路以北。",
+              "area_ha": 1.4892,
+              "housing_type": "普通商品住房",
+              "build_status": "未动工",
+              "developer": "深圳市贯凯投资有限公司",
+              "project_name": "",
+              "supply_date": "2023-09-26"
+            },
+            {
+              "id": "T204-0149",
+              "district_street": "南山区粤海街道",
+              "location": "白石路以西，学府路以北。",
+              "area_ha": 1.2788,
+              "housing_type": "普通商品住房",
+              "build_status": "未动工",
+              "developer": "深圳市贯凯投资有限公司",
+              "project_name": "",
+              "supply_date": "2023-09-26"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "L2 实时地址（无 Key 降级）",
+      "method": "GET",
+      "path": "/api/v1/live/address?lng=114.0579&lat=22.5431",
+      "status": 200,
+      "ms": 3,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "enabled": false,
+          "reason": "未配置 AMAP_KEY：实时地址查询不可用（这是合规设计，不是故障）"
+        }
+      }
+    },
+    {
+      "name": "详情",
+      "method": "GET",
+      "path": "/api/v1/pois/osm-node-4866753941",
+      "status": 200,
+      "ms": 6,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "id": "osm-node-4866753941",
+          "type": "bank",
+          "name": "Bank of China",
+          "address": "",
+          "district": "宝安区",
+          "lng": 113.841718,
+          "lat": 22.604593,
+          "gcjLng": 113.846699,
+          "gcjLat": 22.601611,
+          "brand": "中国银行",
+          "branchType": "atm",
+          "phone": "",
+          "openingHours": "",
+          "demoAttributes": false,
+          "source": "OpenStreetMap",
+          "license": "ODbL",
+          "sourceLevel": "L1"
+        }
+      }
+    },
+    {
+      "name": "详情-字段级来源",
+      "method": "GET",
+      "path": "/api/v1/pois/osm-way-1447687402/sources",
+      "status": 200,
+      "ms": 6,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": []
+      }
+    },
+    {
+      "name": "最近 3 家银行",
+      "method": "GET",
+      "path": "/api/v1/pois/osm-way-1447687402/nearest-banks?limit=3&radius=5000",
+      "status": 200,
+      "ms": 7,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "poiId": "osm-way-1447687402",
+          "items": [
+            {
+              "id": "import-492994615",
+              "name": "招商银行深圳宝安支行",
+              "brand": "招商银行",
+              "address": "深圳市宝安区九区宝民路广场大厦首层",
+              "branchType": "branch",
+              "distance": 218
+            },
+            {
+              "id": "osm-node-13288351469",
+              "name": "中国工商银行",
+              "brand": "中国工商银行",
+              "address": "",
+              "branchType": "branch",
+              "distance": 441
+            },
+            {
+              "id": "import-1291583170",
+              "name": "中信银行深圳宝城支行",
+              "brand": "中信银行",
+              "address": "深圳市宝安区8区建安一路东侧新华书店综合大楼一栋首层",
+              "branchType": "branch",
+              "distance": 481
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "运营登录",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "status": 200,
+      "ms": 34,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "token": "b3BlcmF0b3J8MTc5NTA3MzIxOA.3W-kM8eS9ksqe63CtDxbwNgTt42ByV5_tFSOKjpB1FY",
+          "username": "operator",
+          "expiresAt": 1795073218
+        }
+      }
+    },
+    {
+      "name": "后台概览",
+      "method": "GET",
+      "path": "/api/v1/admin/overview",
+      "status": 200,
+      "ms": 17,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "pendingFeedback": 18,
+          "totalFeedback": 41,
+          "totalJobs": 438,
+          "successJobs": 9,
+          "failedJobs": 157,
+          "runningJobs": 0,
+          "hotRegions": 96,
+          "versions": 4498,
+          "avgFreshHours": 152
+        }
+      }
+    },
+    {
+      "name": "反馈列表",
+      "method": "GET",
+      "path": "/api/v1/admin/feedback?status=pending&size=3",
+      "status": 200,
+      "ms": 6,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "code": "FB20261119-0089",
+              "poiType": "bank",
+              "poiId": "osm-node-13526829501",
+              "poiName": "",
+              "type": "error",
+              "field": "电话",
+              "newValue": "0755-00000000",
+              "description": "acceptance 自测反馈（会被驳回）",
+              "contact": "",
+              "status": "pending",
+              "reviewer": "",
+              "reviewNote": "",
+              "createdAt": "2026-11-19 02:24"
+            },
+            {
+              "code": "FB20261117-0088",
+              "poiType": "bank",
+              "poiId": "osm-node-13282395632",
+              "poiName": "宝生村镇银行",
+              "type": "error",
+              "field": "名称",
+              "newValue": "",
+              "description": "E2E 回归：该网点已搬迁",
+              "contact": "",
+              "status": "pending",
+              "reviewer": "",
+              "reviewNote": "",
+              "createdAt": "2026-11-17 07:06"
+            },
+            {
+              "code": "FB20261117-0087",
+              "poiType": "bank",
+              "poiId": "osm-node-13282395632",
+              "poiName": "宝生村镇银行",
+              "type": "error",
+              "field": "名称",
+              "newValue": "",
+              "description": "E2E 回归：该网点已搬迁",
+              "contact": "",
+              "status": "pending",
+              "reviewer": "",
+              "reviewNote": "",
+              "createdAt": "2026-11-17 07:06"
+            }
+          ],
+          "total": 18,
+          "page": 1,
+          "size": 3
+        }
+      }
+    },
+    {
+      "name": "抓取任务",
+      "method": "GET",
+      "path": "/api/v1/admin/jobs?size=5",
+      "status": 200,
+      "ms": 5,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": {
+          "items": [
+            {
+              "id": 439,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-19 03:25",
+              "finishedAt": "11-19 03:25"
+            },
+            {
+              "id": 438,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-19 03:17",
+              "finishedAt": "11-19 03:17"
+            },
+            {
+              "id": 437,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-19 03:07",
+              "finishedAt": "11-19 03:08"
+            },
+            {
+              "id": 435,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-19 02:56",
+              "finishedAt": "11-19 02:56"
+            },
+            {
+              "id": 434,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-19 02:51",
+              "finishedAt": "11-19 02:51"
+            }
+          ],
+          "total": 438
+        }
+      }
+    },
+    {
+      "name": "热点排行",
+      "method": "GET",
+      "path": "/api/v1/admin/hotspots",
+      "status": 200,
+      "ms": 6,
+      "ok": true,
+      "expect": "2xx",
+      "error": "",
+      "body": {
+        "code": 0,
+        "message": "ok",
+        "data": [
+          {
+            "grid": "114.07,22.53",
+            "statDate": "2026-11-19",
+            "queryCount": 13,
+            "zeroResultCount": 0,
+            "priority": 13,
+            "updatedAt": "11-19 02:29"
+          },
+          {
+            "grid": "114.07,22.55",
+            "statDate": "2026-11-19",
+            "queryCount": 13,
+            "zeroResultCount": 0,
+            "priority": 13,
+            "updatedAt": "11-19 02:29"
+          },
+          {
+            "grid": "113.83,22.73",
+            "statDate": "2026-11-19",
+            "queryCount": 13,
+            "zeroResultCount": 0,
+            "priority": 13,
+            "updatedAt": "11-19 02:29"
+          },
+          {
+            "grid": "114.05,22.55",
+            "statDate": "2026-11-19",
+            "queryCount": 11,
+            "zeroResultCount": 1,
+            "priority": 13,
+            "updatedAt": "11-19 02:29"
+          },
+          {
+            "grid": "114.05,22.53",
+            "statDate": "2026-11-19",
+            "queryCount": 1,
+            "zeroResultCount": 0,
+            "priority": 1,
+            "updatedAt": "11-19 02:29"
+          },
+          {
+            "grid": "113.95,22.55",
+            "statDate": "2026-11-16",
+            "queryCount": 14,
+            "zeroResultCount": 0,
+            "priority": 14,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.05,22.55",
+            "statDate": "2026-11-16",
+            "queryCount": 11,
+            "zeroResultCount": 1,
+            "priority": 13,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.07,22.55",
+            "statDate": "2026-11-16",
+            "queryCount": 13,
+            "zeroResultCount": 0,
+            "priority": 13,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "113.93,22.51",
+            "statDate": "2026-11-16",
+            "queryCount": 11,
+            "zeroResultCount": 0,
+            "priority": 11,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "113.91,22.57",
+            "statDate": "2026-11-16",
+            "queryCount": 8,
+            "zeroResultCount": 0,
+            "priority": 8,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.03,22.53",
+            "statDate": "2026-11-16",
+            "queryCount": 5,
+            "zeroResultCount": 0,
+            "priority": 5,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.03,22.55",
+            "statDate": "2026-11-16",
+            "queryCount": 5,
+            "zeroResultCount": 0,
+            "priority": 5,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "113.93,22.53",
+            "statDate": "2026-11-16",
+            "queryCount": 4,
+            "zeroResultCount": 0,
+            "priority": 4,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.05,22.51",
+            "statDate": "2026-11-16",
+            "queryCount": 3,
+            "zeroResultCount": 0,
+            "priority": 3,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.07,22.53",
+            "statDate": "2026-11-16",
+            "queryCount": 3,
+            "zeroResultCount": 0,
+            "priority": 3,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.05,22.53",
+            "statDate": "2026-11-16",
+            "queryCount": 3,
+            "zeroResultCount": 0,
+            "priority": 3,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.21,22.69",
+            "statDate": "2026-11-16",
+            "queryCount": 3,
+            "zeroResultCount": 0,
+            "priority": 3,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "113.83,22.73",
+            "statDate": "2026-11-16",
+            "queryCount": 2,
+            "zeroResultCount": 0,
+            "priority": 2,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.07,22.57",
+            "statDate": "2026-11-16",
+            "queryCount": 2,
+            "zeroResultCount": 0,
+            "priority": 2,
+            "updatedAt": "11-16 02:52"
+          },
+          {
+            "grid": "114.09,22.57",
+            "statDate": "2026-11-16",
+            "queryCount": 1,
+            "zeroResultCount": 0,
+            "priority": 1,
+            "updatedAt": "11-16 02:52"
+          }
+        ]
+      }
+    },
+    {
+      "name": "无 token 访问后台（应 401）",
+      "method": "GET",
+      "path": "/api/v1/admin/overview",
+      "status": 401,
+      "ms": 2,
+      "ok": true,
+      "expect": 401,
+      "error": "",
+      "body": {
+        "code": 401,
+        "message": "未登录或登录已过期",
+        "data": null
+      }
+    },
+    {
+      "name": "未知接口（应 404）",
+      "method": "GET",
+      "path": "/api/v1/not-exist",
+      "status": 404,
+      "ms": 4,
+      "ok": true,
+      "expect": 404,
+      "error": "",
+      "body": {
+        "code": 404,
+        "message": "接口不存在",
+        "data": null
+      }
+    }
+  ]
+}

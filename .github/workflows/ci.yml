@@ -56,6 +56,20 @@ jobs:
     name: Playwright E2E
     needs: quality
     runs-on: ubuntu-latest
+    services:
+      # 后台管理用例需要真实后端，CI 里起一套 MySQL 供后端连接
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: poi_intel
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
     steps:
       - uses: actions/checkout@v4
 
@@ -68,13 +82,48 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build backend
+        working-directory: backend
+        run: mvn -B -q -DskipTests package
+
+      - name: Start backend
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_NAME: poi_intel
+          DB_USER: root
+          DB_PASSWORD: root
+          OPERATOR_PASSWORD: operator123
+          APP_AUTH_ALLOW_DEFAULT_PASSWORD: 'true'
+        run: |
+          nohup java -jar backend/target/poi-intel.jar > backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8080/api/v1/health >/dev/null 2>&1; then
+              echo "backend ready"; break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8080/api/v1/health
+
       - run: pnpm install --frozen-lockfile
 
       - name: Install browsers
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E
+        env:
+          OPERATOR_PASSWORD: operator123
         run: pnpm e2e
+
+      - name: Backend log on failure
+        if: failure()
+        run: tail -n 120 backend.log
 
       - uses: actions/upload-artifact@v4
         if: failure()

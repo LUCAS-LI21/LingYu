@@ -72,6 +72,16 @@ public class AuthService {
         return Optional.of(new Session(sign(username, expiresAt), username, expiresAt));
     }
 
+/** 取用户角色（operator / viewer / 其它）。账号不存在返回空。 */
+    public java.util.Optional<String> roleOf(String username) {
+        try {
+            return jdbcTemplate.queryForList("SELECT role FROM sys_user WHERE username = ? AND status = 1",
+                    String.class, username).stream().findFirst();
+        } catch (Exception ex) {
+            return java.util.Optional.empty();
+        }
+    }
+
     /** 校验并返回用户名 */
     public Optional<String> verify(String token) {
         try {
@@ -126,6 +136,11 @@ public class AuthService {
     }
 
     private boolean verifyPassword(String raw, String stored) {
+        return matches(raw, stored);
+    }
+
+    /** 校验明文口令与库里存的 base64(salt)$base64(hash) 是否一致（静态版，供 Seeder 复用） */
+    public static boolean matches(String raw, String stored) {
         try {
             String[] parts = stored.split("\\$");
             if (parts.length != 2) {

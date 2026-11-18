@@ -22,4 +22,6 @@ public class PoiQuery {
     private int offset = 0;
     private int size = 20;
     private int limit = 50;
+    /** 精简投影：地图/列表批量拉取只要核心字段，详情才用全量 */
+    private boolean lite;
 }

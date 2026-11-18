@@ -112,7 +112,7 @@ public class SeedRunner implements ApplicationRunner {
 
             jdbcTemplate.batchUpdate("""
                     INSERT INTO poi_community
-                        (id, name, address, district, lng, lat, built_year, avg_price, property_fee,
+                        (id, name, address, district, lng, lat, built_year, avg_price_demo, property_fee,
                          source, license, source_level, demo_attributes)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
                     ON DUPLICATE KEY UPDATE name = VALUES(name)

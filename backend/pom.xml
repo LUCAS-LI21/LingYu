@@ -35,6 +35,11 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
+    <!-- 可观测性：/actuator/health 与 /actuator/metrics，供容器健康检查与排障 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>com.baomidou</groupId>

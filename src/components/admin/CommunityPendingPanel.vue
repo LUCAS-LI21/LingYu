@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { fetchCommunityPending, type PendingCommunity } from '@/api/pois'
 import CoordinatePicker from '@/components/admin/CoordinatePicker.vue'
 import { apiRequest } from '@/api/server'
+import { invalidatePoiCache } from '@/api/pois'
 import { SHENZHEN_DISTRICTS } from '@/types/poi'
 
 const items = ref<PendingCommunity[]>([])
@@ -113,6 +114,7 @@ async function submitCoordinate(payload: { lng: number; lat: number }): Promise<
       },
     )
     pickerOpen.value = false
+    invalidatePoiCache()
     flash('已标注并转正，地图上可搜到该小区')
     await load()
   } catch (cause) {
@@ -123,6 +125,7 @@ async function submitCoordinate(payload: { lng: number; lat: number }): Promise<
 async function reviewSubmission(id: number, action: 'approve' | 'reject'): Promise<void> {
   try {
     await apiRequest(`/admin/coordinate-submissions/${id}/${action}`, { method: 'POST' })
+    invalidatePoiCache()
     flash(action === 'approve' ? '已通过并转正' : '已驳回')
     await loadSubmissions()
     if (action === 'approve') await load()
@@ -234,16 +237,17 @@ onMounted(() => {
             <th class="py-2 pr-3 font-medium">小区名称</th>
             <th class="py-2 pr-3 font-medium">地址</th>
             <th class="py-2 pr-3 font-medium">区 / 街道</th>
+            <th class="py-2 pr-3 font-medium">参考价</th>
             <th class="py-2 pr-3 font-medium">类型</th>
             <th class="py-2 font-medium">定位</th>
           </tr>
         </thead>
         <tbody class="text-ink-600">
           <tr v-if="loading">
-            <td colspan="5" class="py-6 text-center text-ink-400">加载中…</td>
+            <td colspan="6" class="py-6 text-center text-ink-400">加载中…</td>
           </tr>
           <tr v-else-if="items.length === 0">
-            <td colspan="5" class="py-6 text-center text-ink-400">没有匹配的待定位小区</td>
+            <td colspan="6" class="py-6 text-center text-ink-400">没有匹配的待定位小区</td>
           </tr>
           <tr v-for="item in items" v-else :key="item.id" class="border-b border-line/60">
             <td class="max-w-[160px] truncate py-2 pr-3 text-ink-800" :title="item.name">
@@ -255,6 +259,12 @@ onMounted(() => {
             <td class="whitespace-nowrap py-2 pr-3">
               {{ item.district
               }}<span v-if="item.street" class="text-ink-400"> / {{ item.street }}</span>
+            </td>
+            <td class="whitespace-nowrap py-2 pr-3 tabular-nums">
+              <span v-if="item.avg_price" class="text-ink-700">{{
+                Number(item.avg_price).toLocaleString()
+              }}</span>
+              <span v-else class="text-ink-300">—</span>
             </td>
             <td class="whitespace-nowrap py-2 pr-3">{{ item.attribute || '—' }}</td>
             <td class="whitespace-nowrap py-2">

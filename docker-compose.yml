@@ -15,8 +15,11 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?必须在 .env 设置数据库 root 口令}
       MYSQL_DATABASE: ${DB_NAME:-poi_intel}
+      # 业务账号：backend 不再用 root 连库
+      MYSQL_USER: ${DB_USER:-poi}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?必须在 .env 设置数据库业务口令}
       TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
@@ -30,6 +33,12 @@ services:
       retries: 12
       start_period: 40s
     restart: unless-stopped
+    logging:
+      # 容器日志轮转：json-file 默认无限增长，长期跑会撑爆磁盘
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     networks: [poi-net]
 
   backend:
@@ -42,12 +51,13 @@ services:
       DB_HOST: mysql
       DB_PORT: '3306'
       DB_NAME: ${DB_NAME:-poi_intel}
-      DB_USER: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      DB_USER: ${DB_USER:-poi}
+      DB_PASSWORD: ${DB_PASSWORD:?必须在 .env 设置数据库业务口令}
       # 留空则启动时生成随机密钥（重启后 token 失效）
       AUTH_SECRET: ${AUTH_SECRET:-}
       OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operator}
-      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:-operator123}
+      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:?必须在 .env 设置随机运营口令}
+      APP_AUTH_ALLOW_DEFAULT_PASSWORD: 'false'
       # 抓取代理：容器内访问宿主代理要用 host.docker.internal
       HTTP_PROXY: ${INGEST_PROXY:-}
       TZ: Asia/Shanghai
@@ -61,6 +71,12 @@ services:
       # 仅本机暴露，便于直接用 curl 调接口；平时可删掉
       - '127.0.0.1:${API_PORT:-18080}:8080'
     restart: unless-stopped
+    logging:
+      # 容器日志轮转：json-file 默认无限增长，长期跑会撑爆磁盘
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     networks: [poi-net]
 
   web:
@@ -74,7 +90,15 @@ services:
         condition: service_healthy
     ports:
       - '${WEB_PORT:-8081}:80'
+      # HTTPS（自签证书；正式环境换 CA 证书）
+      - '${WEB_SSL_PORT:-8443}:443'
     restart: unless-stopped
+    logging:
+      # 容器日志轮转：json-file 默认无限增长，长期跑会撑爆磁盘
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     networks: [poi-net]
 
 volumes:

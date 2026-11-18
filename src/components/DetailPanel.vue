@@ -203,12 +203,36 @@ const rows = computed(() => {
   return [
     { label: '地址', value: poi.address || '暂无' },
     { label: '建成年份', value: poi.builtYear ? `${poi.builtYear} 年` : '暂无' },
-    { label: '参考均价', value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无' },
+    {
+      // 真实价与演示价彻底分开：成交参考价来自官方表，演示值只作为「示意」展示且带标注
+      label: poi.avgPrice ? '成交参考价' : '参考均价（演示）',
+      value: poi.avgPrice
+        ? `${poi.avgPrice.toLocaleString()} 元/㎡`
+        : poi.avgPriceDemo
+          ? `${poi.avgPriceDemo.toLocaleString()} 元/㎡（示意，不参与筛选）`
+          : '暂无',
+    },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
+    // 政府租赁参考价：真实数据，命中不到就不显示（不要给个假的）
+    ...(rentText(poi) ? [{ label: '参考租金', value: rentText(poi) }] : []),
+    ...(poi.developer ? [{ label: '建设单位', value: poi.developer }] : []),
     ...(poi.propertyCompany ? [{ label: '物业公司', value: poi.propertyCompany }] : []),
     ...(poi.waterSavingYear ? [{ label: '节水型小区', value: `${poi.waterSavingYear} 年度` }] : []),
   ]
 })
+
+/** 优先展示高层租金，其次多层、低密度；全部为空返回空串 */
+function rentText(poi: {
+  rentGc?: number | null
+  rentDc?: number | null
+  rentDmd?: number | null
+}): string {
+  const parts: string[] = []
+  if (poi.rentGc) parts.push(`高层 ${poi.rentGc.toFixed(1)}`)
+  if (poi.rentDc) parts.push(`多层 ${poi.rentDc.toFixed(1)}`)
+  if (poi.rentDmd) parts.push(`低密度 ${poi.rentDmd.toFixed(1)}`)
+  return parts.length ? `${parts.join(' / ')} 元/㎡·月（政府参考）` : ''
+}
 
 /** 周边配套：由本地库按 1km 球面距离算出来的，不是抓取的 */
 const amenities = computed(() => {
@@ -567,7 +591,16 @@ function changeRadius(value: number): void {
           {{ poi.source }}<span v-if="poi.license"> · {{ poi.license }}</span>
           <template v-if="poi.type === 'community' && poi.demoAttributes">
             <br />
-            <span class="text-amber-600">均价/年份为演示数据，不构成投资建议</span>
+            <span class="text-amber-600">
+              {{
+                poi.avgPriceSource === 'gov_reference'
+                  ? '成交参考价来自官方发布表，建成年份按竣工备案年份，不构成投资建议'
+                  : '均价为演示值（该小区未匹配到官方参考价），不构成投资建议'
+              }}
+            </span>
+            <span class="text-ink-400">
+              （建成年份/建设单位/物业费/租金若下方「数据来源」列出，则为公示来源）
+            </span>
           </template>
         </p>
         <ul

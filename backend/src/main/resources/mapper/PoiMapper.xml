@@ -2,42 +2,128 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.poiintel.poi.PoiMapper">
 
-    <sql id="filters">
-        <where>
-            <if test="types != null and types.size() > 0">
-                AND type IN
-                <foreach collection="types" item="t" open="(" separator="," close=")">#{t}</foreach>
-            </if>
-            <if test="keyword != null and keyword != ''">
-                AND (name LIKE CONCAT('%', #{keyword}, '%') OR address LIKE CONCAT('%', #{keyword}, '%'))
-            </if>
-            <if test="district != null and district != '' and district != '全部区域'">
-                AND district = #{district}
-            </if>
-            <if test="branchType != null and branchType != '' and branchType != 'all'">
-                AND (type &lt;&gt; 'bank' OR branch_type = #{branchType})
-            </if>
-            <if test="minPrice != null">
-                AND (type &lt;&gt; 'community' OR (avg_price IS NOT NULL AND avg_price &gt;= #{minPrice}))
-            </if>
-            <if test="maxPrice != null">
-                AND (type &lt;&gt; 'community' OR (avg_price IS NOT NULL AND avg_price &lt;= #{maxPrice}))
-            </if>
-            <if test="minYear != null">
-                AND (type &lt;&gt; 'community' OR (built_year IS NOT NULL AND built_year &gt;= #{minYear}))
-            </if>
-            <if test="maxYear != null">
-                AND (type &lt;&gt; 'community' OR (built_year IS NOT NULL AND built_year &lt;= #{maxYear}))
-            </if>
-            <if test="west != null and east != null and south != null and north != null">
-                AND lng BETWEEN #{west} AND #{east} AND lat BETWEEN #{south} AND #{north}
-            </if>
-        </where>
+    <!--
+      为什么不直接查 v_poi：
+      v_poi 是 UNION ALL 视图，MySQL 会把它物化成派生表再过滤/排序，索引全废
+      （EXPLAIN 显示 type=ALL + Using filesort，5000 条 p95 1 秒）。
+      这里改成「按请求的 types 只拼需要的分支」，并把过滤条件下推到各自基表，
+      让 idx_bank_geo / idx_comm_geo / idx_comm_price 真正生效。
+
+      两套列必须与 v_poi 完全同形，否则 resultType 映射会错位。
+    -->
+
+    <sql id="bankCols">
+        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
+        CAST(NULL AS SIGNED) AS built_year,
+        CAST(NULL AS SIGNED) AS avg_price,
+        CAST(NULL AS CHAR(32)) AS avg_price_source,
+        CAST(NULL AS SIGNED) AS avg_price_demo,
+        CAST(NULL AS DECIMAL(6,1)) AS property_fee,
+        CAST(NULL AS CHAR(64)) AS property_company,
+        CAST(NULL AS SIGNED) AS water_saving_year,
+        CAST(NULL AS SIGNED) AS surround_bank_count,
+        CAST(NULL AS SIGNED) AS surround_atm_count,
+        CAST(NULL AS SIGNED) AS nearest_bank_m,
+        CAST(NULL AS SIGNED) AS nearby_brand_count,
+        CAST(NULL AS DECIMAL(8,2)) AS rent_dc,
+        CAST(NULL AS DECIMAL(8,2)) AS rent_gc,
+        CAST(NULL AS DECIMAL(8,2)) AS rent_dmd,
+        CAST(NULL AS CHAR(64)) AS developer,
+        0 AS demo_attributes, source, license, source_level, updated_at
     </sql>
 
-    <select id="query" resultType="com.poiintel.poi.PoiRow">
-        SELECT * FROM v_poi
-        <include refid="filters"/>
+    <sql id="communityCols">
+        id, 'community' AS type, name, address, district, lng, lat,
+        CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
+        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
+        built_year, avg_price, avg_price_source, avg_price_demo,
+        property_fee, property_company, water_saving_year,
+        surround_bank_count, surround_atm_count, nearest_bank_m, nearby_brand_count,
+        rent_dc, rent_gc, rent_dmd, developer,
+        demo_attributes, source, license, source_level, updated_at
+    </sql>
+
+    <!-- 两类点位共用的过滤条件（name/address/district/bbox） -->
+    <sql id="commonWhere">
+        <if test="keyword != null and keyword != ''">
+            AND (name LIKE CONCAT('%', #{keyword}, '%') OR address LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="district != null and district != '' and district != '全部区域'">
+            AND district = #{district}
+        </if>
+        <if test="west != null and east != null and south != null and north != null">
+            AND lng BETWEEN #{west} AND #{east} AND lat BETWEEN #{south} AND #{north}
+        </if>
+    </sql>
+
+    <sql id="communityWhere">
+        <include refid="commonWhere"/>
+        <if test="minPrice != null">
+            AND avg_price IS NOT NULL AND avg_price &gt;= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            AND avg_price IS NOT NULL AND avg_price &lt;= #{maxPrice}
+        </if>
+        <if test="minYear != null">
+            AND built_year IS NOT NULL AND built_year &gt;= #{minYear}
+        </if>
+        <if test="maxYear != null">
+            AND built_year IS NOT NULL AND built_year &lt;= #{maxYear}
+        </if>
+    </sql>
+
+    <sql id="bankWhere">
+        <include refid="commonWhere"/>
+        <if test="branchType != null and branchType != '' and branchType != 'all'">
+            AND branch_type = #{branchType}
+        </if>
+    </sql>
+
+    <!-- 只拼请求到的类型分支：只查银行时完全不碰 poi_community -->
+    <sql id="source">
+        <trim prefix="(" suffix=")" suffixOverrides=" UNION ALL ">
+            <if test="types == null or types.isEmpty() or types.contains('bank')">
+                (SELECT <include refid="bankCols"/> FROM poi_bank
+                 WHERE status &lt;&gt; 'closed' <include refid="bankWhere"/>) UNION ALL
+            </if>
+            <if test="types == null or types.isEmpty() or types.contains('community')">
+                (SELECT <include refid="communityCols"/> FROM poi_community
+                 WHERE status &lt;&gt; 'closed' <include refid="communityWhere"/>) UNION ALL
+            </if>
+        </trim>
+    </sql>
+
+    <!-- 精简投影：地图/列表批量拉取只需要核心字段。
+         5000 行 × 28 列 ≈ 2.7MB；精简后约 0.9MB，首屏渲染明显更快。
+         详情接口仍走完整投影，字段不缺。 -->
+    <sql id="bankLiteCols">
+        id, 'bank' AS type, name, district, lng, lat, brand, branch_type,
+        CAST(NULL AS SIGNED) AS built_year, CAST(NULL AS SIGNED) AS avg_price,
+        CAST(NULL AS CHAR(32)) AS avg_price_source, CAST(NULL AS SIGNED) AS avg_price_demo,
+        CAST(NULL AS DECIMAL(6,1)) AS property_fee, CAST(NULL AS CHAR(64)) AS property_company,
+        0 AS demo_attributes
+    </sql>
+
+    <sql id="communityLiteCols">
+        id, 'community' AS type, name, district, lng, lat,
+        CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
+        built_year, avg_price, avg_price_source, avg_price_demo,
+        property_fee, property_company, demo_attributes
+    </sql>
+
+    <sql id="liteSource">
+        <trim prefix="(" suffix=")" suffixOverrides=" UNION ALL ">
+            <if test="types == null or types.isEmpty() or types.contains('bank')">
+                (SELECT <include refid="bankLiteCols"/> FROM poi_bank
+                 WHERE status &lt;&gt; 'closed' <include refid="bankWhere"/>) UNION ALL
+            </if>
+            <if test="types == null or types.isEmpty() or types.contains('community')">
+                (SELECT <include refid="communityLiteCols"/> FROM poi_community
+                 WHERE status &lt;&gt; 'closed' <include refid="communityWhere"/>) UNION ALL
+            </if>
+        </trim>
+    </sql>
+    <sql id="orderBy">
         <choose>
             <when test="sort == 'priceDesc'">ORDER BY avg_price IS NULL, avg_price DESC, name</when>
             <when test="sort == 'priceAsc'">ORDER BY avg_price IS NULL, avg_price ASC, name</when>
@@ -46,104 +132,135 @@
             <when test="sort == 'name'">ORDER BY name</when>
             <otherwise>ORDER BY type, name</otherwise>
         </choose>
+    </sql>
+
+    <select id="query" resultType="com.poiintel.poi.PoiRow">
+        SELECT * FROM
+        <choose>
+            <when test="lite"><include refid="liteSource"/></when>
+            <otherwise><include refid="source"/></otherwise>
+        </choose>
+        poi_all
+        <include refid="orderBy"/>
         LIMIT #{size} OFFSET #{offset}
     </select>
 
     <select id="count" resultType="long">
-        SELECT COUNT(*) FROM v_poi
-        <include refid="filters"/>
+        SELECT COUNT(*) FROM <include refid="source"/> poi_all
     </select>
 
     <select id="findById" resultType="com.poiintel.poi.PoiRow">
-        SELECT * FROM v_poi WHERE id = #{id}
+        SELECT * FROM (
+            (SELECT <include refid="bankCols"/> FROM poi_bank WHERE id = #{id}) UNION ALL
+            (SELECT <include refid="communityCols"/> FROM poi_community WHERE id = #{id})
+        ) poi_all LIMIT 1
     </select>
 
-    <!-- 球面距离用 MySQL 内置函数，避免把全表拉到应用层算 -->
-    <select id="nearby" resultType="com.poiintel.poi.PoiRow">
-        SELECT *,
-               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
-        FROM v_poi
-        WHERE type = 'bank'
-        <if test="branchType != null and branchType != '' and branchType != 'all'">
-            AND branch_type = #{branchType}
-        </if>
-          <!-- 先用经纬度矩形粗筛走 (lat,lng) 索引，避免对全表逐行算球面距离（评审 P1-11） -->
-          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
-          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
-                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
-          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
-        ORDER BY distance
-        LIMIT #{limit}
-    </select>
-
-    <!-- 反向关联：某银行网点周边的住宅小区（赛题三.3「某银行服务范围内的小区」） -->
-    <select id="nearbyCommunities" resultType="com.poiintel.poi.PoiRow">
-        SELECT *,
-               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
-        FROM v_poi
-        WHERE type = 'community'
-          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
-          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
-                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
-          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
-        ORDER BY distance
-        LIMIT #{limit}
-    </select>
-    <select id="countsByType" resultType="java.util.Map">
-        SELECT type,
-               COALESCE(branch_type, '') AS branchType,
-               COUNT(*)                  AS cnt
-        FROM v_poi
-        GROUP BY type, branch_type
-    </select>
-
-    <select id="countsByDistrict" resultType="java.util.Map">
-        SELECT district AS label,
-               SUM(type = 'bank')      AS bank,
-               SUM(type = 'community') AS community
-        FROM v_poi
-        WHERE district &lt;&gt; ''
-        GROUP BY district
-        ORDER BY bank DESC, community DESC
-    </select>
     <select id="districtCount" resultType="int">
-        SELECT COUNT(DISTINCT district) FROM v_poi WHERE district &lt;&gt; ''
+        SELECT COUNT(DISTINCT district) FROM (
+            (SELECT district FROM poi_bank WHERE status &lt;&gt; 'closed') UNION ALL
+            (SELECT district FROM poi_community WHERE status &lt;&gt; 'closed')
+        ) d
     </select>
 
     <select id="topBrands" resultType="java.util.Map">
         SELECT brand AS label, COUNT(*) AS value
-        FROM v_poi
-        WHERE type = 'bank' AND brand &lt;&gt; ''
+        FROM poi_bank
+        WHERE status &lt;&gt; 'closed' AND brand IS NOT NULL AND brand &lt;&gt; ''
         GROUP BY brand
         ORDER BY value DESC, label
         LIMIT #{limit}
     </select>
 
     <select id="priceBuckets" resultType="java.util.Map">
+        <!-- 只统计**有官方参考价**的小区：演示值是哈希生成的，混进来会让价格分布失真 -->
         SELECT label, COUNT(*) AS value
         FROM (
             SELECT CASE
-                       WHEN avg_price IS NULL THEN '未知'
                        WHEN avg_price &lt; 50000 THEN '&lt; 5 万'
                        WHEN avg_price &lt; 70000 THEN '5–7 万'
                        WHEN avg_price &lt; 90000 THEN '7–9 万'
                        WHEN avg_price &lt; 110000 THEN '9–11 万'
                        ELSE '≥ 11 万'
                        END AS label
-            FROM v_poi
-            WHERE type = 'community'
+            FROM poi_community
+            WHERE status &lt;&gt; 'closed'
+              AND avg_price_source = 'gov_reference'
+              AND avg_price IS NOT NULL
         ) t
         GROUP BY label
+    </select>
+
+    <select id="priceSampleCount" resultType="java.util.Map">
+        SELECT COUNT(*) AS total,
+               SUM(CASE WHEN avg_price_source = 'gov_reference' THEN 1 ELSE 0 END) AS real_count
+        FROM poi_community
+        WHERE status &lt;&gt; 'closed'
     </select>
 
     <select id="gridTop" resultType="java.util.Map">
         SELECT FLOOR(lng / 0.02) AS gx,
                FLOOR(lat / 0.02) AS gy,
                COUNT(*)          AS value
-        FROM v_poi
-        WHERE type = 'bank'
+        FROM poi_bank
+        WHERE status &lt;&gt; 'closed'
         GROUP BY gx, gy
         ORDER BY value DESC
         LIMIT #{limit}
     </select>
+
+    <select id="countsByType" resultType="java.util.Map">
+        SELECT type,
+               COALESCE(branch_type, '') AS branchType,
+               COUNT(*)                  AS cnt
+        FROM (
+            (SELECT 'bank' AS type, branch_type FROM poi_bank WHERE status &lt;&gt; 'closed') UNION ALL
+            (SELECT 'community' AS type, CAST(NULL AS CHAR(16)) AS branch_type FROM poi_community WHERE status &lt;&gt; 'closed')
+        ) t
+        GROUP BY type, branch_type
+    </select>
+
+    <select id="nearby" resultType="com.poiintel.poi.PoiRow">
+        SELECT *,
+               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
+        FROM poi_bank
+        WHERE status &lt;&gt; 'closed'
+        <if test="branchType != null and branchType != '' and branchType != 'all'">
+            AND branch_type = #{branchType}
+        </if>
+          <!-- 先用经纬度矩形粗筛走 (lat,lng) 索引，避免对全表逐行算球面距离 -->
+          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
+          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <select id="nearbyCommunities" resultType="com.poiintel.poi.PoiRow">
+        SELECT *,
+               ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) AS distance
+        FROM poi_community
+        WHERE status &lt;&gt; 'closed'
+          AND lat BETWEEN #{lat} - #{radius} / 111000.0 AND #{lat} + #{radius} / 111000.0
+          AND lng BETWEEN #{lng} - #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+                      AND #{lng} + #{radius} / (111000.0 * COS(RADIANS(#{lat})))
+          AND ST_Distance_Sphere(POINT(lng, lat), POINT(#{lng}, #{lat})) &lt;= #{radius}
+        ORDER BY distance
+        LIMIT #{limit}
+    </select>
+
+    <select id="countsByDistrict" resultType="java.util.Map">
+        SELECT district AS label,
+               SUM(CASE WHEN type = 'bank' THEN 1 ELSE 0 END) AS bank,
+               SUM(CASE WHEN type = 'community' THEN 1 ELSE 0 END) AS community
+        FROM (
+            (SELECT 'bank' AS type, district FROM poi_bank WHERE status &lt;&gt; 'closed') UNION ALL
+            (SELECT 'community' AS type, district FROM poi_community WHERE status &lt;&gt; 'closed')
+        ) t
+        WHERE district IS NOT NULL AND district &lt;&gt; ''
+        GROUP BY district
+        ORDER BY bank + community DESC
+    </select>
+
 </mapper>

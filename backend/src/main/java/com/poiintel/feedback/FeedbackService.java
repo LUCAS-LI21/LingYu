@@ -102,7 +102,7 @@ public class FeedbackService {
                         """,
                 rs -> {
                     if (!rs.next()) {
-                        throw new IllegalArgumentException("反馈不存在：" + code);
+                        throw new com.poiintel.common.NotFoundException("反馈不存在：" + code);
                     }
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("code", rs.getString("code"));

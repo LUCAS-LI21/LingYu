@@ -25,9 +25,15 @@ interface ServerPoi {
   gcjLat?: number | null
   builtYear?: number | null
   avgPrice?: number | null
+  avgPriceSource?: string
+  avgPriceDemo?: number | null
   propertyFee?: number | null
   propertyCompany?: string | null
   waterSavingYear?: number | null
+  rentDc?: number | null
+  rentGc?: number | null
+  rentDmd?: number | null
+  developer?: string
   surroundBankCount?: number | null
   surroundAtmCount?: number | null
   nearbyBrandCount?: number | null
@@ -106,10 +112,17 @@ function toPoi(row: ServerPoi): Poi {
     type: 'community',
     builtYear: row.builtYear ?? null,
     avgPrice: row.avgPrice ?? null,
+    avgPriceSource: row.avgPriceSource ?? 'demo',
+    avgPriceDemo:
+      row.avgPriceDemo === null || row.avgPriceDemo === undefined ? null : Number(row.avgPriceDemo),
     propertyFee:
       row.propertyFee === null || row.propertyFee === undefined ? null : Number(row.propertyFee),
     propertyCompany: row.propertyCompany ?? '',
     waterSavingYear: row.waterSavingYear ?? null,
+    rentDc: row.rentDc === null || row.rentDc === undefined ? null : Number(row.rentDc),
+    rentGc: row.rentGc === null || row.rentGc === undefined ? null : Number(row.rentGc),
+    rentDmd: row.rentDmd === null || row.rentDmd === undefined ? null : Number(row.rentDmd),
+    developer: row.developer ?? '',
     surroundBankCount: Number(row.surroundBankCount ?? 0),
     surroundAtmCount: Number(row.surroundAtmCount ?? 0),
     nearbyBrandCount: Number(row.nearbyBrandCount ?? 0),
@@ -119,7 +132,8 @@ function toPoi(row: ServerPoi): Poi {
 }
 
 export async function fetchAllPois(): Promise<Poi[]> {
-  const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=20000')
+  // view=lite：地图/列表只需要核心字段，整包体积约减 60%（详情接口仍取全量）
+  const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=20000&lite=true')
   return data.items.map(toPoi)
 }
 
@@ -196,4 +210,22 @@ export async function postFeedback(
     method: 'POST',
     body: JSON.stringify(payload),
   })
+}
+
+export interface HotspotItem {
+  grid: string
+  queryCount: number
+  zeroResultCount: number
+  priority?: number
+  lastDate?: string
+}
+
+export interface Hotspots {
+  items: HotspotItem[]
+  totalQueries: number
+}
+
+/** 查询热点（公开接口）：query_log 聚合的近 7 天热门网格 */
+export async function fetchHotspots(limit = 8): Promise<Hotspots> {
+  return request<Hotspots>(`/hotspots?limit=${limit}`)
 }

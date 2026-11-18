@@ -29,13 +29,26 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
             return true;
         }
         String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")
-                && authService.verify(header.substring(7)).isPresent()) {
-            return true;
+        if (header == null || !header.startsWith("Bearer ")) {
+            return reject(response, HttpServletResponse.SC_UNAUTHORIZED, 401, "未登录或登录已过期");
         }
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        var username = authService.verify(header.substring(7));
+        if (username.isEmpty()) {
+            return reject(response, HttpServletResponse.SC_UNAUTHORIZED, 401, "未登录或登录已过期");
+        }
+        // 只验 token 不验角色等于"任何登录用户都是管理员"；这里补上角色校验
+        String role = authService.roleOf(username.get()).orElse("");
+        if (!"operator".equals(role) && !"admin".equals(role)) {
+            return reject(response, HttpServletResponse.SC_FORBIDDEN, 403, "无运营权限");
+        }
+        return true;
+    }
+
+    private boolean reject(HttpServletResponse response, int status, int code, String message)
+            throws IOException {
+        response.setStatus(status);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"code\":401,\"message\":\"未登录或登录已过期\",\"data\":null}");
+        response.getWriter().write("{\"code\":" + code + ",\"message\":\"" + message + "\",\"data\":null}");
         return false;
     }
 }

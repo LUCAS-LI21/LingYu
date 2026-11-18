@@ -40,6 +40,32 @@ public class CommunityLocateService {
     }
 
     /**
+     * 把「用户反馈新增小区」暂存进 community_pending，等运营标注坐标后转正。
+     * 与银行那条链路对称：反馈 → 暂存 → 标注 → 转正 → 地图可见。
+     */
+    public String stagePending(String name, String address, String source, String feedbackCode) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("小区名称不能为空");
+        }
+        String id = "fb-" + feedbackCode;
+        String district = "";
+        if (address != null) {
+            for (String d : new String[]{"福田区", "南山区", "罗湖区", "宝安区", "龙岗区", "盐田区", "龙华区", "坪山区", "光明区", "大鹏新区"}) {
+                if (address.contains(d)) {
+                    district = d;
+                    break;
+                }
+            }
+        }
+        jdbcTemplate.update("""
+                INSERT INTO community_pending (id, name, address, district, source, status, attribute)
+                VALUES (?, ?, ?, ?, ?, 'pending', '用户反馈')
+                ON DUPLICATE KEY UPDATE name = VALUES(name), address = VALUES(address), district = VALUES(district)
+                """, id, name.trim(), address == null ? "" : address.trim(), district, source);
+        return id;
+    }
+
+    /**
      * 提交坐标。管理员直接转正并返回 poiId，用户提交进审核队列。
      */
     @Transactional
@@ -119,6 +145,25 @@ public class CommunityLocateService {
         return Map.of("status", "rejected");
     }
 
+/**
+     * 驳回一个待定位小区：状态置 rejected，从「待定位」列表消失。
+     * 此前 rejected 状态在 schema 里定义了但没有任何写入口，等于永远到不了。
+     */
+    public Map<String, Object> rejectPending(String pendingId, String reviewer, String reason) {
+        int updated = jdbcTemplate.update("""
+                UPDATE community_pending SET status = 'rejected', geocode_source = ?, geocoded_at = NOW()
+                WHERE id = ? AND status = 'pending'
+                """, reviewer == null ? "admin" : reviewer, pendingId);
+        if (updated == 0) {
+            throw new IllegalStateException("该小区已处理或不存在");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", pendingId);
+        result.put("status", "rejected");
+        result.put("reason", reason == null ? "" : reason);
+        return result;
+    }
+
     /**
      * 把待定位小区转正成 poi_community：写坐标、来源、字段级留痕。
      * 调用前坐标已校验。
@@ -135,12 +180,28 @@ public class CommunityLocateService {
 
         String poiId = "cp-" + pendingId;
         String source = operator.startsWith("admin") ? "管理员标注" : "用户贡献";
+        // 待定位小区若已挂官方成交参考价，转正时一并带入，避免转正后价格又变成演示值
+        Object price = pending.get("avg_price");
+        Object priceSource = pending.get("avg_price_source");
         jdbcTemplate.update("""
                 INSERT INTO poi_community (id, name, address, district, lng, lat, property_company,
+                                           avg_price, avg_price_source,
                                            demo_attributes, source, license, source_level, status)
-                VALUES (?, ?, ?, ?, ?, ?, '', 1, ?, '用户确认坐标（已审核）', 'L1', 'active')
+                VALUES (?, ?, ?, ?, ?, ?, '', ?, ?, 1, ?, '用户确认坐标（已审核）', 'L1', 'active')
                 ON DUPLICATE KEY UPDATE lng = VALUES(lng), lat = VALUES(lat), updated_at = NOW()
-                """, poiId, name, address, district, lng, lat, source);
+                """, poiId, name, address, district, lng, lat,
+                price instanceof Number ? ((Number) price).intValue() : null,
+                priceSource == null || String.valueOf(priceSource).isBlank() ? "demo" : String.valueOf(priceSource),
+                source);
+
+        if (price instanceof Number) {
+            jdbcTemplate.update("""
+                    INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
+                    VALUES ('community', ?, 'avg_price', '深圳市住宅小区二手住房成交参考价格表（2021）',
+                            'https://zjj.sz.gov.cn/gkmlpt/content/8/8545/mpost_8545737.html')
+                    ON DUPLICATE KEY UPDATE source = VALUES(source), source_url = VALUES(source_url)
+                    """, poiId);
+        }
 
         for (String field : List.of("name", "address", "district", "lng", "lat")) {
             jdbcTemplate.update("""

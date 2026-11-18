@@ -36,6 +36,25 @@ const nearbyItems = ref<NearbyItem[]>([])
 const nearbyLoading = ref(false)
 const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
 const mapRef = ref<InstanceType<typeof MapCanvas> | null>(null)
+
+// 底图选择：默认浅灰，记住用户上次选择
+type BaseMap = 'light' | 'color' | 'satellite'
+const BASE_MAP_OPTIONS: Array<{ key: BaseMap; label: string }> = [
+  { key: 'light', label: '浅灰' },
+  { key: 'color', label: '彩色' },
+  { key: 'satellite', label: '卫星' },
+]
+const BASE_MAP_KEY = 'poi-intel:basemap'
+const baseMap = ref<BaseMap>((localStorage.getItem(BASE_MAP_KEY) as BaseMap) || 'light')
+
+function setBaseMap(kind: BaseMap): void {
+  baseMap.value = kind
+  try {
+    localStorage.setItem(BASE_MAP_KEY, kind)
+  } catch {
+    // 隐私模式下 localStorage 可能不可用，忽略即可
+  }
+}
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
 const visiblePois = computed(() =>
@@ -161,6 +180,7 @@ function closeDetail(): void {
       ref="mapRef"
       :pois="visiblePois"
       :selected-id="selectedId"
+      :base-map="baseMap"
       class="absolute inset-0"
       @select="onSelect"
       @nearby="onMapNearby"
@@ -271,6 +291,28 @@ function closeDetail(): void {
         全览
       </button>
 
+      <!-- 底图切换：浅灰 / 彩色 / 卫星 -->
+      <div
+        class="flex h-9 shrink-0 items-center overflow-hidden rounded-[10px] border border-line bg-surface text-xs"
+        role="group"
+        aria-label="底图切换"
+      >
+        <button
+          v-for="option in BASE_MAP_OPTIONS"
+          :key="option.key"
+          class="h-full px-2.5 transition"
+          :class="
+            baseMap === option.key
+              ? 'bg-brand-500 text-white'
+              : 'text-ink-500 hover:bg-surface-soft'
+          "
+          :data-testid="`basemap-${option.key}`"
+          @click="setBaseMap(option.key)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+
       <div
         v-if="bounds"
         class="flex h-9 shrink-0 items-center gap-1.5 rounded-[10px] border border-brand-500/40 bg-brand-50 px-2.5 text-xs text-brand-600"
@@ -370,7 +412,7 @@ function closeDetail(): void {
         ><span class="h-2 w-2 rounded-full bg-amber-500" />小区</span
       >
       <span class="h-3 w-px bg-line-strong" />
-      <span>数据：OpenStreetMap · ODbL</span>
+      <span>数据：OpenStreetMap contributors · ODbL</span>
     </div>
 
     <!-- 移动端列表 -->

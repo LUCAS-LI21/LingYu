@@ -1,6 +1,6 @@
 # 数据模型（ER）
 
-> 对应 `backend/src/main/resources/db/schema.sql`。MySQL 8.0，InnoDB，utf8mb4。
+> 对应 `backend/src/main/resources/db/migration/（V1–V3）`。MySQL 8.0，InnoDB，utf8mb4。
 
 ## 1. 表关系
 
@@ -75,6 +75,6 @@
 
 ## 5. 已知限制（下一轮要补）
 
-- 没有真正的迁移工具（Flyway 未引入），`schema.sql` 靠 `CREATE TABLE IF NOT EXISTS` 幂等；**加字段需手工 ALTER**。
+- 没有真正的迁移工具（Flyway 未引入），`db/migration` 靠 `CREATE TABLE IF NOT EXISTS` 幂等；**加字段需手工 ALTER**。
 - `poi_version` 目前只由反馈审核写入，抓取任务尚未产生版本记录（应改为 upsert 时对比字段并写版本）。
 - `query_log` 无归档策略，演示量级够用，生产需按月分区。

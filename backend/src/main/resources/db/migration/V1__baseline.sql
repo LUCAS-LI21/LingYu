@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS poi_community (
   lat              DECIMAL(10, 6) NOT NULL,
   built_year       SMALLINT     NULL,
   avg_price        INT          NULL,
+  avg_price_source VARCHAR(32)  NOT NULL DEFAULT 'demo' COMMENT 'demo / gov_reference',
   property_fee     DECIMAL(6, 1) NULL,
   property_company    VARCHAR(64) NOT NULL DEFAULT '' COMMENT '物业公司',
   water_saving_year   SMALLINT    NULL COMMENT '节水型小区获评年度',
@@ -37,6 +38,10 @@ CREATE TABLE IF NOT EXISTS poi_community (
   surround_atm_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内 ATM 数',
   nearest_bank_m      INT         NOT NULL DEFAULT 0 COMMENT '最近银行距离(米)',
   nearby_brand_count  INT         NOT NULL DEFAULT 0 COMMENT '1km 内银行品牌数',
+  rent_dc          DECIMAL(8, 2) NULL COMMENT '多层租金(元/㎡·月，政府租赁参考价)',
+  rent_gc          DECIMAL(8, 2) NULL COMMENT '高层租金',
+  rent_dmd         DECIMAL(8, 2) NULL COMMENT '低密度租金',
+  developer        VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '建设单位/开发商（竣工验收备案）',
   demo_attributes  TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '字段是否为演示数据',
   source           VARCHAR(64)  NOT NULL DEFAULT 'OpenStreetMap',
   license          VARCHAR(32)  NOT NULL DEFAULT 'ODbL',
@@ -74,19 +79,24 @@ DROP VIEW IF EXISTS v_poi;
 CREATE VIEW v_poi AS
 SELECT id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
        CAST(NULL AS SIGNED) AS built_year, CAST(NULL AS SIGNED) AS avg_price,
+       CAST(NULL AS CHAR(32)) AS avg_price_source,
        CAST(NULL AS DECIMAL(6,1)) AS property_fee,
        CAST(NULL AS CHAR(64)) AS property_company,
        CAST(NULL AS SIGNED) AS water_saving_year,
        CAST(NULL AS SIGNED) AS surround_bank_count, CAST(NULL AS SIGNED) AS surround_atm_count,
        CAST(NULL AS SIGNED) AS nearest_bank_m, CAST(NULL AS SIGNED) AS nearby_brand_count,
+       CAST(NULL AS DECIMAL(8,2)) AS rent_dc, CAST(NULL AS DECIMAL(8,2)) AS rent_gc,
+       CAST(NULL AS DECIMAL(8,2)) AS rent_dmd,
+       CAST(NULL AS CHAR(64)) AS developer,
        0 AS demo_attributes, source, license, source_level, updated_at
 FROM poi_bank WHERE status <> 'closed'
 UNION ALL
 SELECT id, 'community' AS type, name, address, district, lng, lat,
        CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
-       built_year, avg_price, property_fee, property_company, water_saving_year, surround_bank_count, surround_atm_count,
+       built_year, avg_price, avg_price_source, property_fee, property_company, water_saving_year, surround_bank_count, surround_atm_count,
        nearest_bank_m, nearby_brand_count,
+       rent_dc, rent_gc, rent_dmd, developer,
        demo_attributes, source, license, source_level, updated_at
 FROM poi_community WHERE status <> 'closed';
 
@@ -241,10 +251,22 @@ CREATE TABLE IF NOT EXISTS community_pending (
   geocode_source VARCHAR(32)  NOT NULL DEFAULT '' COMMENT 'admin/user',
   geocoded_at    DATETIME     NULL,
   poi_id         VARCHAR(64)  NOT NULL DEFAULT '',
+  avg_price      INT          NULL COMMENT '官方成交参考价(元/㎡)，转正时带入 poi_community',
+  avg_price_source VARCHAR(32) NOT NULL DEFAULT '' COMMENT 'gov_reference=官方参考价表匹配到的',
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_cp_status (status),
-  KEY idx_cp_district (district)
+  KEY idx_cp_district (district),
+  KEY idx_cp_district_name (district, name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '待定位小区（缺坐标）';
+
+-- 去重黑名单：被判定为重复并下线的点位，抓取侧必须跳过，否则定时任务会把它们重新写回来
+CREATE TABLE IF NOT EXISTS dedupe_log (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  brand      VARCHAR(64)  NOT NULL DEFAULT '',
+  reason     VARCHAR(255) NOT NULL DEFAULT '',
+  removed_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_dedupe_brand (brand)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '去重黑名单';
 
 -- 用户提交的坐标，管理员审核后才转正
 CREATE TABLE IF NOT EXISTS coordinate_submission (
@@ -278,3 +300,4 @@ CREATE TABLE IF NOT EXISTS land_parcel (
   source          VARCHAR(64)   NOT NULL DEFAULT '深圳市政府数据开放平台-存量住宅用地',
   updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '存量住宅用地（宗地级，非小区级）';
+

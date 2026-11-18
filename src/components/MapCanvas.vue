@@ -7,6 +7,8 @@ import type { Poi } from '@/types/poi'
 const props = defineProps<{
   pois: Poi[]
   selectedId?: string | null
+  /** 底图：浅灰（默认）/ 彩色 / 卫星 */
+  baseMap?: 'light' | 'color' | 'satellite'
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +26,14 @@ let boxRect: L.Rectangle | null = null
 let boxStart: L.LatLng | null = null
 let boxMode = false
 let tileErrors = 0
+
+/** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建（5000+ 点位会卡） */
+const rendered = new Map<string, L.Marker | L.CircleMarker>()
+let renderTimer: number | null = null
+
+/** zoom 低于此值时按网格聚合，否则画单点 */
+const CLUSTER_MAX_ZOOM = 14
+const CLUSTER_GRID = 0.008 // 约 800m
 
 // 福田中心区，初始视野聚焦以便看清点位
 const SHENZHEN_CENTER: L.LatLngTuple = [22.5412, 114.0579]
@@ -83,42 +93,179 @@ function openPopup(marker: L.Marker, poi: Poi): void {
   })
 }
 
-/** 只渲染当前视野内的点：1600 个点全量渲染会糊成一团，也拖慢交互 */
+/** 只渲染当前视野内的点；低 zoom 时按网格聚合成带数字的圆点 */
 function renderMarkers(): void {
   if (!map || !markerLayer) return
-  markerLayer.clearLayers()
+  const zoom = map.getZoom()
   const bounds = map.getBounds().pad(0.12)
-  for (const poi of props.pois) {
-    const inside = bounds.contains([poi.lat, poi.lng])
-    if (!inside && poi.id !== props.selectedId) continue
-    const marker = L.marker([poi.lat, poi.lng], {
-      icon: pinIcon(poi, poi.id === props.selectedId),
-      title: poi.name,
-      riseOnHover: true,
-    })
-    marker.on('click', () => {
-      emit('select', poi)
-      openPopup(marker, poi)
-    })
-    marker.addTo(markerLayer)
+  const next = new Map<string, L.Marker | L.CircleMarker>()
+
+  if (zoom <= CLUSTER_MAX_ZOOM) {
+    // 聚合：同网格合并成一个圆点，点击放大
+    const cells = new Map<string, { lat: number; lng: number; count: number }>()
+    for (const poi of props.pois) {
+      if (!bounds.contains([poi.lat, poi.lng])) continue
+      const gx = Math.floor(poi.lng / CLUSTER_GRID)
+      const gy = Math.floor(poi.lat / CLUSTER_GRID)
+      const key = `${gx}:${gy}`
+      const cell = cells.get(key)
+      if (cell) {
+        cell.count += 1
+        cell.lat += poi.lat
+        cell.lng += poi.lng
+      } else {
+        cells.set(key, { lat: poi.lat, lng: poi.lng, count: 1 })
+      }
+    }
+    for (const [key, cell] of cells) {
+      const markerKey = `cluster:${key}`
+      const lat = cell.lat / cell.count
+      const lng = cell.lng / cell.count
+      const radius = Math.min(26, 10 + Math.log2(cell.count + 1) * 4)
+      let marker = rendered.get(markerKey) as L.CircleMarker | undefined
+      if (!marker) {
+        marker = L.circleMarker([lat, lng], {
+          radius,
+          weight: 1,
+          color: '#2563eb',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.75,
+        })
+        marker.on('click', () => {
+          // 用 marker 当前位置而不是闭包里的 lat/lng：聚合点会随视野变化移动，
+          // 闭包捕获的是创建时的坐标，拖动后点它会跳到旧位置
+          const current = marker?.getLatLng()
+          if (current) {
+            map?.setView(current, Math.min(17, (map?.getZoom() ?? zoom) + 2))
+          }
+        })
+        marker.addTo(markerLayer)
+      } else {
+        marker.setLatLng([lat, lng])
+        marker.setRadius(radius)
+      }
+      marker.bindTooltip(`${cell.count} 个点位`, { direction: 'top' })
+      next.set(markerKey, marker)
+    }
+  } else {
+    for (const poi of props.pois) {
+      const inside = bounds.contains([poi.lat, poi.lng])
+      if (!inside && poi.id !== props.selectedId) continue
+      let marker = rendered.get(poi.id) as L.Marker | undefined
+      if (!marker) {
+        marker = L.marker([poi.lat, poi.lng], {
+          icon: pinIcon(poi, poi.id === props.selectedId),
+          title: poi.name,
+          riseOnHover: true,
+        })
+        marker.on('click', () => {
+          emit('select', poi)
+          openPopup(marker as L.Marker, poi)
+        })
+        marker.addTo(markerLayer)
+      } else {
+        marker.setLatLng([poi.lat, poi.lng])
+        marker.setIcon(pinIcon(poi, poi.id === props.selectedId))
+      }
+      next.set(poi.id, marker)
+    }
   }
+
+  // 差量清理：把这次没出现的 marker 从地图上摘掉
+  for (const [key, marker] of rendered) {
+    if (!next.has(key)) {
+      markerLayer.removeLayer(marker)
+    }
+  }
+  rendered.clear()
+  for (const [key, marker] of next) rendered.set(key, marker)
 }
 
+/** moveend/zoomend 会连续触发，防抖后再算，避免拖动时反复重建 */
+function scheduleRender(): void {
+  if (renderTimer !== null) window.clearTimeout(renderTimer)
+  renderTimer = window.setTimeout(() => {
+    renderTimer = null
+    renderMarkers()
+  }, 160)
+}
+
+/**
+ * 底图源。
+ *
+ * 为什么是 Esri 而不是 CARTO/OSM：
+ * - CARTO 的栅格底图现在返回「API KEY REQUIRED」占位图（200 但内容是水印）
+ * - 本机网络下 tile.openstreetmap.org 不可达（000），OSM 官方瓦片只能作为远端兜底
+ * - Esri 的三个服务实测都是真 JPEG：浅灰 / 街道 / 影像
+ *
+ * 署名必须保留（Esri 的条款要求显示版权信息）。
+ */
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services'
+const BASE_MAPS = {
+  light: {
+    url: `${ESRI}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
+    overlay: `${ESRI}/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+    className: 'basemap-light',
+  },
+  color: {
+    url: `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+    className: 'basemap-color',
+  },
+  satellite: {
+    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+    attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+    className: 'basemap-satellite',
+  },
+} as const
+
+let baseLayer: L.TileLayer | null = null
+let overlayLayer: L.TileLayer | null = null
+
 function initTileLayer(target: L.Map): void {
-  // OSM 标准瓦片：免 Key，遵守使用政策；用 CSS 滤镜压成浅灰底图以贴合白净风格
-  const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  applyBaseMap(target, props.baseMap ?? 'light')
+}
+
+/** 换底图：先摘旧层再挂新层，失败计数重置 */
+function applyBaseMap(target: L.Map, kind: keyof typeof BASE_MAPS): void {
+  const config = BASE_MAPS[kind] ?? BASE_MAPS.light
+  if (baseLayer) {
+    target.removeLayer(baseLayer)
+    baseLayer = null
+  }
+  if (overlayLayer) {
+    target.removeLayer(overlayLayer)
+    overlayLayer = null
+  }
+  tileErrors = 0
+  const layer = L.tileLayer(config.url, {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution: config.attribution,
     crossOrigin: true,
   })
   layer.on('tileerror', () => {
     tileErrors += 1
-    if (tileErrors >= 10 && map?.hasLayer(layer)) {
+    if (tileErrors >= 10 && baseLayer === layer && map?.hasLayer(layer)) {
       map.removeLayer(layer)
+      baseLayer = null
       tilesFailed.value = true
     }
   })
   layer.addTo(target)
+  baseLayer = layer
+
+  // 浅灰底图不含注记，叠一层 reference（道路/地名标签）
+  if ('overlay' in config && config.overlay) {
+    overlayLayer = L.tileLayer(config.overlay, {
+      maxZoom: 19,
+      crossOrigin: true,
+      pane: 'overlayPane',
+    })
+    overlayLayer.addTo(target)
+  }
+  container.value?.setAttribute('data-basemap', config.className)
+  tilesFailed.value = false
 }
 
 function setBoxMode(enabled: boolean): void {
@@ -180,16 +327,28 @@ onMounted(() => {
     setBoxMode(false)
   })
 
-  map.on('moveend', renderMarkers)
-  map.on('zoomend', renderMarkers)
+  map.on('moveend', scheduleRender)
+  map.on('zoomend', scheduleRender)
   renderMarkers()
 })
 
 onBeforeUnmount(() => {
+  if (renderTimer !== null) {
+    window.clearTimeout(renderTimer)
+    renderTimer = null
+  }
+  rendered.clear()
   map?.remove()
   map = null
   markerLayer = null
 })
+
+watch(
+  () => props.baseMap,
+  (kind) => {
+    if (map) applyBaseMap(map, kind ?? 'light')
+  },
+)
 
 watch(
   () => props.pois,

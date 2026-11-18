@@ -26,6 +26,7 @@ public class PoiController {
     private final QueryLogService queryLogService;
     private final CommunityLocateService locateService;
     private final JdbcTemplate jdbcTemplate;
+    private final com.poiintel.common.AnonymousRateLimiter rateLimiter;
 
     @GetMapping("/health")
     public ApiResult<Map<String, Object>> health() {
@@ -101,11 +102,13 @@ public class PoiController {
             @RequestParam(required = false) Double east,
             @RequestParam(required = false) Double north,
             @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "false") boolean lite,
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
         PoiQuery query = new PoiQuery();
         query.setTypes(parseTypes(types));
+        query.setLite(lite);
         query.setKeyword(keyword);
         query.setDistrict(district);
         query.setBranchType(branchType == null ? "all" : branchType);
@@ -132,7 +135,8 @@ public class PoiController {
         Double centerLng = (west != null && east != null) ? (west + east) / 2 : null;
         Double centerLat = (south != null && north != null) ? (south + north) / 2 : null;
         queryLogService.log("list", keyword, district, QueryLogService.gridOf(centerLng, centerLat),
-                result.items().size(), System.currentTimeMillis() - started);
+                (int) Math.min(result.total(), Integer.MAX_VALUE),
+                System.currentTimeMillis() - started);
 
         return ApiResult.ok(result);
     }
@@ -163,6 +167,32 @@ public class PoiController {
     @GetMapping("/pois/{id}")
     public ApiResult<PoiRow> detail(@PathVariable String id) {
         return ApiResult.ok(poiService.detail(id));
+    }
+
+    /**
+     * 查询热点（公开）：query_log 聚合出来的热门网格。
+     * 之前只有运营后台能看到，前台/洞察看不到"大家都在搜哪"，闭环少了一半。
+     */
+    @GetMapping("/hotspots")
+    public ApiResult<Map<String, Object>> hotspots(
+            @RequestParam(defaultValue = "8") int limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT grid, SUM(query_count) AS queryCount, SUM(zero_result_count) AS zeroResultCount,
+                       MAX(priority) AS priority, MAX(stat_date) AS lastDate
+                FROM hot_region
+                GROUP BY grid
+                ORDER BY queryCount DESC
+                LIMIT ?
+                """, safeLimit);
+        long total = 0;
+        for (Map<String, Object> row : rows) {
+            total += ((Number) row.get("queryCount")).longValue();
+        }
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("items", rows);
+        result.put("totalQueries", total);
+        return ApiResult.ok(result);
     }
 
     /** 字段级来源：每个字段最后由谁写入（政府/官网/Agent/审核），用于回答"这条数据哪来的" */
@@ -206,7 +236,7 @@ public class PoiController {
         pageArgs.add(safeSize);
         pageArgs.add((int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE));
         List<Map<String, Object>> items = jdbcTemplate.queryForList(
-                "SELECT id, name, address, district, street, attribute" + base
+                "SELECT id, name, address, district, street, attribute, avg_price" + base
                         + " ORDER BY district, name LIMIT ? OFFSET ?",
                 pageArgs.toArray());
 
@@ -232,7 +262,14 @@ public class PoiController {
     @PostMapping("/community-pending/{id}/locate")
     public ApiResult<Map<String, Object>> locate(
             @PathVariable String id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body,
+            jakarta.servlet.http.HttpServletRequest http) {
+        // 匿名可写：按 IP 限流，避免单人刷爆坐标提交队列
+        String forwarded = http.getHeader("X-Forwarded-For");
+        String ip = forwarded == null || forwarded.isBlank()
+                ? (http.getRemoteAddr() == null ? "unknown" : http.getRemoteAddr())
+                : forwarded.split(",")[forwarded.split(",").length - 1].trim();
+        rateLimiter.checkLocate(ip);
         double lng = number(body.get("lng"));
         double lat = number(body.get("lat"));
         String note = body.get("note") == null ? "" : String.valueOf(body.get("note"));

@@ -21,10 +21,9 @@ spring:
       connection-timeout: 5000
   sql:
     init:
-      mode: always
-      schema-locations: classpath:db/schema.sql
-      encoding: UTF-8
-      continue-on-error: false
+      # 结构演进统一走 db/migration/*.sql（SchemaMigrator 顺序执行 + schema_version 记账），
+      # 不再每次启动重跑 schema.sql：它含 DROP VIEW，中途失败会让 /pois 直接不可用。
+      mode: never
 
 mybatis-plus:
   configuration:
@@ -37,9 +36,30 @@ logging:
     root: info
     com.poiintel: info
     org.springframework.jdbc.datasource.init: warn
+  pattern:
+    # %X{requestId} 由 RequestIdFilter 写入；排查前端报错时凭响应头 X-Request-Id 反查日志
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId:-no-req}] %logger{36} - %msg%n'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 只暴露排障需要的三个，metrics 用于看 QPS/延迟/连接池
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: poi-intel
 
 app:
   auth:
+    # 开发环境允许默认口令；容器/生产不设该值 → 默认口令会直接拒绝启动
+    allow-default-password: ${APP_AUTH_ALLOW_DEFAULT_PASSWORD:false}
     # 留空则启动时生成临时密钥（重启后 token 失效）；生产必须显式配置
     secret: ${AUTH_SECRET:}
     ttl-minutes: 720
@@ -48,8 +68,8 @@ app:
   ingest:
     # Java 直连 Overpass 会被 502，必须走本机代理；留空则直连
     proxy: ${HTTP_PROXY:}
-    user-agent: poi-intel-demo/0.1 (academic demo; contact 2396845790@qq.com)
-    endpoints: https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter
+    user-agent: poi-intel-demo/0.1 (academic demo; contact poi-intel@example.com)
+    endpoints: https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter,https://overpass.private.coffee/api/interpreter
     # 定时抓取：默认 30 分钟一次，启动后 2 分钟首跑
     enabled: true
     schedule-ms: 1800000
