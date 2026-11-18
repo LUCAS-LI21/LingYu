@@ -42,11 +42,11 @@ git commit -am "docs: 替换仓库路径" && git push
 
 推送后 `.github/workflows/ci.yml` 自动运行：
 
-| Job | 内容 |
-| --- | --- |
-| `quality` | lint / format / typecheck / 单测（77 例）/ 构建 |
-| `e2e` | 起 MySQL + 后端，跑 Playwright（20 例，桌面 + 移动） |
-| `deploy` | 构建并推送镜像到 GHCR（仅 main 分支） |
+| Job       | 内容                                                 |
+| --------- | ---------------------------------------------------- |
+| `quality` | lint / format / typecheck / 单测（77 例）/ 构建      |
+| `e2e`     | 起 MySQL + 后端，跑 Playwright（20 例，桌面 + 移动） |
+| `deploy`  | 构建并推送镜像到 GHCR（仅 main 分支）                |
 
 首次运行需要几分钟；徽章变绿即可作为"可运行"的公开证据。
 

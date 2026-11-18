@@ -9,7 +9,7 @@
  *   docs/初赛/assets/evidence-snapshot.md    可直接贴进文档的表格
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 
 const BASE = process.env.API_BASE || 'http://127.0.0.1:8080'
 const USER = process.env.OPERATOR_USERNAME || 'operator'
@@ -29,7 +29,11 @@ async function call(name, path, { method = 'GET', body, auth = false, expect } =
   let json = null
   let error = ''
   try {
-    const res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
+    const res = await fetch(BASE + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    })
     status = res.status
     const text = await res.text()
     try {
@@ -64,11 +68,17 @@ if (firstId) await call('详情', `/api/v1/pois/${encodeURIComponent(firstId)}`)
 const communityId = community.json?.data?.items?.[0]?.id
 if (communityId) {
   await call('详情-字段级来源', `/api/v1/pois/${encodeURIComponent(communityId)}/sources`)
-  await call('最近 3 家银行', `/api/v1/pois/${encodeURIComponent(communityId)}/nearest-banks?limit=3&radius=5000`)
+  await call(
+    '最近 3 家银行',
+    `/api/v1/pois/${encodeURIComponent(communityId)}/nearest-banks?limit=3&radius=5000`,
+  )
 }
 
 // ---- 鉴权 ----
-const login = await call('运营登录', '/api/v1/auth/login', { method: 'POST', body: { username: USER, password: PASS } })
+const login = await call('运营登录', '/api/v1/auth/login', {
+  method: 'POST',
+  body: { username: USER, password: PASS },
+})
 token = login.json?.data?.token || ''
 
 // ---- 运营接口 ----
@@ -90,11 +100,18 @@ const lines = [
   '',
   '| # | 验证项 | 方法与路径 | 状态码 | 耗时 | 结果 |',
   '| --- | --- | --- | --- | --- | --- |',
-  ...rows.map((r, i) => `| ${i + 1} | ${r.name} | \`${r.method} ${r.path}\` | ${r.status || 'ERR'} | ${r.ms} ms | ${r.ok ? 'PASS' : 'FAIL'} |`),
+  ...rows.map(
+    (r, i) =>
+      `| ${i + 1} | ${r.name} | \`${r.method} ${r.path}\` | ${r.status || 'ERR'} | ${r.ms} ms | ${r.ok ? 'PASS' : 'FAIL'} |`,
+  ),
   '',
 ]
 mkdirSync(OUT, { recursive: true })
-writeFileSync(join(OUT, 'evidence-snapshot.json'), JSON.stringify({ base: BASE, stamp, rows }, null, 2), 'utf8')
+writeFileSync(
+  join(OUT, 'evidence-snapshot.json'),
+  JSON.stringify({ base: BASE, stamp, rows }, null, 2),
+  'utf8',
+)
 writeFileSync(join(OUT, 'evidence-snapshot.md'), lines.join('\n'), 'utf8')
 console.log(`\n汇总：${ok} / ${rows.length} 通过；证据已写入 ${OUT}`)
 if (ok !== rows.length) process.exitCode = 1
