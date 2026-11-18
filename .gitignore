@@ -72,3 +72,6 @@ data/poi_intel_dump.sql
 
 # 部署配置（含口令），只用 .env.deploy.example 作模板
 .env
+
+# DSH 本地渲染临时目录
+.dsh-office-*/

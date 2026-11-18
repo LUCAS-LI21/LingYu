@@ -1,5 +1,8 @@
 # 邻域 POI 情报系统
 
+[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 银行网点与小区信息的**采集 → 清洗 → 多维查询 → 用户反馈 → 审核生效 → 热点驱动重采**闭环。
 
 前端 Vue 3 + Vite + Leaflet，后端 Spring Boot 3 + MySQL 8，数据来自 OpenStreetMap（ODbL）。
@@ -7,13 +10,35 @@
 > 完整技术说明见 **[docs/tech/技术文档.md](docs/tech/技术文档.md)**：技术栈、功能清单、账号体系、使用说明。
 > 代码改动后请同步更新该文档与 `docs/api/openapi.yaml`。
 
-## 快速开始
+## 🚀 评委怎么打开
+
+**方式一：GitHub Codespaces（推荐，无需本地环境）**
+
+1. 本仓库页面点 **Code → Codespaces → Create codespace on main**（或点下面的徽章）
+2. 首次启动会自动构建并拉起 MySQL + 后端 + 前端，约 5–10 分钟
+3. 状态栏端口 **8081** 点开即为系统首页；后端 18080（排障）、HTTPS 8443 也会转发
+4. 运营后台：首页顶部「管理后台」，账号 `operator`，**口令见 Codespaces 里的 `.env` 文件**（每次创建随机生成，不会硬编码在仓库里）
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/OWNER/REPO)
+
+**方式二：本地 Docker 一键跑**
 
 ```bash
-# 1. 数据库（只需一次）
+cp .env.deploy.example .env      # 填写 MYSQL_ROOT_PASSWORD / DB_PASSWORD / AUTH_SECRET / OPERATOR_PASSWORD
+docker compose --env-file .env up -d --build
+# 打开 http://127.0.0.1:8081
+```
+
+**数据说明**：仓库内含 1,523 家银行、3,605 个小区的真实采集结果（价格/租金/建成年份/建设单位均标注来源）；
+不依赖任何外部 API Key 即可浏览全部功能。
+
+## 快速开始（本地开发）
+
+```bash
+# 1. 数据库（只需一次）：建库即可，表结构由后端启动时按 db/migration 自动迁移
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS poi_intel DEFAULT CHARSET utf8mb4;"
 
-# 2. 后端（自动建表 + 导入种子数据）
+# 2. 后端（自动迁移 + 导入种子数据）
 cd backend && mvn -DskipTests package && java -jar target/poi-intel.jar
 
 # 3. 前端
@@ -22,7 +47,7 @@ pnpm install && pnpm dev
 
 - 前端：http://127.0.0.1:5173
 - 后端：http://127.0.0.1:8080/api/v1/health
-- 运营后台：http://127.0.0.1:5173/admin（口令由 `OPERATOR_PASSWORD` 环境变量提供；未设置时后端拒绝启动，开发环境可用 `APP_AUTH_ALLOW_DEFAULT_PASSWORD=true` 放行）
+- 运营后台：http://127.0.0.1:5173/admin（口令由 `OPERATOR_PASSWORD` 环境变量提供；未设置或为空时后端拒绝启动，开发环境可用 `APP_AUTH_ALLOW_DEFAULT_PASSWORD=true` 放行）
 
 ## 功能
 
