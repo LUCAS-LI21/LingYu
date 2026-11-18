@@ -32,6 +32,8 @@ export interface CommunityPoi extends BasePoi {
   avgPrice: number | null
   /** demo=哈希演示值 / gov_reference=政府成交参考价（2021 官方表） */
   avgPriceSource?: string
+  /** 演示均价：仅展示用，带「演示」标注，不参与价格筛选/排序 */
+  avgPriceDemo?: number | null
   propertyFee: number | null
   /** 物业公司（政府物业项目库匹配所得，可能为空） */
   propertyCompany?: string

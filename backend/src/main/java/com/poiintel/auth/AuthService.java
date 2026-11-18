@@ -72,6 +72,16 @@ public class AuthService {
         return Optional.of(new Session(sign(username, expiresAt), username, expiresAt));
     }
 
+/** 取用户角色（operator / viewer / 其它）。账号不存在返回空。 */
+    public java.util.Optional<String> roleOf(String username) {
+        try {
+            return jdbcTemplate.queryForList("SELECT role FROM sys_user WHERE username = ? AND status = 1",
+                    String.class, username).stream().findFirst();
+        } catch (Exception ex) {
+            return java.util.Optional.empty();
+        }
+    }
+
     /** 校验并返回用户名 */
     public Optional<String> verify(String token) {
         try {

@@ -102,11 +102,13 @@ public class PoiController {
             @RequestParam(required = false) Double east,
             @RequestParam(required = false) Double north,
             @RequestParam(required = false, defaultValue = "default") String sort,
+            @RequestParam(required = false, defaultValue = "false") boolean lite,
             @RequestParam(required = false, defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
 
         PoiQuery query = new PoiQuery();
         query.setTypes(parseTypes(types));
+        query.setLite(lite);
         query.setKeyword(keyword);
         query.setDistrict(district);
         query.setBranchType(branchType == null ? "all" : branchType);
@@ -165,6 +167,32 @@ public class PoiController {
     @GetMapping("/pois/{id}")
     public ApiResult<PoiRow> detail(@PathVariable String id) {
         return ApiResult.ok(poiService.detail(id));
+    }
+
+    /**
+     * 查询热点（公开）：query_log 聚合出来的热门网格。
+     * 之前只有运营后台能看到，前台/洞察看不到"大家都在搜哪"，闭环少了一半。
+     */
+    @GetMapping("/hotspots")
+    public ApiResult<Map<String, Object>> hotspots(
+            @RequestParam(defaultValue = "8") int limit) {
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+                SELECT grid, SUM(query_count) AS queryCount, SUM(zero_result_count) AS zeroResultCount,
+                       MAX(priority) AS priority, MAX(stat_date) AS lastDate
+                FROM hot_region
+                GROUP BY grid
+                ORDER BY queryCount DESC
+                LIMIT ?
+                """, safeLimit);
+        long total = 0;
+        for (Map<String, Object> row : rows) {
+            total += ((Number) row.get("queryCount")).longValue();
+        }
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("items", rows);
+        result.put("totalQueries", total);
+        return ApiResult.ok(result);
     }
 
     /** 字段级来源：每个字段最后由谁写入（政府/官网/Agent/审核），用于回答"这条数据哪来的" */

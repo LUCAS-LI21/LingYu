@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { buildStats, loadPois, statsFromServer, type Stats } from '@/api/pois'
+import { fetchHotspots, type Hotspots } from '@/api/server'
 import {
   clearRecentQueries,
   listRecentQueries,
@@ -14,6 +15,8 @@ import { SHENZHEN_DISTRICTS, type PoiType } from '@/types/poi'
 
 const router = useRouter()
 const stats = ref<Stats | null>(null)
+/** 查询热点：query_log 聚合结果，前台也展示，形成「搜索 → 热点 → 采集优先级」的可见闭环 */
+const hotspots = ref<Hotspots | null>(null)
 const loading = ref(true)
 
 const keyword = ref('')
@@ -27,6 +30,7 @@ const districts = ['全部区域', ...SHENZHEN_DISTRICTS]
 onMounted(async () => {
   recentQueries.value = listRecentQueries()
   // 后端在线用后端聚合（SQL GROUP BY），否则用本地统计兜底
+  hotspots.value = await fetchHotspots().catch(() => null)
   const remote = await statsFromServer()
   stats.value = remote ?? buildStats(await loadPois())
   loading.value = false
@@ -317,8 +321,38 @@ function onClearRecent(): void {
           </div>
         </div>
         <p class="mt-3 text-[11px] leading-relaxed text-ink-400">
-          OSM 不提供均价字段，图为按名称哈希生成的稳定演示值，仅用于演示图表能力。
+          仅统计有官方成交参考价的小区（{{ stats?.priceSample?.real_count ?? 0 }}
+          个）；演示值不计入分布。
         </p>
+      </section>
+
+      <!-- 查询热点：query_log 聚合，前台可见（此前只在运营后台） -->
+      <section class="rounded-card border border-line bg-surface p-5 shadow-card">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-ink-900">用户查询热点（2km 网格）</h2>
+          <span class="text-[11px] text-ink-400"
+            >近 7 天共 {{ hotspots?.totalQueries ?? 0 }} 次查询</span
+          >
+        </div>
+        <ul class="space-y-2">
+          <li
+            v-for="(item, index) in hotspots?.items ?? []"
+            :key="item.grid"
+            class="flex items-center gap-3 text-[11px]"
+          >
+            <span class="w-4 shrink-0 tabular-nums text-ink-300">{{ index + 1 }}</span>
+            <span class="min-w-0 flex-1 truncate text-ink-600">
+              网格 {{ item.grid
+              }}<span v-if="item.zeroResultCount > 0" class="text-amber-600">
+                · 空结果 {{ item.zeroResultCount }} 次</span
+              >
+            </span>
+            <span class="shrink-0 tabular-nums text-ink-700">{{ item.queryCount }} 次</span>
+          </li>
+          <li v-if="!(hotspots?.items ?? []).length" class="text-[11px] text-ink-400">
+            暂无查询记录：前台搜索、框选或查看点位后会写入 query_log
+          </li>
+        </ul>
       </section>
 
       <!-- 密度排行 -->

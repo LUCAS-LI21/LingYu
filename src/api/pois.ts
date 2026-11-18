@@ -375,6 +375,8 @@ export interface Stats {
   /** 区域维度：每区银行数与小区数 */
   byDistrict: Array<{ label: string; bank: number; community: number }>
   priceBuckets: Array<{ label: string; value: number }>
+  /** 小区总数与其中「有官方参考价」的数量，用于标注价格分布样本口径 */
+  priceSample?: { total: number; real_count: number }
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
 }
 

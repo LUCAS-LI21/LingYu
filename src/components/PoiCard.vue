@@ -26,7 +26,12 @@ const subtitle = computed(() => {
   }
   const parts = [
     p.builtYear ? `${p.builtYear} 年` : '',
-    p.avgPrice ? `${p.avgPrice.toLocaleString()} 元/㎡` : '',
+    // 真实价优先；没有真实价时展示演示值并显式标注，避免被当成官方数据
+    p.avgPrice
+      ? `${p.avgPrice.toLocaleString()} 元/㎡`
+      : p.avgPriceDemo
+        ? `约 ${p.avgPriceDemo.toLocaleString()} 元/㎡（演示）`
+        : '',
   ]
   return parts.filter(Boolean).join(' · ')
 })
@@ -107,9 +112,7 @@ const subtitle = computed(() => {
         <span v-if="subtitle" class="truncate">{{ subtitle }}</span>
         <!-- 均价已有官方参考价时不再标「演示属性」，否则会误导；其余字段的演示标识在详情页说明 -->
         <span
-          v-if="
-            poi.type === 'community' && poi.demoAttributes && poi.avgPriceSource !== 'gov_reference'
-          "
+          v-if="poi.type === 'community' && !poi.avgPrice && poi.avgPriceDemo"
           class="shrink-0 text-amber-600"
         >
           演示属性

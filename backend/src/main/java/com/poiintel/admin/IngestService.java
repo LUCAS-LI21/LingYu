@@ -56,7 +56,7 @@ public class IngestService {
     private static final List<String> BANK_COLUMNS = List.of(
             "name", "brand", "branch_type", "address", "district", "lng", "lat", "phone", "opening_hours");
     private static final List<String> COMMUNITY_COLUMNS = List.of(
-            "name", "address", "district", "lng", "lat", "built_year", "avg_price", "property_fee");
+            "name", "address", "district", "lng", "lat", "built_year", "avg_price_demo", "property_fee");
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
@@ -84,6 +84,15 @@ public class IngestService {
      * 否则两个 job 会同时 upsert 同一批 POI（评审 P1-7）。多实例部署需换成 DB 级锁。
      */
     public synchronized long createJob(String triggerType, double south, double west, double north, double east) {
+        return createJob(triggerType, south, west, north, east, "");
+    }
+
+    /**
+     * 带反馈编号的版本：「新增点位」审核后建的任务会带上 feedback code，
+     * 任务结束回写反馈状态，用户才能看到"重抓完了"（闭环最后一跳）。
+     */
+    public synchronized long createJob(String triggerType, double south, double west, double north,
+                                       double east, String feedbackCode) {
         Integer running = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM ingest_job WHERE status IN ('pending','running')", Integer.class);
         if (running != null && running > 0) {
@@ -91,9 +100,9 @@ public class IngestService {
         }
         String scope = String.format("%.5f,%.5f,%.5f,%.5f", south, west, north, east);
         jdbcTemplate.update("""
-                INSERT INTO ingest_job (source_code, trigger_type, scope_type, scope_value, status)
-                VALUES ('osm_overpass', ?, 'bbox', ?, 'pending')
-                """, triggerType, scope);
+                INSERT INTO ingest_job (source_code, trigger_type, scope_type, scope_value, status, feedback_code)
+                VALUES ('osm_overpass', ?, 'bbox', ?, 'pending', ?)
+                """, triggerType, scope, feedbackCode == null ? "" : feedbackCode);
         Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
         return id == null ? 0L : id;
     }
@@ -223,6 +232,7 @@ public class IngestService {
                     WHERE id = ?
                     """, status, fetched, inserted, updated, failed, joinNotes(notes), jobId);
             log.info("[ingest] job {} {}：抓取 {}，新增 {}，更新 {}", jobId, status, fetched, inserted, updated);
+            writeBackFeedback(jobId, status, inserted + updated, null);
         } catch (Exception ex) {
             // 失败也要回写已完成的计数，否则任务显示 0 条、实际已写入部分数据（评审 P1-8）
             jdbcTemplate.update("""
@@ -232,6 +242,36 @@ public class IngestService {
                     WHERE id = ?
                     """, fetched, inserted, updated, failed, shortMessage(ex), jobId);
             log.warn("[ingest] job {} 失败：{}", jobId, ex.getMessage());
+            writeBackFeedback(jobId, "failed", 0, shortMessage(ex));
+        }
+    }
+
+    /**
+     * 闭环最后一跳：任务结束后把结果写回发起它的反馈。
+     * 成功/部分成功 → approved（用户能看到"已重抓并入库"）；失败 → need_refetch（保留可再试的出口）。
+     */
+    private void writeBackFeedback(long jobId, String jobStatus, int touched, String error) {
+        try {
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                    "SELECT feedback_code FROM ingest_job WHERE id = ? AND feedback_code <> ''", jobId);
+            if (rows.isEmpty()) {
+                return;
+            }
+            String code = String.valueOf(rows.get(0).get("feedback_code"));
+            if ("failed".equals(jobStatus)) {
+                jdbcTemplate.update("""
+                        UPDATE feedback SET status = 'need_refetch', reviewed_at = NOW(),
+                            review_note = ? WHERE code = ? AND status IN ('need_refetch','pending')
+                        """, "重抓失败：" + (error == null ? "未知原因" : error), code);
+            } else {
+                jdbcTemplate.update("""
+                        UPDATE feedback SET status = 'approved', reviewed_at = NOW(),
+                            review_note = ? WHERE code = ? AND status IN ('need_refetch','pending')
+                        """, "已重抓并入库，本次影响 " + touched + " 个点位", code);
+            }
+            log.info("[ingest] job {} 回写反馈 {} → {}", jobId, code, jobStatus);
+        } catch (Exception ex) {
+            log.warn("[ingest] job {} 回写反馈失败：{}", jobId, ex.getMessage());
         }
     }
 
@@ -387,7 +427,7 @@ public class IngestService {
         }
         return jdbcTemplate.batchUpdate("""
                 INSERT INTO poi_community
-                    (id, name, address, district, lng, lat, built_year, avg_price, property_fee,
+                    (id, name, address, district, lng, lat, built_year, avg_price_demo, property_fee,
                      demo_attributes, source, license, source_level, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'OpenStreetMap', 'ODbL', 'L1', NOW())
                 ON DUPLICATE KEY UPDATE name = VALUES(name), address = VALUES(address), updated_at = NOW()

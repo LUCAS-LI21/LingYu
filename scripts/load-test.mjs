@@ -10,7 +10,7 @@ const PER_ENDPOINT = Number(process.argv[3] || 50)
 
 const endpoints = [
   { name: '列表 /pois?size=20', path: '/api/v1/pois?size=20' },
-  { name: '地图 /pois?size=5000', path: '/api/v1/pois?size=5000' },
+  { name: '地图 /pois?size=5000&lite', path: '/api/v1/pois?size=5000&lite=true' },
   { name: '统计 /stats', path: '/api/v1/stats' },
   { name: '待定位 /community-pending?size=20', path: '/api/v1/community-pending?size=20' },
 ]

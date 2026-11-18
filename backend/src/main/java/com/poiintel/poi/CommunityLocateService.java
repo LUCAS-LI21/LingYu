@@ -145,6 +145,25 @@ public class CommunityLocateService {
         return Map.of("status", "rejected");
     }
 
+/**
+     * 驳回一个待定位小区：状态置 rejected，从「待定位」列表消失。
+     * 此前 rejected 状态在 schema 里定义了但没有任何写入口，等于永远到不了。
+     */
+    public Map<String, Object> rejectPending(String pendingId, String reviewer, String reason) {
+        int updated = jdbcTemplate.update("""
+                UPDATE community_pending SET status = 'rejected', geocode_source = ?, geocoded_at = NOW()
+                WHERE id = ? AND status = 'pending'
+                """, reviewer == null ? "admin" : reviewer, pendingId);
+        if (updated == 0) {
+            throw new IllegalStateException("该小区已处理或不存在");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", pendingId);
+        result.put("status", "rejected");
+        result.put("reason", reason == null ? "" : reason);
+        return result;
+    }
+
     /**
      * 把待定位小区转正成 poi_community：写坐标、来源、字段级留痕。
      * 调用前坐标已校验。

@@ -89,7 +89,7 @@ public class AdminController {
                 double lat = ((Number) result.get("anchorLat")).doubleValue();
                 double span = 0.012; // 约 1.3km
                 try {
-                    long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span);
+                    long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span, code);
                     ingestService.runJob(jobId, lat - span, lng - span, lat + span, lng + span);
                     result.put("jobId", jobId);
                 } catch (IllegalStateException busy) {
@@ -147,6 +147,16 @@ public class AdminController {
         page.put("total", items.size());
         page.put("limit", limit);
         return ApiResult.ok(page);
+    }
+
+/** 驳回待定位小区（rejected 状态此前没有任何入口） */
+    @PostMapping("/community-pending/{id}/reject")
+    public ApiResult<Map<String, Object>> rejectCommunityPending(
+            @PathVariable String id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        String reason = body == null || body.get("reason") == null ? "" : String.valueOf(body.get("reason"));
+        return ApiResult.ok(communityLocateService.rejectPending(id, reviewerOf(authorization), reason));
     }
 
     /** 人工确认坐标后转正 */
