@@ -251,10 +251,22 @@ CREATE TABLE IF NOT EXISTS community_pending (
   geocode_source VARCHAR(32)  NOT NULL DEFAULT '' COMMENT 'admin/user',
   geocoded_at    DATETIME     NULL,
   poi_id         VARCHAR(64)  NOT NULL DEFAULT '',
+  avg_price      INT          NULL COMMENT '官方成交参考价(元/㎡)，转正时带入 poi_community',
+  avg_price_source VARCHAR(32) NOT NULL DEFAULT '' COMMENT 'gov_reference=官方参考价表匹配到的',
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_cp_status (status),
-  KEY idx_cp_district (district)
+  KEY idx_cp_district (district),
+  KEY idx_cp_district_name (district, name)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '待定位小区（缺坐标）';
+
+-- 去重黑名单：被判定为重复并下线的点位，抓取侧必须跳过，否则定时任务会把它们重新写回来
+CREATE TABLE IF NOT EXISTS dedupe_log (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  brand      VARCHAR(64)  NOT NULL DEFAULT '',
+  reason     VARCHAR(255) NOT NULL DEFAULT '',
+  removed_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_dedupe_brand (brand)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT '去重黑名单';
 
 -- 用户提交的坐标，管理员审核后才转正
 CREATE TABLE IF NOT EXISTS coordinate_submission (

@@ -26,6 +26,7 @@ public class PoiController {
     private final QueryLogService queryLogService;
     private final CommunityLocateService locateService;
     private final JdbcTemplate jdbcTemplate;
+    private final com.poiintel.common.AnonymousRateLimiter rateLimiter;
 
     @GetMapping("/health")
     public ApiResult<Map<String, Object>> health() {
@@ -132,7 +133,8 @@ public class PoiController {
         Double centerLng = (west != null && east != null) ? (west + east) / 2 : null;
         Double centerLat = (south != null && north != null) ? (south + north) / 2 : null;
         queryLogService.log("list", keyword, district, QueryLogService.gridOf(centerLng, centerLat),
-                result.items().size(), System.currentTimeMillis() - started);
+                (int) Math.min(result.total(), Integer.MAX_VALUE),
+                System.currentTimeMillis() - started);
 
         return ApiResult.ok(result);
     }
@@ -232,7 +234,14 @@ public class PoiController {
     @PostMapping("/community-pending/{id}/locate")
     public ApiResult<Map<String, Object>> locate(
             @PathVariable String id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body,
+            jakarta.servlet.http.HttpServletRequest http) {
+        // 匿名可写：按 IP 限流，避免单人刷爆坐标提交队列
+        String forwarded = http.getHeader("X-Forwarded-For");
+        String ip = forwarded == null || forwarded.isBlank()
+                ? (http.getRemoteAddr() == null ? "unknown" : http.getRemoteAddr())
+                : forwarded.split(",")[forwarded.split(",").length - 1].trim();
+        rateLimiter.checkLocate(ip);
         double lng = number(body.get("lng"));
         double lat = number(body.get("lat"));
         String note = body.get("note") == null ? "" : String.valueOf(body.get("note"));

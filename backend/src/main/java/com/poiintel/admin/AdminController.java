@@ -137,10 +137,16 @@ public class AdminController {
     }
 
     @GetMapping("/pending")
-    public ApiResult<List<Map<String, Object>>> pending(
+    public ApiResult<Map<String, Object>> pending(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
-        return ApiResult.ok(pendingBankService.list(status, limit));
+        // 与其它列表接口保持同一形态：{items,total,limit}，不要返回裸数组
+        List<Map<String, Object>> items = pendingBankService.list(status, limit);
+        Map<String, Object> page = new java.util.LinkedHashMap<>();
+        page.put("items", items);
+        page.put("total", items.size());
+        page.put("limit", limit);
+        return ApiResult.ok(page);
     }
 
     /** 人工确认坐标后转正 */

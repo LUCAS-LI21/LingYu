@@ -120,20 +120,29 @@
     </select>
 
     <select id="priceBuckets" resultType="java.util.Map">
+        <!-- 只统计**有官方参考价**的小区：演示值是哈希生成的，混进来会让价格分布和"最贵小区"失真 -->
         SELECT label, COUNT(*) AS value
         FROM (
             SELECT CASE
-                       WHEN avg_price IS NULL THEN '未知'
                        WHEN avg_price &lt; 50000 THEN '&lt; 5 万'
                        WHEN avg_price &lt; 70000 THEN '5–7 万'
                        WHEN avg_price &lt; 90000 THEN '7–9 万'
                        WHEN avg_price &lt; 110000 THEN '9–11 万'
                        ELSE '≥ 11 万'
                        END AS label
-            FROM v_poi
-            WHERE type = 'community'
+            FROM poi_community
+            WHERE status &lt;&gt; 'closed'
+              AND avg_price_source = 'gov_reference'
+              AND avg_price IS NOT NULL
         ) t
         GROUP BY label
+    </select>
+
+    <select id="priceSampleCount" resultType="java.util.Map">
+        SELECT COUNT(*) AS total,
+               SUM(CASE WHEN avg_price_source = 'gov_reference' THEN 1 ELSE 0 END) AS real_count
+        FROM poi_community
+        WHERE status &lt;&gt; 'closed'
     </select>
 
     <select id="gridTop" resultType="java.util.Map">

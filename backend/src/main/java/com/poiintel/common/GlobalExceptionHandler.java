@@ -21,6 +21,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResult.fail(409, ex.getMessage()));
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResult<Void>> handleUnauthorized(UnauthorizedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResult.fail(401, ex.getMessage()));
+    }
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiResult<Void>> handleMissingResource(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResult.fail(404, ex.getMessage()));
+    }
     @ExceptionHandler(RateLimitException.class)
     public ResponseEntity<ApiResult<Void>> handleRateLimit(RateLimitException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(ApiResult.fail(429, ex.getMessage()));
@@ -58,6 +66,28 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ApiResult<Void>> handleNotFound(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResult.fail(404, "接口不存在"));
+    }
+
+    /** 请求体不是合法 JSON：400（不能落到兜底 500，调用方会以为是服务故障） */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResult<Void>> handleBadJson(
+            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(ApiResult.fail(400, "请求体格式错误，需为合法 JSON"));
+    }
+
+    /** 方法不允许（如 GET /feedback）：405 */
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResult<Void>> handleMethodNotAllowed(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResult.fail(405, "不支持的请求方法：" + ex.getMethod()));
+    }
+
+    /** 查询单条记录为空（如未知的待定位 id）：404 */
+    @ExceptionHandler(org.springframework.dao.EmptyResultDataAccessException.class)
+    public ResponseEntity<ApiResult<Void>> handleEmptyResult(
+            org.springframework.dao.EmptyResultDataAccessException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResult.fail(404, "资源不存在"));
     }
 
     @ExceptionHandler(Exception.class)

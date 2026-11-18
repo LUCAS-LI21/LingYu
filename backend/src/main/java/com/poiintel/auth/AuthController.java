@@ -47,7 +47,7 @@ public class AuthController {
                         "token", session.token(),
                         "username", session.username(),
                         "expiresAt", session.expiresAt())))
-                .orElseThrow(() -> new IllegalArgumentException("用户名或口令错误"));
+                .orElseThrow(() -> new com.poiintel.common.UnauthorizedException("用户名或口令错误"));
     }
 
     /**

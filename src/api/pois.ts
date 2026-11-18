@@ -22,10 +22,18 @@ let probing: Promise<boolean> | null = null
 export async function isServerMode(): Promise<boolean> {
   if (serverMode !== null) return serverMode
   if (!probing) {
-    probing = probeServer().then((value) => {
-      serverMode = value
-      return value
-    })
+    probing = probeServer()
+      .then((value) => {
+        serverMode = value
+        // 页面横幅依赖这个响应式状态；之前只写了非响应式的 serverMode，横幅永远不出现
+        backendOnline.value = value
+        return value
+      })
+      .catch(() => {
+        serverMode = false
+        backendOnline.value = false
+        return false
+      })
   }
   return probing
 }

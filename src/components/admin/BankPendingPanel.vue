@@ -38,10 +38,11 @@ async function load(): Promise<void> {
   loading.value = true
   error.value = ''
   try {
-    const rows = await apiRequest<Array<Record<string, unknown>>>(
+    const page = await apiRequest<{ items: Array<Record<string, unknown>> }>(
       '/admin/pending?status=pending&limit=200',
     )
-    items.value = (Array.isArray(rows) ? rows : []).map((row) => ({
+    const rows = Array.isArray(page) ? page : (page?.items ?? [])
+    items.value = rows.map((row) => ({
       id: Number(row.id),
       name: String(row.name ?? ''),
       address: String(row.address ?? ''),

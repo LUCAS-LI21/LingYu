@@ -223,14 +223,16 @@ public class AdminService {
                     toJson(jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", poiId)), reviewer);
             return Map.of("id", poiId, "status", "active", "type", poiType);
         }
-        throw new IllegalArgumentException("POI 不存在：" + poiId);
+        throw new com.poiintel.common.NotFoundException("POI 不存在：" + poiId);
     }
 
     @Transactional
     public Map<String, Object> reject(String code, String reviewer, String note) {
+        // 允许驳回 pending 与 need_refetch：后者是「已标记待重抓」，
+        // 如果抓不到或用户撤诉，运营必须能关掉，否则这条反馈永远悬着（闭环没有出口）
         int updated = jdbcTemplate.update("""
                 UPDATE feedback SET status = 'rejected', reviewer = ?, reviewed_at = NOW(), review_note = ?
-                WHERE code = ? AND status = 'pending'
+                WHERE code = ? AND status IN ('pending', 'need_refetch')
                 """, reviewer, note == null ? "" : note, code);
         if (updated == 0) {
             throw new IllegalStateException("该反馈已处理或不存在，请刷新");

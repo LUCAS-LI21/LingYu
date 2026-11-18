@@ -34,7 +34,7 @@ public class PoiService {
     public PoiRow detail(String id) {
         PoiRow row = poiMapper.findById(id);
         if (row == null) {
-            throw new IllegalArgumentException("POI 不存在：" + id);
+            throw new com.poiintel.common.NotFoundException("POI 不存在：" + id);
         }
         fillGcj(row);
         return row;
@@ -106,6 +106,7 @@ public class PoiService {
         stats.put("brands", normalizeList(poiMapper.topBrands(8), "label", "value"));
         stats.put("byDistrict", poiMapper.countsByDistrict());
         stats.put("priceBuckets", orderedBuckets(poiMapper.priceBuckets()));
+        stats.put("priceSample", poiMapper.priceSampleCount());
         stats.put("gridTop", gridCells(poiMapper.gridTop(6)));
         return stats;
     }

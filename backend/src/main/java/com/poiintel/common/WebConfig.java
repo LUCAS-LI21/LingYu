@@ -18,9 +18,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * 允许的跨域来源。默认只放开发环境 5173；生产走 Nginx 同源反代（nginx 会剥掉 Origin）。
-     * 独立域名部署时用 CORS_ORIGINS 环境变量覆盖，逗号分隔。
+     *
+     * 覆盖方式二选一：`CORS_ORIGINS=http://a,http://b`（环境变量，与部署文档一致）
+     * 或 `APP_CORS_ORIGINS`（Spring 宽松绑定）。两层占位符保证环境变量真的生效——
+     * 之前只写 app.cors.origins，导致文档里的 CORS_ORIGINS 静默无效。
      */
-    @Value("${app.cors.origins:http://127.0.0.1:5173,http://localhost:5173}")
+    @Value("${app.cors.origins:${CORS_ORIGINS:http://127.0.0.1:5173,http://localhost:5173}}")
     private String allowedOrigins;
 
     @Override
