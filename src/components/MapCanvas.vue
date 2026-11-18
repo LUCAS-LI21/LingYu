@@ -19,13 +19,20 @@ const emit = defineEmits<{
 
 const container = ref<HTMLDivElement | null>(null)
 const tilesFailed = ref(false)
+const tilesReady = ref(false)
+const tileFallback = ref(false)
 
 let map: L.Map | null = null
 let markerLayer: L.LayerGroup | null = null
+let tileLayer: L.TileLayer | null = null
+let tileTimer: number | null = null
+let tileErrors = 0
+let fallbackErrors = 0
+let fallbackLoaded = 0
+let usingFallback = false
 let boxRect: L.Rectangle | null = null
 let boxStart: L.LatLng | null = null
 let boxMode = false
-let tileErrors = 0
 let introMode = false
 let introDoneEmitted = false
 let introFallback: number | null = null
@@ -109,21 +116,79 @@ function renderMarkers(): void {
   }
 }
 
-function initTileLayer(target: L.Map): void {
-  // OSM 标准瓦片：免 Key，遵守使用政策；用 CSS 滤镜压成浅灰底图以贴合白净风格
-  const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+function clearTileTimer(): void {
+  if (tileTimer !== null) {
+    window.clearTimeout(tileTimer)
+    tileTimer = null
+  }
+}
+
+function markTileReady(): void {
+  tilesReady.value = true
+  tilesFailed.value = false
+  clearTileTimer()
+}
+
+function addTileLayer(target: L.Map, url: string, fallback: boolean): void {
+  const layer = L.tileLayer(url, {
     maxZoom: 19,
     attribution: '&copy; OpenStreetMap contributors',
-    crossOrigin: true,
+    // 不做 canvas 取图，不需要 CORS；强制 crossOrigin 会放大偶发失败
   })
+
+  layer.on('tileload', () => {
+    // 切备用源后旧 layer 可能还有迟到的 tileload，不能拿它当新源成功
+    if (tileLayer !== layer) return
+    if (fallback) fallbackLoaded += 1
+    markTileReady()
+  })
+
   layer.on('tileerror', () => {
+    if (fallback) {
+      fallbackErrors += 1
+      if (fallbackErrors >= 6 && map?.hasLayer(layer)) {
+        map.removeLayer(layer)
+        tileLayer = null
+        tilesFailed.value = true
+      }
+      return
+    }
     tileErrors += 1
-    if (tileErrors >= 10 && map?.hasLayer(layer)) {
-      map.removeLayer(layer)
+    if (tileErrors >= 6) switchTileFallback(target)
+  })
+
+  tileLayer = layer
+  layer.addTo(target)
+}
+
+function switchTileFallback(target: L.Map): void {
+  if (usingFallback) return
+  usingFallback = true
+  tileFallback.value = true
+  tileErrors = 0
+  fallbackLoaded = 0
+  clearTileTimer()
+  if (tileLayer && target.hasLayer(tileLayer)) target.removeLayer(tileLayer)
+  tileLayer = null
+
+  // 备用源与主源同为 OSM 体系，避免底图与 WGS-84/GCJ-02 标记错位
+  addTileLayer(target, 'https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', true)
+  tileTimer = window.setTimeout(() => {
+    if (!fallbackLoaded && tileLayer && target.hasLayer(tileLayer)) {
+      target.removeLayer(tileLayer)
+      tileLayer = null
       tilesFailed.value = true
     }
-  })
-  layer.addTo(target)
+  }, 7000)
+}
+
+function initTileLayer(target: L.Map): void {
+  // OSM 德国镜像：国内访问通常比 tile.openstreetmap.org 稳定；CSS 滤镜仍压成浅灰
+  addTileLayer(target, 'https://tile.openstreetmap.de/{z}/{x}/{y}.png', false)
+  // 主源 3.2s 内没有成功瓦片时切法国 HOT 镜像，避免一直白屏
+  tileTimer = window.setTimeout(() => {
+    if (!tilesReady.value) switchTileFallback(target)
+  }, 3200)
 }
 
 function setBoxMode(enabled: boolean): void {
@@ -226,6 +291,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  clearTileTimer()
   if (introFallback !== null) {
     window.clearTimeout(introFallback)
     introFallback = null
@@ -233,6 +299,7 @@ onBeforeUnmount(() => {
   map?.remove()
   map = null
   markerLayer = null
+  tileLayer = null
 })
 
 watch(
@@ -285,6 +352,12 @@ defineExpose({
       class="pointer-events-none absolute left-1/2 top-4 z-[500] -translate-x-1/2 rounded-full border border-line bg-surface/95 px-3 py-1.5 text-xs text-ink-500 shadow-card"
     >
       底图加载失败，已切换纯标记模式（标记位置仍准确）
+    </div>
+    <div
+      v-else-if="!tilesReady"
+      class="pointer-events-none absolute left-1/2 top-4 z-[500] -translate-x-1/2 rounded-full border border-line bg-surface/95 px-3 py-1.5 text-xs text-ink-500 shadow-card"
+    >
+      {{ tileFallback ? '主底图超时，正在切换备用源…' : '底图加载中…' }}
     </div>
   </div>
 </template>

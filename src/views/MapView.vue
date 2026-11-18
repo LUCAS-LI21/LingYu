@@ -57,7 +57,10 @@ const isDesktop = useMediaQuery('(min-width: 1024px)')
 const reducedMotion =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const forceIntro = route.query.intro === '1'
-const shouldIntro = forceIntro || (!navigator.webdriver && !reducedMotion && !hasPlayedIntro())
+const skipIntroForSpeed = route.query.intro === '0'
+const shouldIntro =
+  !skipIntroForSpeed &&
+  (forceIntro || (!navigator.webdriver && !reducedMotion && !hasPlayedIntro()))
 
 if (shouldIntro) markIntroPlayed()
 
