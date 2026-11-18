@@ -22,7 +22,7 @@ pnpm install && pnpm dev
 
 - 前端：http://127.0.0.1:5173
 - 后端：http://127.0.0.1:8080/api/v1/health
-- 运营后台：http://127.0.0.1:5173/admin（默认 `operator / operator123`，可用环境变量覆盖）
+- 运营后台：http://127.0.0.1:5173/admin（口令由 `OPERATOR_PASSWORD` 环境变量提供；未设置时后端拒绝启动，开发环境可用 `APP_AUTH_ALLOW_DEFAULT_PASSWORD=true` 放行）
 
 ## 功能
 

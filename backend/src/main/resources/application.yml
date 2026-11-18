@@ -59,7 +59,7 @@ management:
 app:
   auth:
     # 开发环境允许默认口令；容器/生产不设该值 → 默认口令会直接拒绝启动
-    allow-default-password: ${APP_AUTH_ALLOW_DEFAULT_PASSWORD:true}
+    allow-default-password: ${APP_AUTH_ALLOW_DEFAULT_PASSWORD:false}
     # 留空则启动时生成临时密钥（重启后 token 失效）；生产必须显式配置
     secret: ${AUTH_SECRET:}
     ttl-minutes: 720

@@ -39,12 +39,14 @@ public class AdminAccountSeeder implements ApplicationRunner {
     @Value("${app.auth.operator-password:" + DEFAULT_PASSWORD + "}")
     private String password;
 
+    // 用 String 接收再宽松解析：环境变量为空串时 Spring 的布尔转换会直接抛 Invalid boolean value
     @Value("${app.auth.allow-default-password:false}")
-    private boolean allowDefaultPassword;
+    private String allowDefaultPasswordRaw;
 
     @Override
     public void run(ApplicationArguments args) {
         // 非开发环境拒绝以默认口令启动：评审指出"换个默认值等于没改"，这里直接 fail-fast
+        boolean allowDefaultPassword = "true".equalsIgnoreCase(allowDefaultPasswordRaw == null ? "" : allowDefaultPasswordRaw.trim());
         if (DEFAULT_PASSWORD.equals(password) && !allowDefaultPassword) {
             throw new IllegalStateException(
                     "OPERATOR_PASSWORD 仍是默认值，拒绝启动；请设置随机强口令（开发环境可设 APP_AUTH_ALLOW_DEFAULT_PASSWORD=true 放行）");

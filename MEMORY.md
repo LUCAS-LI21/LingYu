@@ -84,7 +84,7 @@ SRS Q5 已定；行政区按深圳 10 区建模（福田/罗湖/南山/盐田/�
 | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | 位置     | `backend/`（Maven 单体，`mvn -DskipTests package` 构建）                                                                        |
 | 技术栈   | Spring Boot 3.2.5 + Java 17 + MyBatis-Plus 3.5.5 + MySQL 8.0.45（root/root，库 `poi_intel`）                                    |
-| 表       | `poi_bank` / `poi_community` / `feedback` + 统一视图 `v_poi`（schema.sql 幂等建表，启动自动执行）                               |
+| 表       | `poi_bank` / `poi_community` / `feedback` + 统一视图 `v_poi`（db/migration V1–V3，SchemaMigrator 启动时按版本执行）             |
 | 种子     | 首次启动读 `classpath:seed/pois.json`，导入 339 银行 + 1287 小区，小区演示属性用与前端相同的哈希生成                            |
 | 接口     | `GET /api/v1/health`、`/pois`（筛选+分页+bbox）、`/pois/nearby`（ST_Distance_Sphere）、`/pois/{id}`、`/stats`、`POST /feedback` |
 | 前端接入 | `src/api/server.ts` + `pois.ts` 的 `isServerMode()`：探活失败自动降级本地种子，离线也能演示                                     |
@@ -127,7 +127,7 @@ pnpm dev
 | 登录界面 | `/admin` 未登录显示登录卡，登录后带 Bearer 调接口，401 自动清 token                          | 截图见 `shot-admin-login.png` / `shot-admin-authed.png` |
 | 定时抓取 | `@Scheduled` + 热点驱动选区域（无热点退回福田默认框）                                        | 启动 8s 后自动产生 `triggerType=hotspot` 的 job#3       |
 
-**默认账号**：`operator / operator123`（口令可用 `OPERATOR_PASSWORD` 覆盖，`AUTH_SECRET` 务必在生产替换）。
+**账号**：`operator`，口令由 `OPERATOR_PASSWORD` 提供；未设置或仍为 `operator123` 时后端拒绝启动（开发环境可设 `APP_AUTH_ALLOW_DEFAULT_PASSWORD=true` 放行）。`AUTH_SECRET` 生产必须显式配置。
 
 ## 评审与修复（第二轮）
 

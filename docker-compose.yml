@@ -15,11 +15,11 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?必须在 .env 设置数据库 root 口令}
       MYSQL_DATABASE: ${DB_NAME:-poi_intel}
       # 业务账号：backend 不再用 root 连库
       MYSQL_USER: ${DB_USER:-poi}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-poi-pass-change-me}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?必须在 .env 设置数据库业务口令}
       TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
@@ -52,7 +52,7 @@ services:
       DB_PORT: '3306'
       DB_NAME: ${DB_NAME:-poi_intel}
       DB_USER: ${DB_USER:-poi}
-      DB_PASSWORD: ${DB_PASSWORD:-poi-pass-change-me}
+      DB_PASSWORD: ${DB_PASSWORD:?必须在 .env 设置数据库业务口令}
       # 留空则启动时生成随机密钥（重启后 token 失效）
       AUTH_SECRET: ${AUTH_SECRET:-}
       OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operator}
