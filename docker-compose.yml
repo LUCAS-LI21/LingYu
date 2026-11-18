@@ -56,7 +56,8 @@ services:
       # 留空则启动时生成随机密钥（重启后 token 失效）
       AUTH_SECRET: ${AUTH_SECRET:-}
       OPERATOR_USERNAME: ${OPERATOR_USERNAME:-operator}
-      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:-operator123}
+      OPERATOR_PASSWORD: ${OPERATOR_PASSWORD:?必须在 .env 设置随机运营口令}
+      APP_AUTH_ALLOW_DEFAULT_PASSWORD: 'false'
       # 抓取代理：容器内访问宿主代理要用 host.docker.internal
       HTTP_PROXY: ${INGEST_PROXY:-}
       TZ: Asia/Shanghai

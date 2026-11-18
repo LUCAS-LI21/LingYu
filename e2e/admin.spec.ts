@@ -39,7 +39,11 @@ test.describe('管理后台', () => {
     const code = await createFeedback()
 
     await page.goto('/admin')
-    await page.fill('input[placeholder="请输入口令"]', 'operator123')
+    // 口令从环境变量读，避免把某次部署的口令写死在用例里
+    await page.fill(
+      'input[placeholder="请输入口令"]',
+      process.env.OPERATOR_PASSWORD || 'operator123',
+    )
     await page.getByRole('button', { name: '登录' }).click()
 
     // 登录成功标志：出现退出按钮
