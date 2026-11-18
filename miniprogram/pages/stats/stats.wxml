@@ -150,6 +150,14 @@
         </view>
         <text class="arrow">›</text>
       </view>
+<view class="data-link card" bindtap="openHotspots">
+        <view class="thumb">热</view>
+        <view class="grow">
+          <text class="data-link-title">查询热点</text>
+          <text class="tiny">近 7 天搜索最集中的网格 · 采集优先级参考</text>
+        </view>
+        <text class="arrow">›</text>
+      </view>
       <view class="data-link card" bindtap="openLand">
         <view class="thumb">地</view>
         <view class="grow">

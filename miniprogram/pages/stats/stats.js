@@ -182,6 +182,10 @@ Page({
     wx.navigateTo({ url: '/pages/pending/pending' })
   },
 
+  openHotspots() {
+    wx.navigateTo({ url: '/pages/hotspots/hotspots' })
+  },
+
   openLand() {
     wx.navigateTo({ url: '/pages/land/land' })
   },

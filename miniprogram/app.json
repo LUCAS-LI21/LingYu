@@ -10,6 +10,7 @@
     "pages/compliance/compliance",
     "pages/pending/pending",
     "pages/land/land",
+    "pages/hotspots/hotspots",
     "pages/admin/admin"
   ],
   "window": {

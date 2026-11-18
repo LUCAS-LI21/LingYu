@@ -1,0 +1,73 @@
+.hotspot-summary {
+  display: flex;
+  flex-direction: column;
+}
+
+.hotspot-total {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #1f2d3d;
+}
+
+.hotspot-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.hotspot-rank {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  background: #eef1f6;
+  color: #8a94a6;
+  font-size: 22rpx;
+  text-align: center;
+  line-height: 44rpx;
+  flex-shrink: 0;
+}
+
+.hotspot-rank-top {
+  background: #e6efff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.hotspot-grid {
+  font-size: 26rpx;
+  color: #1f2d3d;
+  font-weight: 500;
+}
+
+.hotspot-badge {
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #fff4e5;
+  color: #b26a00;
+  font-size: 18rpx;
+}
+
+.hotspot-count {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.hotspot-count-num {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.skeleton-line {
+  height: 22rpx;
+  border-radius: 8rpx;
+  background: #eef1f6;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-line.short {
+  width: 45%;
+}

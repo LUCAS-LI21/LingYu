@@ -39,9 +39,10 @@
 | 数据说明 | `pages/compliance` | 三级授权模型、来源清单、不采集清单、免责声明 |
 | 待定位小区 | `pages/pending` | 名录、区域/关键词筛选、实地选点提交坐标（GCJ→WGS） |
 | 存量用地 | `pages/land` | 宗地级政府开放数据、区域筛选、面积/类型/状态 |
+| 查询热点 | `pages/hotspots` | query_log 聚合的热门网格（公开 `/hotspots`），空结果可作为采集优先级参考 |
 | 管理后台 | `pages/admin` | 运营登录、概览、反馈审核、Agent 建议（含发起/采纳）、抓取任务、查询热点 |
 
-管理后台演示账号：`operator / operator123`（与 Web 端一致）。
+管理后台演示账号：`operator`，口令由后端 `OPERATOR_PASSWORD` 提供（未设置/为空时后端拒绝启动；`operator123` 已不再默认可登录）。
 
 ## 4. 后端契约
 

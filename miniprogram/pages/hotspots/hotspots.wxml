@@ -1,0 +1,60 @@
+<view class="page">
+  <view>
+    <text class="h1">查询热点</text>
+    <text class="muted">近 7 天用户搜索最集中的 2km 网格，用于判断该优先补采哪里</text>
+  </view>
+
+  <view class="card card-pad mt-20 hotspot-summary">
+    <view class="row between">
+      <view>
+        <text class="tiny">累计查询</text>
+        <text class="hotspot-total">{{totalText}}</text>
+      </view>
+      <text class="tiny">样本 {{items.length}} 个网格</text>
+    </view>
+    <text class="tiny mt-12">口径：query_log 聚合 → hot_region，与运营后台同源</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="mt-20">
+    <view class="card card-pad mt-12" wx:for="{{[1,2,3]}}" wx:key="*this">
+      <view class="skeleton-line"></view>
+      <view class="skeleton-line short"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card card-pad mt-20">
+    <text class="data-link-title">加载失败</text>
+    <text class="tiny">{{error}}</text>
+    <button class="btn btn-primary btn-block mt-16" bindtap="retry">重试</button>
+  </view>
+
+  <view wx:else class="mt-20">
+    <view
+      class="card card-pad hotspot-row"
+      wx:for="{{items}}"
+      wx:key="grid"
+      data-index="{{index}}"
+      bindtap="onTapItem"
+    >
+      <view class="hotspot-rank {{item.rank <= 3 ? 'hotspot-rank-top' : ''}}">{{item.rank}}</view>
+      <view class="grow">
+        <view class="row gap-8">
+          <text class="hotspot-grid">{{item.grid}}</text>
+          <text wx:if="{{item.hasZero}}" class="hotspot-badge">空结果 {{item.zeroResultCount}}</text>
+        </view>
+        <text class="tiny">最近统计日 {{item.lastDate || '—'}}</text>
+      </view>
+      <view class="hotspot-count">
+        <text class="hotspot-count-num">{{item.queryCount}}</text>
+        <text class="tiny">次</text>
+      </view>
+    </view>
+
+    <view wx:if="{{!items.length}}" class="card card-pad mt-12">
+      <text class="data-link-title">暂无查询记录</text>
+      <text class="tiny">在地图/列表/洞察页搜索或框选后，这里会出现热点</text>
+    </view>
+
+    <text class="stats-note">热点只统计查询行为（关键词/区域/视野），不记录任何个人信息。</text>
+  </view>
+</view>
