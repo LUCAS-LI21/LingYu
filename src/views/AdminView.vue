@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import AgentPanel from '@/components/admin/AgentPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
-import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
 import {
   approveFeedback,
@@ -20,7 +19,7 @@ import { isServerMode } from '@/api/pois'
 import { clearToken, isLoggedIn, login } from '@/api/auth'
 import { toast } from '@/lib/toast'
 
-type Tab = 'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs' | 'compliance'
+type Tab = 'overview' | 'feedback' | 'agent' | 'behavior' | 'correction' | 'jobs'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -91,7 +90,6 @@ const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'behavior', label: '查询行为' },
   { key: 'correction', label: '数据纠错' },
   { key: 'jobs', label: '抓取任务' },
-  { key: 'compliance', label: '数据说明' },
 ]
 
 const kpis = computed(() => [
@@ -383,7 +381,7 @@ onBeforeUnmount(() => {
       <div>
         <h1 class="text-xl font-semibold tracking-tight text-ink-900">管理后台</h1>
         <p class="mt-1 text-xs text-ink-500">
-          查询行为 · 反馈审核 · Agent 建议 · 数据纠错 · 抓取任务 · 数据说明，一个后台完成运营闭环
+          查询行为 · 反馈审核 · Agent 建议 · 数据纠错 · 抓取任务，一个后台完成运营闭环
         </p>
       </div>
       <div class="flex items-center gap-2">
@@ -786,11 +784,6 @@ onBeforeUnmount(() => {
           @review="switchTab('feedback')"
           @submitted="onCorrectionSubmitted"
         />
-      </div>
-
-      <!-- 数据说明：与用户后台共用同一份合规文档 -->
-      <div v-else class="rounded-card border border-line bg-surface p-5 shadow-card">
-        <ComplianceDoc />
       </div>
     </template>
   </div>

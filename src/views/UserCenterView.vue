@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
 import {
   clearFeedbackHistory,
@@ -13,7 +12,7 @@ import {
 } from '@/lib/feedbackHistory'
 import { toast } from '@/lib/toast'
 
-type Tab = 'correct' | 'history' | 'compliance'
+type Tab = 'correct' | 'history'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,7 +26,6 @@ const savedProfile = ref(false)
 const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'correct', label: '纠错 / 补充' },
   { key: 'history', label: '我的反馈' },
-  { key: 'compliance', label: '数据说明' },
 ]
 
 const pendingCount = computed(
@@ -72,7 +70,7 @@ function saveProfile(): void {
 
 function applyRouteTab(): void {
   const value = String(route.query.tab ?? '')
-  if (value === 'correct' || value === 'history' || value === 'compliance') {
+  if (value === 'correct' || value === 'history') {
     tab.value = value
   }
 }
@@ -176,10 +174,7 @@ watch(
       />
     </div>
 
-    <div
-      v-else-if="tab === 'history'"
-      class="rounded-card border border-line bg-surface shadow-card"
-    >
+    <div v-else class="rounded-card border border-line bg-surface shadow-card">
       <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
         <div>
           <p class="text-sm font-semibold text-ink-900">我的反馈</p>
@@ -238,10 +233,6 @@ watch(
           </div>
         </li>
       </ul>
-    </div>
-
-    <div v-else>
-      <ComplianceDoc />
     </div>
   </div>
 </template>

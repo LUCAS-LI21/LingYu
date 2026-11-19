@@ -25,12 +25,6 @@ const router = createRouter({
       meta: { title: '数据洞察' },
     },
     {
-      path: '/compliance',
-      name: 'compliance',
-      component: () => import('@/views/ComplianceView.vue'),
-      meta: { title: '数据说明' },
-    },
-    {
       path: '/me',
       name: 'me',
       component: () => import('@/views/UserCenterView.vue'),

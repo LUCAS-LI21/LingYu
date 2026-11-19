@@ -109,13 +109,6 @@ watch(
         </nav>
 
         <div class="ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3">
-          <RouterLink
-            to="/compliance"
-            class="hidden items-center gap-1.5 rounded-full border border-mint-500/20 bg-mint-50 px-2.5 py-1 text-[11px] text-mint-600 transition hover:border-mint-500/40 hover:bg-mint-100/70 md:flex"
-          >
-            <span class="h-1.5 w-1.5 rounded-full bg-mint-500" />
-            数据合规
-          </RouterLink>
           <span class="hidden text-[11px] text-ink-400 sm:inline">v{{ version }}</span>
 
           <div ref="accountMenu" class="relative">
@@ -212,19 +205,6 @@ watch(
                       {{ authed ? '审核、Agent、任务与热点' : '需要运营账号登录' }}
                     </span>
                   </span>
-                </RouterLink>
-
-                <RouterLink
-                  to="/compliance"
-                  class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs text-ink-600 transition hover:bg-surface-soft"
-                  @click="closeMenu"
-                >
-                  <span
-                    class="grid h-7 w-7 place-items-center rounded-lg bg-surface-soft text-[10px]"
-                  >
-                    源
-                  </span>
-                  数据说明
                 </RouterLink>
 
                 <div class="my-1 h-px bg-line" />
