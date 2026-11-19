@@ -164,6 +164,15 @@
 .poi-pin--bank::after {
   background: var(--color-brand-500);
 }
+/* ATM 与网点互斥展示，用天蓝区分，避免用户误以为是网点 */
+.poi-pin--atm::after {
+  background: #0ea5e9;
+}
+.poi-pin--atm.is-active {
+  box-shadow:
+    0 0 0 4px rgba(14, 165, 233, 0.18),
+    0 8px 20px -6px rgba(15, 23, 42, 0.4);
+}
 .poi-pin--community::after {
   background: var(--color-amber-500);
 }

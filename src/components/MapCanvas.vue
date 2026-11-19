@@ -40,9 +40,11 @@ const SHENZHEN_CENTER: L.LatLngTuple = [22.5412, 114.0579]
 const INITIAL_ZOOM = 14
 
 function pinIcon(poi: Poi, active: boolean): L.DivIcon {
+  // ATM 单独一个类，颜色与网点区分开（两类互斥展示，不会同时上屏）
+  const atmClass = poi.type === 'bank' && poi.branchType === 'atm' ? ' poi-pin--atm' : ''
   return L.divIcon({
     className: 'poi-marker',
-    html: `<span class="poi-pin poi-pin--${poi.type}${active ? ' is-active' : ''}"></span>`,
+    html: `<span class="poi-pin poi-pin--${poi.type}${atmClass}${active ? ' is-active' : ''}"></span>`,
     iconSize: [18, 18],
     iconAnchor: [9, 9],
   })
@@ -102,7 +104,7 @@ function renderMarkers(): void {
 
   if (zoom <= CLUSTER_MAX_ZOOM) {
     // 聚合：同网格合并成一个圆点，点击放大
-    const cells = new Map<string, { lat: number; lng: number; count: number }>()
+    const cells = new Map<string, { lat: number; lng: number; count: number; atm: number }>()
     for (const poi of props.pois) {
       if (!bounds.contains([poi.lat, poi.lng])) continue
       const gx = Math.floor(poi.lng / CLUSTER_GRID)
@@ -113,8 +115,14 @@ function renderMarkers(): void {
         cell.count += 1
         cell.lat += poi.lat
         cell.lng += poi.lng
+        if (poi.type === 'bank' && poi.branchType === 'atm') cell.atm += 1
       } else {
-        cells.set(key, { lat: poi.lat, lng: poi.lng, count: 1 })
+        cells.set(key, {
+          lat: poi.lat,
+          lng: poi.lng,
+          count: 1,
+          atm: poi.type === 'bank' && poi.branchType === 'atm' ? 1 : 0,
+        })
       }
     }
     for (const [key, cell] of cells) {
@@ -122,13 +130,15 @@ function renderMarkers(): void {
       const lat = cell.lat / cell.count
       const lng = cell.lng / cell.count
       const radius = Math.min(26, 10 + Math.log2(cell.count + 1) * 4)
+      // 该网格里全是 ATM 时用天蓝，和网点区分（两类本来也互斥展示）
+      const onlyAtm = cell.atm === cell.count
       let marker = rendered.get(markerKey) as L.CircleMarker | undefined
       if (!marker) {
         marker = L.circleMarker([lat, lng], {
           radius,
           weight: 1,
-          color: '#2563eb',
-          fillColor: '#3b82f6',
+          color: onlyAtm ? '#0284c7' : '#2563eb',
+          fillColor: onlyAtm ? '#38bdf8' : '#3b82f6',
           fillOpacity: 0.75,
         })
         marker.on('click', () => {
@@ -143,6 +153,10 @@ function renderMarkers(): void {
       } else {
         marker.setLatLng([lat, lng])
         marker.setRadius(radius)
+        marker.setStyle({
+          color: onlyAtm ? '#0284c7' : '#2563eb',
+          fillColor: onlyAtm ? '#38bdf8' : '#3b82f6',
+        })
       }
       marker.bindTooltip(`${cell.count} 个点位`, { direction: 'top' })
       next.set(markerKey, marker)

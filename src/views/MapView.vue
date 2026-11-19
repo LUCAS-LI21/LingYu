@@ -409,6 +409,9 @@ function closeDetail(): void {
         ><span class="h-2 w-2 rounded-full bg-brand-500" />银行网点</span
       >
       <span class="flex items-center gap-1.5"
+        ><span class="h-2 w-2 rounded-full bg-sky-500" />ATM</span
+      >
+      <span class="flex items-center gap-1.5"
         ><span class="h-2 w-2 rounded-full bg-amber-500" />小区</span
       >
       <span class="h-3 w-px bg-line-strong" />

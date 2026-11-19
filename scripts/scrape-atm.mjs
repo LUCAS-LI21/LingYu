@@ -148,7 +148,7 @@ function parseJsonp(text) {
   )
 }
 
-async function fetchHxb() {
+async function _fetchHxb() {
   const rows = []
   for (let page = 1; page <= 30; page += 1) {
     const url =

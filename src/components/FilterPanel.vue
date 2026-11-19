@@ -114,11 +114,15 @@ function reset(): void {
       </section>
 
       <section>
-        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-400">银行类型</p>
+        <p
+          class="mb-2 flex items-center justify-between text-[11px] font-medium tracking-wide text-ink-400"
+        >
+          <span>银行类型</span>
+          <span class="font-normal">地图同一时间只显示一种</span>
+        </p>
         <div class="flex rounded-[10px] border border-line bg-surface-soft p-0.5">
           <button
             v-for="option in [
-              { label: '全部', value: 'all' },
               { label: '网点', value: 'branch' },
               { label: 'ATM', value: 'atm' },
             ]"

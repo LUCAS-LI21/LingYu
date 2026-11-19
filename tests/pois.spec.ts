@@ -49,6 +49,8 @@ const community = (id: string, over: Partial<CommunityPoi> = {}): CommunityPoi =
 const filters = (over: Partial<Filters> = {}): Filters => ({
   ...DEFAULT_FILTERS,
   layers: ['bank', 'community'],
+  // 这里显式 all：本文件测的是图层/区域/关键词逻辑，不应随 UI 默认值变化而失败
+  branchType: 'all',
   ...over,
 })
 
@@ -203,5 +205,12 @@ describe('后端探测状态（离线横幅依赖）', () => {
     expect(online).toBe(false)
     expect(pois.backendOnline.value).toBe(false)
     probe.mockRestore()
+  })
+})
+
+describe('默认筛选（地图防拥挤）', () => {
+  it('默认只显示网点，ATM 与网点不同时出现', () => {
+    expect(DEFAULT_FILTERS.branchType).toBe('branch')
+    expect(DEFAULT_FILTERS.layers).toEqual(['bank'])
   })
 })

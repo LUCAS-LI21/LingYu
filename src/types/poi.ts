@@ -78,7 +78,9 @@ export const DEFAULT_FILTERS: Filters = {
   // 默认只显示银行：小区数量是银行的四倍，混显会让首屏糊成一团
   layers: ['bank'],
   district: '全部区域',
-  branchType: 'all',
+  // 默认只显示「网点」：368 台 ATM 与 1485 个网点叠在一起会糊成一片；
+  // 地图同一时间只展示一类，需要看 ATM 时手动切换
+  branchType: 'branch',
   priceRange: null,
   yearRange: null,
   keyword: '',
