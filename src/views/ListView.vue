@@ -119,20 +119,17 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[1200px] px-4 py-6">
-    <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
+  <div class="mx-auto w-full max-w-[1440px] px-4 py-4 sm:px-6">
+    <header class="mb-4 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 class="text-xl font-semibold tracking-tight text-ink-900">列表查询</h1>
-        <p class="mt-1 text-xs text-ink-500">
-          按区域、类型、价格与年份筛选，支持排序与分页
-          <span class="text-ink-400/80">· OSM 部分网点只记录品牌名，用 #编号 区分</span>
-        </p>
+        <h1 class="text-2xl font-semibold tracking-tight text-ink-900">列表查询</h1>
+        <p class="mt-1 text-sm text-ink-500">按区域、类型、价格与年份筛选，支持排序与分页</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
         <div class="relative">
           <svg
-            class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400"
+            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -144,18 +141,18 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
           <input
             v-model="filters.keyword"
             data-testid="list-search"
-            class="h-9 w-48 rounded-[10px] border border-line bg-surface pl-9 pr-3 text-xs text-ink-700 outline-none transition placeholder:text-ink-400 focus:border-brand-500 sm:w-56"
+            class="h-10 w-52 rounded-[10px] border border-line bg-surface pl-9 pr-3 text-sm text-ink-700 outline-none transition placeholder:text-ink-400 focus:border-brand-500 sm:w-64"
             placeholder="搜索名称 / 地址"
             @input="resetPage"
             @keyup.enter="onKeywordSearch"
           />
         </div>
-        <span class="text-xs text-ink-400">
+        <span class="text-sm text-ink-400">
           共 <span class="font-medium text-ink-700">{{ filtered.length }}</span> 条
         </span>
         <select
           v-model="sort"
-          class="h-9 rounded-[10px] border border-line bg-surface px-3 text-xs text-ink-700 outline-none transition focus:border-brand-500"
+          class="h-10 rounded-[10px] border border-line bg-surface px-3 text-sm text-ink-700 outline-none transition focus:border-brand-500"
           @change="resetPage"
         >
           <option value="default">默认排序</option>
@@ -167,7 +164,7 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
       </div>
     </header>
 
-    <div class="grid gap-5 lg:grid-cols-[248px_1fr]">
+    <div class="grid gap-4 lg:grid-cols-[248px_minmax(0,1fr)]">
       <aside class="lg:sticky lg:top-20 lg:self-start">
         <div class="rounded-card border border-line bg-surface p-4 shadow-card">
           <FilterPanel v-model="filters" :total="filtered.length" @reset="resetPage" />
@@ -175,15 +172,16 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
       </aside>
 
       <section>
-        <div v-if="loading" class="grid gap-3 sm:grid-cols-2">
-          <div v-for="i in 6" :key="i" class="h-[72px] animate-pulse rounded-soft bg-surface" />
+        <div v-if="loading" class="grid gap-3 xl:grid-cols-2">
+          <div v-for="i in 6" :key="i" class="h-24 animate-pulse rounded-soft bg-surface" />
         </div>
 
-        <div v-else-if="paged.items.length" class="grid gap-3 sm:grid-cols-2">
+        <div v-else-if="paged.items.length" class="grid gap-3 xl:grid-cols-2">
           <PoiCard
             v-for="poi in paged.items"
             :key="poi.id"
             :poi="poi"
+            size="list"
             :active="poi.id === selected?.id"
             @click="selected = poi"
           />
@@ -191,23 +189,23 @@ function handleNearby(payload: { poi: Poi; radius: number; branchType: 'all' | '
 
         <div
           v-else
-          class="rounded-card border border-dashed border-line-strong bg-surface px-6 py-16 text-center"
+          class="rounded-card border border-dashed border-line-strong bg-surface px-6 py-12 text-center"
         >
           <p class="text-sm text-ink-600">没有符合条件的点位</p>
           <p class="mt-1 text-xs text-ink-400">试着放宽价格区间或切换图层</p>
         </div>
 
-        <nav v-if="!loading && maxPage > 1" class="mt-5 flex items-center justify-center gap-1.5">
+        <nav v-if="!loading && maxPage > 1" class="mt-4 flex items-center justify-center gap-1.5">
           <button
-            class="h-8 rounded-lg border border-line bg-surface px-3 text-xs text-ink-600 transition hover:border-line-strong disabled:opacity-40"
+            class="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink-600 transition hover:border-line-strong disabled:opacity-40"
             :disabled="page === 1"
             @click="page -= 1"
           >
             上一页
           </button>
-          <span class="px-2 text-xs text-ink-500">{{ page }} / {{ maxPage }}</span>
+          <span class="px-2 text-sm text-ink-500">{{ page }} / {{ maxPage }}</span>
           <button
-            class="h-8 rounded-lg border border-line bg-surface px-3 text-xs text-ink-600 transition hover:border-line-strong disabled:opacity-40"
+            class="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink-600 transition hover:border-line-strong disabled:opacity-40"
             :disabled="page >= maxPage"
             @click="page += 1"
           >

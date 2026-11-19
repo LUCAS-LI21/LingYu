@@ -64,7 +64,7 @@ router.afterEach((to, from, failure) => {
     })
   }
   const title = to.meta.title
-  document.title = typeof title === 'string' ? `${title} · 邻域 POI` : '邻域 POI'
+  document.title = typeof title === 'string' ? `${title} · 邻域` : '邻域'
 })
 
 export default router

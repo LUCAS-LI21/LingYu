@@ -366,7 +366,7 @@ onBeforeUnmount(() => {
     <header class="map-intro__brand">
       <span class="map-intro__logo">邻</span>
       <div>
-        <p class="map-intro__name">邻域 POI</p>
+        <p class="map-intro__name">邻域</p>
         <p class="map-intro__en">NEIGHBORHOOD INTELLIGENCE</p>
       </div>
     </header>
