@@ -226,7 +226,7 @@ def setup_styles(doc):
     normal.paragraph_format.space_before = Pt(0)
     normal.paragraph_format.space_after = Pt(0)
 
-    specs = {1: (H1_PT, True, 9, 4), 2: (BODY_PT, True, 6, 3), 3: (BODY_PT, False, 4, 2), 4: (BODY_PT, False, 3, 1)}
+    specs = {1: (H1_PT, True, 7, 3), 2: (BODY_PT, True, 5, 2), 3: (BODY_PT, False, 4, 2), 4: (BODY_PT, False, 3, 1)}
     for level, (size, bold, before, after) in specs.items():
         st = doc.styles[f"Heading {level}"]
         st.font.name = SONG
@@ -361,7 +361,7 @@ def enable_update_fields(doc):
 CAPTION_RE = re.compile(r"^(表|图)\s*\d+")
 
 
-def add_caption(doc, text, space_before=6, space_after=3, keep_next=False):
+def add_caption(doc, text, space_before=3, space_after=2, keep_next=False):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pf = p.paragraph_format
@@ -376,7 +376,7 @@ def add_caption(doc, text, space_before=6, space_after=3, keep_next=False):
 def add_table(doc, rows):
     cols = max(len(r) for r in rows)
     rows = [r + [""] * (cols - len(r)) for r in rows]
-    size = 9.5 if cols >= 4 else BODY_PT
+    size = 9.5
 
     table = doc.add_table(rows=len(rows), cols=cols)
     table.style = "Table Grid"
@@ -417,7 +417,7 @@ def add_table(doc, rows):
     spacer = doc.add_paragraph()
     spacer.paragraph_format.space_after = Pt(0)
     spacer.paragraph_format.line_spacing = 1.0
-    set_font(spacer.add_run(""), SONG, 6)
+    set_font(spacer.add_run(""), SONG, 4)
 
 
 def add_code(doc, text):
@@ -492,7 +492,7 @@ def add_body(doc, blocks):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(2)
-            p.add_run().add_picture(full, width=Cm(13.2))
+            p.add_run().add_picture(full, width=Cm(12.0))
             add_caption(doc, alt, space_before=2, space_after=6)
         elif kind == "code":
             add_code(doc, payload)
@@ -521,7 +521,7 @@ def estimate_pages(blocks):
             full = os.path.join(ROOT, "docs", "初赛", payload[1])
             with Image.open(full) as im:
                 w, h = im.size
-            cm += 13.2 * h / w + 1.2
+            cm += 12.0 * h / w + 1.2
         elif kind == "code":
             cm += payload.count("\n") * 0.36 + 0.4
     return cm / PAGE_H_CM
