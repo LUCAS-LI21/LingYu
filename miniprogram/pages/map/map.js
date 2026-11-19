@@ -1,5 +1,5 @@
 const { get } = require('../../utils/api')
-const { normalizePoi, normalizePoiList, normalizeSource } = require('../../utils/poi')
+const { normalizePoi, normalizePoiList } = require('../../utils/poi')
 const { openLocation, callPhone } = require('../../utils/nav')
 const {
   formatPrice,
@@ -39,15 +39,6 @@ const DISTRICT_CENTERS = {
   大鹏新区: { latitude: 22.596, longitude: 114.479 },
 }
 
-const FIELD_LABELS = {
-  address: '地址',
-  phone: '电话',
-  openingHours: '营业时间',
-  name: '名称',
-  builtYear: '建成年份',
-  avgPrice: '均价',
-  propertyFee: '物业费',
-}
 
 Page({
   data: {
@@ -73,7 +64,6 @@ Page({
     selectedOpen: false,
     selectedLoading: false,
     nearby: [],
-    sources: [],
     formatted: {},
     nearbyTitle: '附近点位',
   },
@@ -252,7 +242,6 @@ Page({
       selectedOpen: true,
       selectedLoading: true,
       nearby: [],
-      sources: [],
       formatted: this.buildFormatted(poi),
       nearbyTitle: poi.type === 'community' ? '最近银行' : '周边小区',
     })
@@ -286,10 +275,7 @@ Page({
 
   async loadSelectedDetail(poi) {
     try {
-      const tasks = [
-        get('/pois/' + encodeURIComponent(poi.id)),
-        get('/pois/' + encodeURIComponent(poi.id) + '/sources').catch(() => []),
-      ]
+      const tasks = [get('/pois/' + encodeURIComponent(poi.id))]
       if (poi.type === 'community') {
         tasks.push(
           get('/pois/' + encodeURIComponent(poi.id) + '/nearest-banks', {
@@ -306,15 +292,9 @@ Page({
         )
       }
 
-      const [detailRaw, sourceRows, nearbyRaw] = await Promise.all(tasks)
+      const [detailRaw, nearbyRaw] = await Promise.all(tasks)
       const detail = normalizePoi(detailRaw) || poi
-      const sources = (sourceRows || []).map((row) => {
-        const source = normalizeSource(row)
-        return Object.assign(source, {
-          label: FIELD_LABELS[source.field] || source.field,
-          date: source.updatedAt ? String(source.updatedAt).slice(0, 10) : '—',
-        })
-      })
+
       const nearbyRows = nearbyRaw && nearbyRaw.items ? nearbyRaw.items : []
       const nearby = nearbyRows.map((row) => {
         const item = row.poi ? normalizePoi(row.poi) : normalizePoi(row)
@@ -333,7 +313,6 @@ Page({
         selected: detail,
         selectedLoading: false,
         nearby,
-        sources,
         formatted: this.buildFormatted(detail),
       })
     } catch (error) {
@@ -350,7 +329,6 @@ Page({
       selected: null,
       selectedOpen: false,
       nearby: [],
-      sources: [],
     })
   },
 
@@ -404,7 +382,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '邻域 POI · 深圳银行网点与小区地图',
+      title: '邻域 · 深圳银行网点与小区地图',
       path: '/pages/map/map',
     }
   },

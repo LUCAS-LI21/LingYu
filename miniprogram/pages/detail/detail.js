@@ -101,7 +101,7 @@ Page({
     if (poi.rentGc) parts.push('高层 ' + Number(poi.rentGc).toFixed(1))
     if (poi.rentDc) parts.push('多层 ' + Number(poi.rentDc).toFixed(1))
     if (poi.rentDmd) parts.push('低密度 ' + Number(poi.rentDmd).toFixed(1))
-    return parts.length ? parts.join(' / ') + ' 元/㎡·月（政府参考）' : ''
+    return parts.length ? parts.join(' / ') + ' 元/㎡·月' : ''
   },
 
   async loadExtras(poi) {
@@ -217,9 +217,9 @@ Page({
   },
 
   onShareAppMessage() {
-    if (!this.data.poi) return { title: '邻域 POI', path: '/pages/map/map' }
+    if (!this.data.poi) return { title: '邻域', path: '/pages/map/map' }
     return {
-      title: this.data.poi.name + ' · 邻域 POI',
+      title: this.data.poi.name + ' · 邻域',
       path: '/pages/detail/detail?id=' + encodeURIComponent(this.data.poi.id),
     }
   },

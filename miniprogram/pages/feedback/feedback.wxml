@@ -1,8 +1,8 @@
 <view class="page">
   <view wx:if="{{record}}" class="card card-pad success-card fade-up">
     <view class="success-icon">✓</view>
-    <text class="success-title">反馈已进入审核队列</text>
-    <text class="success-sub">感谢你帮忙完善数据，运营会尽快核对。</text>
+    <text class="success-title">反馈已提交</text>
+    <text class="success-sub">我们会尽快核对，感谢你的帮助。</text>
 
     <view class="receipt mt-20">
       <view class="between">
@@ -32,7 +32,7 @@
   <block wx:else>
     <view>
       <text class="h1">纠错 / 补充</text>
-      <text class="muted">低风险字段先以「用户提供」展示，其余进入运营审核</text>
+      <text class="muted">告诉我们哪里不对，我们会尽快处理</text>
     </view>
 
     <view class="notice notice-mint mt-16">
@@ -169,7 +169,7 @@
       >
         {{submitting ? '提交中…' : (selected ? '提交反馈' : '请先选择点位')}}
       </button>
-      <text class="submit-note">提交即表示你同意平台在审核与数据完善范围内使用该信息。</text>
+      <text class="submit-note">提交后我们会核对你的反馈。</text>
     </view>
   </block>
 </view>

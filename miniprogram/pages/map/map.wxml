@@ -4,7 +4,7 @@
       <view class="row gap-16">
         <view class="logo">邻</view>
         <view>
-          <text class="brand-title">邻域 POI</text>
+          <text class="brand-title">邻域</text>
           <text class="brand-sub">NEIGHBORHOOD INTELLIGENCE</text>
         </view>
       </view>
@@ -96,7 +96,6 @@
     <view class="legend-row">
       <view class="legend-item"><view class="legend-dot legend-bank"></view>银行网点</view>
       <view class="legend-item"><view class="legend-dot legend-community"></view>住宅小区</view>
-      <view class="legend-note">坐标 GCJ-02 · 数据不落第三方</view>
     </view>
   </view>
 
@@ -202,20 +201,6 @@
               <text class="nearby-address">{{item.address || '地址待补充'}}</text>
             </view>
             <text class="nearby-distance">{{item.distance}}</text>
-          </view>
-        </view>
-
-        <view wx:if="{{sources.length}}" class="mt-20">
-          <view class="between mb-12">
-            <text class="section-title">数据来源</text>
-            <text class="tiny">{{sources.length}} 个字段</text>
-          </view>
-          <view wx:for="{{sources}}" wx:key="field" class="source-row">
-            <text class="source-field">{{item.label}}</text>
-            <view class="grow">
-              <text class="source-name">{{item.source}}</text>
-              <text class="tiny">{{item.date}}</text>
-            </view>
           </view>
         </view>
 

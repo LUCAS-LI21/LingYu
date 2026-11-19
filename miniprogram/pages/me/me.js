@@ -1,24 +1,24 @@
-const { APP_VERSION, API_BASE } = require('../../config')
+const { APP_VERSION } = require('../../config')
 const { getProfile, saveProfile, listFeedback } = require('../../utils/feedback-store')
 
 Page({
   data: {
     nickname: '',
     contact: '',
+    avatarText: '访',
     saved: false,
     feedbackCount: 0,
     pendingCount: 0,
     version: APP_VERSION,
-    apiBase: API_BASE,
-    quickActions: [
-      { key: 'feedback', label: '纠错 / 补充', hint: '提交后会进审核队列', icon: '修' },
-      { key: 'history', label: '我的反馈', hint: '查看本机提交记录', icon: '记' },
-      { key: 'compliance', label: '数据说明', hint: '来源、坐标与合规', icon: '源' },
-      { key: 'admin', label: '管理后台', hint: '运营登录后可审核', icon: '管' },
+    services: [
+      { key: 'feedback', label: '纠错 / 补充', hint: '发现信息不准，告诉我们就好', icon: '修' },
+      { key: 'history', label: '我的反馈', hint: '查看提交记录与处理进度', icon: '记' },
+      { key: 'compliance', label: '数据说明', hint: '了解数据来自哪里', icon: '源' },
     ],
-    dataLinks: [
-      { key: 'pending', label: '待定位小区', hint: '有地址、缺坐标，可实地确认', icon: '待' },
-      { key: 'land', label: '存量住宅用地', hint: '政府开放数据 · 宗地级', icon: '地' },
+    explore: [
+      { key: 'pending', label: '待定位小区', hint: '帮小区补上地图位置', icon: '定' },
+      { key: 'land', label: '存量住宅用地', hint: '查看深圳住宅用地信息', icon: '地' },
+      { key: 'hotspots', label: '查询热点', hint: '看看大家最近在找什么', icon: '热' },
     ],
   },
 
@@ -28,13 +28,18 @@ Page({
     this.setData({
       nickname: profile.nickname,
       contact: profile.contact,
+      avatarText: profile.nickname ? profile.nickname.slice(0, 1) : '访',
       feedbackCount: history.length,
       pendingCount: history.filter((item) => item.status === 'pending').length,
     })
   },
 
   onNickname(e) {
-    this.setData({ nickname: e.detail.value })
+    const nickname = e.detail.value
+    this.setData({
+      nickname,
+      avatarText: nickname.trim() ? nickname.trim().slice(0, 1) : '访',
+    })
   },
 
   onContact(e) {
@@ -47,11 +52,11 @@ Page({
       contact: this.data.contact.trim(),
     })
     if (!ok) {
-      wx.showToast({ title: '存储不可用，未保存', icon: 'none' })
+      wx.showToast({ title: '保存失败，请稍后再试', icon: 'none' })
       return
     }
     this.setData({ saved: true })
-    wx.showToast({ title: '本机档案已保存', icon: 'success' })
+    wx.showToast({ title: '已保存', icon: 'success' })
     setTimeout(() => this.setData({ saved: false }), 1800)
   },
 
@@ -63,10 +68,11 @@ Page({
     else if (key === 'admin') wx.navigateTo({ url: '/pages/admin/admin' })
   },
 
-  onDataLink(e) {
+  onExplore(e) {
     const key = e.currentTarget.dataset.key
     if (key === 'pending') wx.navigateTo({ url: '/pages/pending/pending' })
     else if (key === 'land') wx.navigateTo({ url: '/pages/land/land' })
+    else if (key === 'hotspots') wx.navigateTo({ url: '/pages/hotspots/hotspots' })
   },
 
   goMap() {
@@ -79,7 +85,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '邻域 POI · 深圳银行网点与小区情报',
+      title: '邻域 · 深圳银行网点与小区情报',
       path: '/pages/map/map',
     }
   },

@@ -2,7 +2,7 @@
   <view class="between">
     <view>
       <text class="h1">存量住宅用地</text>
-      <text class="muted">政府开放数据 · 宗地级，不参与地图 POI 展示</text>
+      <text class="muted">深圳住宅用地信息，供参考</text>
     </view>
     <button class="btn btn-sm btn-ghost" bindtap="refresh">刷新</button>
   </view>
@@ -89,6 +89,6 @@
         <text class="tiny">{{item.supplyDate || ''}}</text>
       </view>
     </view>
-    <text class="land-note">数据来源：深圳市政府数据开放平台 29200/00303565 · 共 {{total}} 宗</text>
+    <text class="land-note">数据来自深圳市公开数据 · 共 {{total}} 宗</text>
   </view>
 </view>

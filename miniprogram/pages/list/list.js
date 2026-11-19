@@ -303,7 +303,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '邻域 POI · 深圳银行网点与小区列表',
+      title: '邻域 · 深圳银行网点与小区列表',
       path: '/pages/list/list',
     }
   },

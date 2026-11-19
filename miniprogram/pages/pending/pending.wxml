@@ -1,11 +1,11 @@
 <view class="page">
   <view>
     <text class="h1">待定位小区</text>
-    <text class="muted">有名称与地址、缺坐标，暂不进入地图</text>
+    <text class="muted">这些小区还没在地图上标记位置</text>
   </view>
 
   <view class="notice mt-16">
-    <text>坐标只能靠实地确认产生。点击「在地图上选点」，选到小区门口后提交；审核通过即转正。</text>
+    <text>点击「在地图上选点」，选到小区门口提交，审核通过后就会出现在地图上。</text>
   </view>
 
   <view class="pending-kpis mt-16">
@@ -19,7 +19,7 @@
     </view>
     <view class="pending-kpi">
       <text class="pending-value">政府</text>
-      <text class="pending-label">物业管理区域数据</text>
+      <text class="pending-label">待补充位置</text>
     </view>
   </view>
 

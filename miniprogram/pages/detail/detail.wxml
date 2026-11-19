@@ -34,7 +34,7 @@
             {{poi.type === 'community' ? '住宅小区' : (poi.branchType === 'atm' ? '银行 ATM' : '银行网点')}}
           </text>
           <text class="tag tag-gray">{{poi.district || '深圳'}}</text>
-          <text wx:if="{{poi.demoAttributes}}" class="tag tag-amber">演示字段</text>
+          <text wx:if="{{poi.demoAttributes}}" class="tag tag-amber">仅供参考</text>
         </view>
         <text class="detail-title mt-8">{{poi.name}}</text>
       </view>
@@ -45,18 +45,12 @@
       <text class="grow">{{poi.address || '地址待补充，欢迎纠错'}}</text>
       <text class="tiny">复制</text>
     </view>
-
-    <view class="hero-meta mt-16">
-      <text class="tiny">来源 {{poi.source}}</text>
-      <text wx:if="{{poi.license}}" class="tiny">· {{poi.license}}</text>
-      <text class="tiny">· 坐标已转 GCJ-02</text>
-    </view>
   </view>
 
   <view wx:if="{{poi.type === 'community'}}" class="card card-pad mt-20">
     <view class="section-head">
       <text class="section-title">小区画像</text>
-      <text class="section-sub">政府开放数据 + 用户补充</text>
+      <text class="section-sub">基本情况</text>
     </view>
     <view class="metric-grid">
       <view class="metric">
@@ -103,7 +97,6 @@
   <view wx:if="{{poi.type === 'bank'}}" class="card card-pad mt-20">
     <view class="section-head">
       <text class="section-title">网点信息</text>
-      <text class="section-sub">数据持续采集中</text>
     </view>
     <view class="kv-row">
       <text class="kv-key">所属品牌</text>
@@ -141,7 +134,6 @@
   <view class="card card-pad mt-20">
     <view class="section-head">
       <text class="section-title">实时地址</text>
-      <text class="section-sub">高德 L2 · 不落库</text>
     </view>
     <view class="row gap-12">
       <button class="btn btn-sm btn-ghost" bindtap="loadLiveAddress">
@@ -176,8 +168,8 @@
 
   <view wx:if="{{sources.length}}" class="card card-pad mt-20">
     <view class="section-head">
-      <text class="section-title">字段级来源</text>
-      <text class="section-sub">回答「这条数据从哪来」</text>
+      <text class="section-title">信息来源</text>
+      <text class="section-sub">记录信息来自哪里</text>
     </view>
     <view wx:for="{{sources}}" wx:key="field" class="source-row">
       <text class="source-field">{{item.label}}</text>

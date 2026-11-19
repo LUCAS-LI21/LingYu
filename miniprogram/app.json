@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/intro/intro",
     "pages/map/map",
     "pages/list/list",
     "pages/stats/stats",
@@ -16,7 +17,7 @@
   "window": {
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "邻域 POI",
+    "navigationBarTitleText": "邻域",
     "backgroundColor": "#f4f6f9",
     "backgroundTextStyle": "dark"
   },

@@ -200,7 +200,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '邻域 POI · 深圳银行与小区数据洞察',
+      title: '邻域 · 深圳银行与小区数据洞察',
       path: '/pages/stats/stats',
     }
   },

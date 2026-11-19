@@ -216,7 +216,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '邻域 POI · 一起完善银行与小区数据',
+      title: '邻域 · 一起完善银行与小区数据',
       path: '/pages/feedback/feedback',
     }
   },
