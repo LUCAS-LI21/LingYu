@@ -629,7 +629,5 @@ Page({
     wx.navigateTo({ url: '/pages/pending/pending' })
   },
 
-  goCompliance() {
-    wx.navigateTo({ url: '/pages/compliance/compliance' })
-  },
+
 })

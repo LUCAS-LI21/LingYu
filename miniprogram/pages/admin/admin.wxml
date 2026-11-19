@@ -111,7 +111,6 @@
           <button class="btn btn-sm btn-ghost" bindtap="goFeedback">代录纠错</button>
           <button class="btn btn-sm btn-ghost" bindtap="goPending">待定位小区</button>
           <button class="btn btn-sm btn-ghost" bindtap="goLand">存量用地</button>
-          <button class="btn btn-sm btn-ghost" bindtap="goCompliance">数据说明</button>
         </view>
       </view>
 

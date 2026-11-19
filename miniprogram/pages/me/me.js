@@ -13,7 +13,6 @@ Page({
     services: [
       { key: 'feedback', label: '纠错 / 补充', hint: '发现信息不准，告诉我们就好', icon: '修' },
       { key: 'history', label: '我的反馈', hint: '查看提交记录与处理进度', icon: '记' },
-      { key: 'compliance', label: '数据说明', hint: '了解数据来自哪里', icon: '源' },
     ],
     explore: [
       { key: 'pending', label: '待定位小区', hint: '帮小区补上地图位置', icon: '定' },
@@ -64,7 +63,6 @@ Page({
     const key = e.currentTarget.dataset.key
     if (key === 'feedback') wx.navigateTo({ url: '/pages/feedback/feedback' })
     else if (key === 'history') wx.navigateTo({ url: '/pages/history/history' })
-    else if (key === 'compliance') wx.navigateTo({ url: '/pages/compliance/compliance' })
     else if (key === 'admin') wx.navigateTo({ url: '/pages/admin/admin' })
   },
 
