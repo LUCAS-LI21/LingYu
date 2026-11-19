@@ -135,6 +135,7 @@
           <view class="metric">
             <text class="metric-value">{{formatted.price}}</text>
             <text class="metric-label">参考均价</text>
+            <text wx:if="{{formatted.priceNote}}" class="metric-hint">{{formatted.priceNote}}</text>
           </view>
           <view class="metric">
             <text class="metric-value">{{formatted.year}}</text>

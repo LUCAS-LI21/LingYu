@@ -183,10 +183,14 @@ Page({
 
   decorate(poi) {
     if (poi.type === 'community') {
+      const priceValue = poi.avgPrice || poi.avgPriceDemo
+      const priceText = priceValue
+        ? formatPrice(priceValue) + (poi.avgPrice ? '' : '（示意）')
+        : '价格待补充'
       return Object.assign({}, poi, {
         typeText: '住宅小区',
         tagClass: 'tag-amber',
-        meta: (poi.builtYear ? poi.builtYear + ' 年建' : '年份待补充') + ' · ' + formatPrice(poi.avgPrice),
+        meta: (poi.builtYear ? poi.builtYear + ' 年建' : '年份待补充') + ' · ' + priceText,
         extra: poi.propertyCompany ? '物业 ' + poi.propertyCompany : '物业信息待补充',
         thumb: '宅',
       })

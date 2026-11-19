@@ -68,8 +68,19 @@ Page({
   buildFormatted(poi) {
     if (!poi) return {}
     if (poi.type === 'community') {
+      const hasRealPrice = Boolean(poi.avgPrice)
+      const priceValue = poi.avgPrice || poi.avgPriceDemo
       return {
-        price: formatPrice(poi.avgPrice),
+        price: formatPrice(priceValue),
+        priceNote: hasRealPrice
+          ? poi.avgPriceSource === 'gov_reference'
+            ? '官方成交参考价'
+            : ''
+          : poi.avgPriceDemo
+            ? '示意均价，不参与筛选'
+            : '暂无均价',
+        rent: this.rentText(poi),
+        developer: poi.developer || '',
         fee: formatFee(poi.propertyFee),
         year: poi.builtYear ? poi.builtYear + ' 年' : '—',
         nearest: poi.nearestBankM ? formatDistance(poi.nearestBankM) : '—',
@@ -83,6 +94,14 @@ Page({
       phone: poi.phone || '—',
       hours: poi.openingHours || '—',
     }
+  },
+
+  rentText(poi) {
+    const parts = []
+    if (poi.rentGc) parts.push('高层 ' + Number(poi.rentGc).toFixed(1))
+    if (poi.rentDc) parts.push('多层 ' + Number(poi.rentDc).toFixed(1))
+    if (poi.rentDmd) parts.push('低密度 ' + Number(poi.rentDmd).toFixed(1))
+    return parts.length ? parts.join(' / ') + ' 元/㎡·月（政府参考）' : ''
   },
 
   async loadExtras(poi) {

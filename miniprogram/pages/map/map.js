@@ -262,8 +262,16 @@ Page({
   buildFormatted(poi) {
     if (!poi) return {}
     if (poi.type === 'community') {
+      const priceValue = poi.avgPrice || poi.avgPriceDemo
       return {
-        price: formatPrice(poi.avgPrice),
+        price: formatPrice(priceValue),
+        priceNote: poi.avgPrice
+          ? poi.avgPriceSource === 'gov_reference'
+            ? '官方参考价'
+            : ''
+          : poi.avgPriceDemo
+            ? '示意均价'
+            : '',
         fee: poi.propertyFee === null ? '—' : Number(poi.propertyFee).toFixed(2) + ' 元/㎡·月',
         year: poi.builtYear ? poi.builtYear + ' 年' : '—',
         nearest: poi.nearestBankM ? formatDistance(poi.nearestBankM) : '—',

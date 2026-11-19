@@ -38,7 +38,7 @@
     </button>
 
     <view class="login-hint mt-20">
-      <text class="tiny">演示账号：operator / operator123</text>
+      <text class="tiny">演示账号：operator；口令由后端 OPERATOR_PASSWORD 配置</text>
       <text class="tiny">登录后可审核反馈、查看 Agent 建议与抓取任务</text>
     </view>
   </view>

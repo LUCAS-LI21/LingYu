@@ -62,6 +62,7 @@
       <view class="metric">
         <text class="metric-value">{{formatted.price}}</text>
         <text class="metric-label">参考均价</text>
+        <text wx:if="{{formatted.priceNote}}" class="metric-hint">{{formatted.priceNote}}</text>
       </view>
       <view class="metric">
         <text class="metric-value">{{formatted.year}}</text>
@@ -75,6 +76,14 @@
 
     <view class="divider"></view>
 
+    <view wx:if="{{formatted.rent}}" class="kv-row">
+      <text class="kv-key">参考租金</text>
+      <text class="kv-value">{{formatted.rent}}</text>
+    </view>
+    <view wx:if="{{formatted.developer}}" class="kv-row">
+      <text class="kv-key">建设单位</text>
+      <text class="kv-value">{{formatted.developer}}</text>
+    </view>
     <view class="kv-row">
       <text class="kv-key">物业公司</text>
       <text class="kv-value">{{poi.propertyCompany || '暂无物业公司信息'}}</text>
