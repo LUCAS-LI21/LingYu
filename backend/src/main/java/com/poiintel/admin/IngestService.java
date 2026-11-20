@@ -431,6 +431,17 @@ public class IngestService {
         if (rows.isEmpty()) {
             return new int[0];
         }
+        // 名称闸门：OSM 里「29栋 / 36小区」这类单栋楼编号不是完整小区名，
+        // 入库会让第一屏看起来像没审核，直接丢弃并计数（审计可查 ingest_job.failed_count）
+        int before = rows.size();
+        rows.removeIf(row -> row.length > 1 && com.poiintel.common.NameQuality.isBuildingLike(
+                row[1] == null ? null : String.valueOf(row[1])));
+        if (rows.size() < before) {
+            log.warn("[ingest] 小区名称闸门拦截 {} 条楼栋编号（如 29栋 / 36小区）", before - rows.size());
+        }
+        if (rows.isEmpty()) {
+            return new int[0];
+        }
         return jdbcTemplate.batchUpdate("""
                 INSERT INTO poi_community
                     (id, name, address, district, lng, lat, built_year, avg_price_demo, property_fee,

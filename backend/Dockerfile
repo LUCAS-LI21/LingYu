@@ -8,7 +8,7 @@ COPY pom.xml ./
 RUN mvn -B -q dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -q -DskipTests package
+RUN mvn -B -q -Dmaven.test.skip=true package
 
 
 # ---------- 运行阶段 ----------

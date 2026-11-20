@@ -67,7 +67,7 @@ services:
       LIVE_MIN_INTERVAL_MS: ${LIVE_MIN_INTERVAL_MS:-200}
       # Agent（可选）：不配置则「Agent 建议」为空，不影响主流程
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
-      AGENT_ENABLED: ${AGENT_ENABLED:-false}
+      AGENT_SCHEDULE_ENABLED: ${AGENT_SCHEDULE_ENABLED:-false}
       TZ: Asia/Shanghai
     extra_hosts:
       # Linux 上也能解析 host.docker.internal

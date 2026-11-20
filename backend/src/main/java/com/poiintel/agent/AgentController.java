@@ -41,6 +41,12 @@ public class AgentController {
         return ApiResult.ok(deepSeekClient.status());
     }
 
+    /** 数据质量巡检：楼栋编号、纯数字、过短名称（规则版，不消耗大模型配额） */
+    @GetMapping("/quality")
+    public ApiResult<Map<String, Object>> quality() {
+        return ApiResult.ok(agentService.quality());
+    }
+
     @PostMapping("/propose")
     public ApiResult<Map<String, Object>> propose(
             @RequestParam String entityType,

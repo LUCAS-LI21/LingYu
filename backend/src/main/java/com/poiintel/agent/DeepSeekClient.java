@@ -41,6 +41,9 @@ public class DeepSeekClient {
     @Value("${app.agent.base-url:https://api.deepseek.com}")
     private String baseUrl;
 
+    @Value("${app.agent.schedule-enabled:false}")
+    private boolean scheduleEnabled;
+
     @Value("${app.agent.model:deepseek-flash}")
     private String model;
 
@@ -130,6 +133,7 @@ public class DeepSeekClient {
         map.put("enabled", enabled());
         map.put("model", model);
         map.put("baseUrl", baseUrl);
+        map.put("scheduleEnabled", scheduleEnabled);
         return map;
     }
 }

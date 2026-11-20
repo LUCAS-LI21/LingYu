@@ -59,3 +59,20 @@ export const proposeAgentField = (entityType: string, entityId: string, field: s
 
 export const applyAgentRun = (runId: number) =>
   apiRequest<AgentApplyResult>(`/admin/agent/${runId}/apply`, { method: 'POST' })
+
+export interface AgentQualityItem {
+  id: string
+  name: string
+  district?: string
+  source?: string
+  reason: string
+}
+
+export interface AgentQuality {
+  checked: number
+  flagged: number
+  items: AgentQualityItem[]
+}
+
+/** 数据质量巡检（规则版）：楼栋编号 / 纯数字 / 过短名称 */
+export const fetchAgentQuality = () => apiRequest<AgentQuality>('/admin/agent/quality')

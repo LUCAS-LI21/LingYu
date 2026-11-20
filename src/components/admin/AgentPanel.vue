@@ -3,11 +3,13 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import {
   applyAgentRun,
+  fetchAgentQuality,
   fetchAgentRuns,
   fetchAgentStatus,
   proposeAgentField,
   type AgentProposal,
   type AgentProposeResult,
+  type AgentQuality,
   type AgentRunRow,
   type AgentStatus,
 } from '@/api/agent'
@@ -28,6 +30,8 @@ const statusLoading = ref(true)
 const runs = ref<AgentRunRow[]>([])
 const runsLoading = ref(false)
 const error = ref('')
+const quality = ref<AgentQuality | null>(null)
+const qualityLoading = ref(false)
 
 const keyword = ref('')
 const results = ref<Poi[]>([])
@@ -224,6 +228,17 @@ async function refreshAll(): Promise<void> {
   await Promise.all([loadStatus(), loadRuns()])
 }
 
+async function runQuality(): Promise<void> {
+  qualityLoading.value = true
+  try {
+    quality.value = await fetchAgentQuality()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : '巡检失败'
+  } finally {
+    qualityLoading.value = false
+  }
+}
+
 async function runPropose(): Promise<void> {
   if (!selected.value || !status.value?.enabled) return
   proposing.value = true
@@ -271,6 +286,7 @@ watch(keyword, (value) => runSearch(value))
 onMounted(() => {
   void loadStatus()
   void loadRuns()
+  void runQuality()
 })
 
 onBeforeUnmount(() => {
@@ -337,6 +353,50 @@ onBeforeUnmount(() => {
       >
         {{ error }}
       </p>
+    </section>
+
+    <!-- 数据质量巡检：规则版，不消耗大模型 -->
+    <section class="rounded-card border border-line bg-surface shadow-card">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
+        <div>
+          <p class="text-sm font-semibold text-ink-900">数据质量巡检</p>
+          <p class="mt-0.5 text-[11px] text-ink-400">
+            扫描楼栋编号 / 纯数字等可疑名称，结果只作待处理清单，不自动改库
+          </p>
+        </div>
+        <button
+          class="rounded-lg border border-line px-2.5 py-1 text-[11px] text-ink-600 transition hover:border-brand-500/50 hover:text-brand-600 disabled:opacity-50"
+          :disabled="qualityLoading"
+          @click="runQuality"
+        >
+          {{ qualityLoading ? '巡检中…' : '开始巡检' }}
+        </button>
+      </div>
+      <div class="px-4 py-3">
+        <p class="text-xs text-ink-600">
+          已检查
+          <span class="font-medium text-ink-900">{{ quality?.checked ?? '—' }}</span> 个小区，
+          发现问题
+          <span class="font-medium" :class="quality?.flagged ? 'text-amber-600' : 'text-mint-600'">
+            {{ quality?.flagged ?? '—' }}
+          </span>
+          个
+        </p>
+        <ul v-if="quality?.items?.length" class="mt-2 space-y-1">
+          <li
+            v-for="item in quality.items.slice(0, 6)"
+            :key="item.id"
+            class="flex items-center justify-between gap-2 text-[11px] text-ink-500"
+          >
+            <span class="truncate"
+              >{{ item.name }}<span class="text-ink-400"> · {{ item.district || '—' }}</span></span
+            >
+            <span class="shrink-0 rounded bg-amber-50 px-1.5 py-0.5 text-amber-600">{{
+              item.reason
+            }}</span>
+          </li>
+        </ul>
+      </div>
     </section>
 
     <div class="grid gap-4 lg:grid-cols-[minmax(0,390px)_minmax(0,1fr)]">

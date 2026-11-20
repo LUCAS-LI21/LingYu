@@ -297,6 +297,34 @@ public class AgentService {
     }
 
     /**
+     * 数据质量巡检（规则版，不调大模型）：
+     * 扫描小区名里的楼栋编号、纯数字等，给出待处理清单。
+     * 这是「Agent 审核数据」的第一道闸门——比事后靠人翻列表可靠。
+     */
+    public Map<String, Object> quality() {
+        List<Map<String, Object>> flagged = jdbcTemplate.queryForList("""
+                SELECT id, name, district, source,
+                       CASE
+                         WHEN name REGEXP '^[0-9]{1,4}[[:space:]]*(栋|号楼|单元|座|号|小区)$' THEN '楼栋编号'
+                         WHEN name REGEXP '^[0-9]+$' THEN '纯数字'
+                         ELSE '可疑'
+                       END AS reason
+                FROM poi_community
+                WHERE status <> 'closed'
+                  AND (name REGEXP '^[0-9]{1,4}[[:space:]]*(栋|号楼|单元|座|号|小区)$'
+                       OR name REGEXP '^[0-9]+$')
+                ORDER BY id
+                LIMIT 50
+                """);
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("checked", jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM poi_community WHERE status <> 'closed'", Integer.class));
+        result.put("flagged", flagged.size());
+        result.put("items", flagged);
+        return result;
+    }
+
+    /**
      * 批量补全：挑出缺该字段的实体，逐个跑 propose。
      * 只出建议、不写库；返回各类结果计数，便于判断要不要继续投人审。
      */

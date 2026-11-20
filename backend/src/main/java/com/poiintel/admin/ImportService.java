@@ -358,6 +358,11 @@ public class ImportService {
                     blankTo(row.district(), ""), row.lng(), row.lat(),
                     blankTo(row.phone(), ""), blankTo(row.openingHours(), ""), source, license);
         } else {
+            // 名称闸门：楼栋编号（29栋 / 36小区）不进库，避免列表第一屏全是编号
+            if (com.poiintel.common.NameQuality.isBuildingLike(row.name())) {
+                log.warn("[import] 跳过楼栋编号名称：{}", row.name());
+                return;
+            }
             jdbcTemplate.update("""
                     INSERT INTO poi_community (id, name, address, district, lng, lat, built_year, avg_price,
                                                property_fee, property_company, water_saving_year,
