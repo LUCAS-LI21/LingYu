@@ -23,7 +23,7 @@ const route = useRoute()
 const pois = ref<Poi[]>([])
 const loading = ref(true)
 const filters = ref<Filters>({ ...DEFAULT_FILTERS })
-const sort = ref<'default' | 'name' | 'priceAsc' | 'priceDesc' | 'yearDesc'>('default')
+const sort = ref<'quality' | 'name' | 'priceAsc' | 'priceDesc' | 'yearDesc'>('quality')
 const page = ref(1)
 const pageSize = 12
 const selected = ref<Poi | null>(null)
@@ -163,7 +163,7 @@ async function handleNearby(payload: {
           class="h-10 rounded-[10px] border border-line bg-surface px-3 text-sm text-ink-700 outline-none transition focus:border-brand-500"
           @change="resetPage"
         >
-          <option value="default">默认排序</option>
+          <option value="quality">数据完整度优先</option>
           <option value="priceDesc">均价从高到低</option>
           <option value="priceAsc">均价从低到高</option>
           <option value="yearDesc">建成年份从新到旧</option>

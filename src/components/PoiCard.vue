@@ -43,7 +43,7 @@ const subtitle = computed(() => {
   <button
     type="button"
     data-testid="poi-card"
-    class="group flex w-full items-start rounded-soft border bg-surface text-left transition-all duration-150"
+    class="group flex w-full min-w-0 items-start overflow-hidden rounded-soft border bg-surface text-left transition-all duration-150"
     :class="[
       isList ? 'gap-4 p-4' : 'gap-3 p-3',
       active
@@ -114,17 +114,17 @@ const subtitle = computed(() => {
       </span>
 
       <span
-        class="flex items-center gap-2 text-ink-400"
+        class="flex min-w-0 items-center gap-2 text-ink-400"
         :class="isList ? 'mt-2 text-xs' : 'mt-1 text-[11px]'"
       >
-        <span>{{ poi.district }}</span>
+        <span class="shrink-0">{{ poi.district }}</span>
         <span
           v-if="poi.type === 'bank' && !poi.address"
           class="shrink-0 tabular-nums text-ink-400/80"
         >
           #{{ poi.id.slice(-4) }}
         </span>
-        <span v-if="subtitle" class="truncate">{{ subtitle }}</span>
+        <span v-if="subtitle" class="min-w-0 truncate">{{ subtitle }}</span>
       </span>
     </span>
 

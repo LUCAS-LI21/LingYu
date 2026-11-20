@@ -29,7 +29,13 @@
         CAST(NULL AS DECIMAL(8,2)) AS rent_gc,
         CAST(NULL AS DECIMAL(8,2)) AS rent_dmd,
         CAST(NULL AS CHAR(64)) AS developer,
-        0 AS demo_attributes, source, license, source_level, updated_at
+        0 AS demo_attributes, source, license, source_level, updated_at,
+        (
+            (address IS NOT NULL AND address != '') * 2
+            + (phone IS NOT NULL AND phone != '')
+            + (opening_hours IS NOT NULL AND opening_hours != '')
+            + (brand IS NOT NULL AND brand != '')
+        ) AS quality_score
     </sql>
 
     <sql id="communityCols">
@@ -40,7 +46,15 @@
         property_fee, property_company, water_saving_year,
         surround_bank_count, surround_atm_count, nearest_bank_m, nearby_brand_count,
         rent_dc, rent_gc, rent_dmd, developer,
-        demo_attributes, source, license, source_level, updated_at
+        demo_attributes, source, license, source_level, updated_at,
+        (
+            (address IS NOT NULL AND address != '') * 2
+            + (avg_price IS NOT NULL) * 2
+            + (built_year IS NOT NULL)
+            + (property_fee IS NOT NULL)
+            + (developer IS NOT NULL AND developer != '')
+            + (rent_dc IS NOT NULL OR rent_gc IS NOT NULL OR rent_dmd IS NOT NULL)
+        ) AS quality_score
     </sql>
 
     <!-- 两类点位共用的过滤条件（name/address/district/bbox） -->
@@ -97,18 +111,33 @@
          5000 行 × 28 列 ≈ 2.7MB；精简后约 0.9MB，首屏渲染明显更快。
          详情接口仍走完整投影，字段不缺。 -->
     <sql id="bankLiteCols">
-        id, 'bank' AS type, name, district, lng, lat, brand, branch_type,
+        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
         CAST(NULL AS SIGNED) AS built_year, CAST(NULL AS SIGNED) AS avg_price,
         CAST(NULL AS CHAR(32)) AS avg_price_source, CAST(NULL AS SIGNED) AS avg_price_demo,
         CAST(NULL AS DECIMAL(6,1)) AS property_fee, CAST(NULL AS CHAR(64)) AS property_company,
-        0 AS demo_attributes
+        0 AS demo_attributes,
+        (
+            (address IS NOT NULL AND address != '') * 2
+            + (phone IS NOT NULL AND phone != '')
+            + (opening_hours IS NOT NULL AND opening_hours != '')
+            + (brand IS NOT NULL AND brand != '')
+        ) AS quality_score
     </sql>
 
     <sql id="communityLiteCols">
-        id, 'community' AS type, name, district, lng, lat,
+        id, 'community' AS type, name, address, district, lng, lat,
         CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
+        CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
         built_year, avg_price, avg_price_source, avg_price_demo,
-        property_fee, property_company, demo_attributes
+        property_fee, property_company, demo_attributes,
+        (
+            (address IS NOT NULL AND address != '') * 2
+            + (avg_price IS NOT NULL) * 2
+            + (built_year IS NOT NULL)
+            + (property_fee IS NOT NULL)
+            + (developer IS NOT NULL AND developer != '')
+            + (rent_dc IS NOT NULL OR rent_gc IS NOT NULL OR rent_dmd IS NOT NULL)
+        ) AS quality_score
     </sql>
 
     <sql id="liteSource">
@@ -130,7 +159,8 @@
             <when test="sort == 'yearDesc'">ORDER BY built_year IS NULL, built_year DESC, name</when>
             <when test="sort == 'yearAsc'">ORDER BY built_year IS NULL, built_year ASC, name</when>
             <when test="sort == 'name'">ORDER BY name</when>
-            <otherwise>ORDER BY type, name</otherwise>
+            <!-- 默认按数据完整度：地址/价格/年份等字段越全越靠前，避免首屏是空壳记录 -->
+            <otherwise>ORDER BY quality_score DESC, name</otherwise>
         </choose>
     </sql>
 

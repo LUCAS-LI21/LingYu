@@ -274,11 +274,27 @@ export async function searchPois(keyword: string, limit = 8): Promise<Poi[]> {
 export interface QueryOptions {
   filters: Filters
   bounds?: { north: number; south: number; east: number; west: number } | null
-  sort?: 'default' | 'name' | 'priceAsc' | 'priceDesc' | 'yearDesc' | 'yearAsc'
+  sort?: 'quality' | 'name' | 'priceAsc' | 'priceDesc' | 'yearDesc' | 'yearAsc' | 'default'
   page?: number
   pageSize?: number
 }
 
+/** 数据完整度：地址/价格/年份等字段的加权分（与后端 quality_score 口径一致） */
+function qualityScore(poi: Poi): number {
+  if (poi.type === 'bank') {
+    return (
+      (poi.address ? 2 : 0) + (poi.phone ? 1 : 0) + (poi.openingHours ? 1 : 0) + (poi.brand ? 1 : 0)
+    )
+  }
+  return (
+    (poi.address ? 2 : 0) +
+    (poi.avgPrice ? 2 : 0) +
+    (poi.builtYear ? 1 : 0) +
+    (poi.propertyFee ? 1 : 0) +
+    (poi.developer ? 1 : 0) +
+    (poi.rentDc || poi.rentGc || poi.rentDmd ? 1 : 0)
+  )
+}
 export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
   const { filters, bounds, sort = 'default' } = options
   const keyword = filters.keyword.trim().toLowerCase()
@@ -317,6 +333,13 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
   })
 
   if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+  if (sort === 'default' || sort === 'quality') {
+    // 默认按数据完整度：字段越全越靠前，避免首屏出现"只有名字"的空壳记录
+    result.sort((a, b) => {
+      const diff = qualityScore(b) - qualityScore(a)
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, 'zh-CN')
+    })
+  }
   if (sort === 'priceAsc' || sort === 'priceDesc') {
     const dir = sort === 'priceAsc' ? 1 : -1
     result.sort((a, b) => {
