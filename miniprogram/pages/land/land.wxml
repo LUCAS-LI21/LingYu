@@ -1,0 +1,94 @@
+<view class="page">
+  <view class="between">
+    <view>
+      <text class="h1">存量住宅用地</text>
+      <text class="muted">深圳住宅用地信息，供参考</text>
+    </view>
+    <button class="btn btn-sm btn-ghost" bindtap="refresh">刷新</button>
+  </view>
+
+  <view class="land-kpis mt-20">
+    <view class="land-kpi">
+      <text class="land-value">{{totalText}}</text>
+      <text class="land-label">宗地总数</text>
+    </view>
+    <view class="land-kpi">
+      <text class="land-value">{{items.length}}</text>
+      <text class="land-label">当前列表</text>
+    </view>
+    <view class="land-kpi">
+      <text class="land-value">{{areaText}} ha</text>
+      <text class="land-label">当前合计面积</text>
+    </view>
+  </view>
+
+  <view class="row between mt-16">
+    <picker mode="selector" range="{{districts}}" value="{{districtIndex}}" bindchange="onDistrictChange">
+      <view class="filter-pill">{{district}} ▾</view>
+    </picker>
+    <text class="tiny">按供地时间倒序 · 最多 100 条</text>
+  </view>
+
+  <view wx:if="{{housingTypes.length}}" class="housing-types mt-12">
+    <text class="tiny">住房类型：</text>
+    <text wx:for="{{housingTypes}}" wx:key="label" class="tag tag-gray">{{item.label}} {{item.value}}</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="mt-20">
+    <view wx:for="{{skeletons}}" wx:key="*this" class="card card-pad mt-12">
+      <view class="skeleton" style="width: 45%"></view>
+      <view class="skeleton mt-12" style="width: 80%"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{error}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">!</view>
+      <text class="empty-title">{{error}}</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="refresh">重新加载</button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{!items.length}}" class="card card-pad mt-20">
+    <view class="empty">
+      <view class="empty-icon">地</view>
+      <text class="empty-title">该区域暂无宗地数据</text>
+      <text class="tiny">数据来自深圳市政府数据开放平台</text>
+    </view>
+  </view>
+
+  <view wx:else class="land-list">
+    <view wx:for="{{items}}" wx:key="id" class="card card-pad">
+      <view class="between">
+        <text class="land-name">{{item.projectName || item.location || '未命名宗地'}}</text>
+        <text class="tag tag-brand">{{item.areaText}}</text>
+      </view>
+      <text class="land-location">{{item.location || '位置待补充'}}</text>
+      <view class="land-grid mt-12">
+        <view class="land-field">
+          <text class="land-key">区 / 街道</text>
+          <text class="land-val">{{item.districtStreet || '—'}}</text>
+        </view>
+        <view class="land-field">
+          <text class="land-key">住房类型</text>
+          <text class="land-val">{{item.housingType || '—'}}</text>
+        </view>
+        <view class="land-field">
+          <text class="land-key">建设状态</text>
+          <text class="land-val">{{item.buildStatus || '—'}}</text>
+        </view>
+        <view class="land-field">
+          <text class="land-key">建设单位</text>
+          <text class="land-val">{{item.developer || '—'}}</text>
+        </view>
+      </view>
+      <view class="between mt-12">
+        <text class="mono tiny">{{item.id}}</text>
+        <text class="tiny">{{item.supplyDate || ''}}</text>
+      </view>
+    </view>
+    <text class="land-note">数据来自深圳市公开数据 · 共 {{total}} 宗</text>
+  </view>
+</view>

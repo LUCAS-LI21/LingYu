@@ -1,0 +1,215 @@
+<view class="map-page">
+  <view class="map-head">
+    <view class="between">
+      <view class="row gap-16">
+        <view class="logo">邻</view>
+        <view>
+          <text class="brand-title">邻域</text>
+          <text class="brand-sub">NEIGHBORHOOD INTELLIGENCE</text>
+        </view>
+      </view>
+      <view class="city-chip">
+        <view class="dot dot-mint"></view>
+        <text>深圳</text>
+      </view>
+    </view>
+
+    <view class="search-box mt-20">
+      <text class="search-icon">⌕</text>
+      <input
+        class="search-input"
+        value="{{keyword}}"
+        placeholder="搜索网点 / 小区 / 地址"
+        placeholder-class="input-placeholder"
+        confirm-type="search"
+        bindinput="onKeywordInput"
+        bindconfirm="onSearch"
+      />
+      <view wx:if="{{keyword}}" class="search-clear" bindtap="clearKeyword">×</view>
+    </view>
+
+    <view class="filter-line">
+      <scroll-view scroll-x="{{true}}" class="type-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="chip-row">
+          <view
+            wx:for="{{types}}"
+            wx:key="key"
+            class="chip {{type === item.key ? 'chip-active' : ''}}"
+            data-type="{{item.key}}"
+            bindtap="setType"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </scroll-view>
+      <picker
+        mode="selector"
+        range="{{districts}}"
+        value="{{districtIndex}}"
+        bindchange="onDistrictChange"
+      >
+        <view class="chip chip-soft district-chip">
+          {{district === '全部区域' ? '全部区域' : district}} ▾
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="map-status">
+    <view class="status-loading"></view>
+    <text>正在加载当前视野的点位…</text>
+  </view>
+  <view wx:elif="{{error}}" class="map-status map-status-error">
+    <text class="grow">{{error}}</text>
+    <text class="link" bindtap="retry">重试</text>
+  </view>
+
+  <view class="map-wrap">
+    <map
+      id="poiMap"
+      class="map"
+      latitude="{{latitude}}"
+      longitude="{{longitude}}"
+      scale="{{scale}}"
+      markers="{{markers}}"
+      show-location="{{false}}"
+      enable-zoom="{{true}}"
+      enable-scroll="{{true}}"
+      enable-rotate="{{false}}"
+      bindmarkertap="onMarkerTap"
+      bindregionchange="onRegionChange"
+    ></map>
+    <view class="map-count">
+      <text class="mono">{{total}}</text>
+      <text class="map-count-label">个点位</text>
+    </view>
+  </view>
+
+  <view wx:if="{{!selected}}" class="map-foot">
+    <view class="between">
+      <view>
+        <text class="map-foot-title">当前视野</text>
+        <text class="map-foot-sub">拖动地图自动刷新 · 点击标记查看详情</text>
+      </view>
+      <button class="btn btn-sm btn-ghost" bindtap="goList">列表查看</button>
+    </view>
+    <view class="legend-row">
+      <view class="legend-item"><view class="legend-dot legend-bank"></view>银行网点</view>
+      <view class="legend-item"><view class="legend-dot legend-community"></view>住宅小区</view>
+    </view>
+  </view>
+
+  <scroll-view wx:if="{{selected}}" scroll-y="{{true}}" class="map-detail" enhanced="{{true}}" show-scrollbar="{{false}}">
+    <view class="detail-peek">
+      <view class="between">
+        <view class="row gap-12">
+          <view class="thumb {{selected.type === 'community' ? 'thumb-community' : ''}}">
+            {{selected.type === 'community' ? '宅' : '银'}}
+          </view>
+          <view class="grow">
+            <view class="row gap-8">
+              <text class="tag {{selected.type === 'community' ? 'tag-amber' : 'tag-brand'}}">
+                {{selected.type === 'community' ? '住宅小区' : (selected.branchType === 'atm' ? '银行 ATM' : '银行网点')}}
+              </text>
+              <text class="tiny">{{selected.district || '深圳'}}</text>
+            </view>
+            <text class="detail-name mt-8">{{selected.name}}</text>
+          </view>
+        </view>
+        <view class="detail-close" bindtap="closeSelected">×</view>
+      </view>
+
+      <view class="detail-address mt-16">
+        <text class="detail-pin">⌖</text>
+        <text class="grow">{{selected.address || '地址待补充'}}</text>
+      </view>
+
+      <view wx:if="{{selectedLoading}}" class="detail-loading">
+        <view class="skeleton" style="width: 72%"></view>
+        <view class="skeleton mt-12" style="width: 48%"></view>
+      </view>
+
+      <block wx:else>
+        <view wx:if="{{selected.type === 'community'}}" class="metric-grid mt-16">
+          <view class="metric">
+            <text class="metric-value">{{formatted.price}}</text>
+            <text class="metric-label">参考均价</text>
+            <text wx:if="{{formatted.priceNote}}" class="metric-hint">{{formatted.priceNote}}</text>
+          </view>
+          <view class="metric">
+            <text class="metric-value">{{formatted.year}}</text>
+            <text class="metric-label">建成年份</text>
+          </view>
+          <view class="metric">
+            <text class="metric-value">{{formatted.nearest}}</text>
+            <text class="metric-label">最近银行</text>
+          </view>
+        </view>
+        <view wx:else class="metric-grid mt-16">
+          <view class="metric">
+            <text class="metric-value">{{formatted.branch}}</text>
+            <text class="metric-label">网点类型</text>
+          </view>
+          <view class="metric">
+            <text class="metric-value">{{selected.brand || '—'}}</text>
+            <text class="metric-label">所属品牌</text>
+          </view>
+          <view class="metric" bindtap="callSelectedPhone">
+            <text class="metric-value">{{formatted.phone}}</text>
+            <text class="metric-label">电话</text>
+          </view>
+        </view>
+
+        <view wx:if="{{selected.type === 'community'}}" class="soft-box mt-16">
+          <view class="between">
+            <text class="tiny">1 km 周边配套</text>
+            <text class="tiny">最近银行 {{formatted.nearest}}</text>
+          </view>
+          <view class="row gap-20 mt-12">
+            <view class="surround-item">
+              <text class="surround-value">{{selected.surroundBankCount || 0}}</text>
+              <text class="tiny">银行</text>
+            </view>
+            <view class="surround-item">
+              <text class="surround-value">{{selected.surroundAtmCount || 0}}</text>
+              <text class="tiny">ATM</text>
+            </view>
+            <view class="surround-item">
+              <text class="surround-value">{{selected.nearbyBrandCount || 0}}</text>
+              <text class="tiny">品牌</text>
+            </view>
+            <view class="surround-item">
+              <text class="surround-value">{{formatted.fee}}</text>
+              <text class="tiny">物业费</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{nearby.length}}" class="mt-20">
+          <view class="between mb-12">
+            <text class="section-title">{{nearbyTitle}}</text>
+            <text class="tiny">直线距离</text>
+          </view>
+          <view
+            wx:for="{{nearby}}"
+            wx:key="id"
+            class="nearby-row"
+          >
+            <view class="nearby-dot"></view>
+            <view class="grow">
+              <text class="nearby-name">{{item.name}}</text>
+              <text class="nearby-address">{{item.address || '地址待补充'}}</text>
+            </view>
+            <text class="nearby-distance">{{item.distance}}</text>
+          </view>
+        </view>
+
+        <view class="detail-actions mt-20">
+          <button class="btn btn-primary grow" bindtap="openSelectedLocation">导航到这里</button>
+          <button class="btn btn-ghost grow" bindtap="goDetail">完整详情</button>
+          <button class="btn btn-ghost detail-feedback" bindtap="goFeedback">纠错</button>
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+</view>
