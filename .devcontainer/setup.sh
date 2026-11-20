@@ -16,6 +16,10 @@ DB_PASSWORD="$(gen 16)"
 AUTH_SECRET="$(gen 44)"
 MYSQL_ROOT_PASSWORD="$(gen 20)"
 
+# Codespaces Secrets 会以环境变量注入：有就带进 .env，没有就留空（前端显示「未配置」）
+AMAP_KEY_VALUE="${AMAP_KEY:-}"
+DEEPSEEK_KEY_VALUE="${DEEPSEEK_API_KEY:-}"
+
 cat > .env <<EOF
 # 由 .devcontainer/setup.sh 生成（每次创建 Codespace 都不同）
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
@@ -29,7 +33,9 @@ OPERATOR_PASSWORD=${OPERATOR_PASSWORD}
 APP_AUTH_ALLOW_DEFAULT_PASSWORD=false
 
 INGEST_PROXY=
-AMAP_KEY=
+# 来自 Codespaces Secrets（仓库 Settings → Secrets and variables → Codespaces）
+AMAP_KEY=${AMAP_KEY_VALUE}
+DEEPSEEK_API_KEY=${DEEPSEEK_KEY_VALUE}
 LIVE_DAILY_BUDGET=300
 LIVE_DAILY_BUDGET_AROUND=100
 LIVE_MIN_INTERVAL_MS=200
@@ -39,6 +45,12 @@ WEB_SSL_PORT=8443
 API_PORT=18080
 MYSQL_PORT=3307
 EOF
+
+if [ -n "${AMAP_KEY_VALUE}" ]; then
+  echo "[setup] 已从 Codespaces Secrets 注入 AMAP_KEY（L2 实时层可用）"
+else
+  echo "[setup] 未检测到 AMAP_KEY：L2 实时层显示「未配置」，本地库功能不受影响"
+fi
 
 echo "[setup] 已生成 .env"
 echo "[setup] 运营账号：operator / ${OPERATOR_PASSWORD}"

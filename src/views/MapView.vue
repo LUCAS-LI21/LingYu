@@ -756,7 +756,8 @@ function closeDetail(): void {
 
 <style scoped>
 .intro-card {
-  position: relative;
+  /* 不要写 position：卡片本身用 Tailwind 的 absolute 浮在地图上，
+     这里写 relative 会覆盖它，把筛选栏/命令条挤进文档流（曾导致整页错位） */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

@@ -56,6 +56,19 @@ function pinIcon(poi: Poi, active: boolean): L.DivIcon {
   })
 }
 
+/** 聚合点：外环白、中间蓝底数字，和单点白环小点保持同一套视觉 */
+function clusterIcon(count: number, atmOnly: boolean): L.DivIcon {
+  const size = Math.min(40, 22 + Math.log2(count + 1) * 4)
+  return L.divIcon({
+    className: 'poi-marker',
+    html:
+      `<span class="poi-cluster${atmOnly ? ' poi-cluster--atm' : ''}" style="width:${size}px;height:${size}px">` +
+      `<span class="poi-cluster__count">${count > 99 ? '99+' : count}</span></span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  })
+}
+
 function escapeHtml(input: string): string {
   return input.replace(
     /[&<>"']/g,
@@ -136,17 +149,14 @@ function renderMarkers(): void {
       const markerKey = `cluster:${key}`
       const lat = cell.lat / cell.count
       const lng = cell.lng / cell.count
-      const radius = Math.min(26, 10 + Math.log2(cell.count + 1) * 4)
       // 该网格里全是 ATM 时用天蓝，和网点区分（两类本来也互斥展示）
       const onlyAtm = cell.atm === cell.count
-      let marker = rendered.get(markerKey) as L.CircleMarker | undefined
+      let marker = rendered.get(markerKey) as L.Marker | undefined
       if (!marker) {
-        marker = L.circleMarker([lat, lng], {
-          radius,
-          weight: 1,
-          color: onlyAtm ? '#0284c7' : '#2563eb',
-          fillColor: onlyAtm ? '#38bdf8' : '#3b82f6',
-          fillOpacity: 0.75,
+        marker = L.marker([lat, lng], {
+          icon: clusterIcon(cell.count, onlyAtm),
+          keyboard: false,
+          riseOnHover: true,
         })
         marker.on('click', () => {
           // 用 marker 当前位置而不是闭包里的 lat/lng：聚合点会随视野变化移动，
@@ -159,11 +169,7 @@ function renderMarkers(): void {
         marker.addTo(markerLayer)
       } else {
         marker.setLatLng([lat, lng])
-        marker.setRadius(radius)
-        marker.setStyle({
-          color: onlyAtm ? '#0284c7' : '#2563eb',
-          fillColor: onlyAtm ? '#38bdf8' : '#3b82f6',
-        })
+        marker.setIcon(clusterIcon(cell.count, onlyAtm))
       }
       marker.bindTooltip(`${cell.count} 个点位`, { direction: 'top' })
       next.set(markerKey, marker)

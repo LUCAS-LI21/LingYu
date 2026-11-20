@@ -69,3 +69,22 @@ cp .env.deploy.example .env      # 填写四个必填口令
 docker compose --env-file .env up -d --build
 # http://127.0.0.1:8081
 ```
+
+## 六、把高德 Key 配到 Codespaces Secrets
+
+Key 不进仓库，用 Codespaces Secrets 注入（容器里会变成同名环境变量，`setup.sh` 自动写进 `.env`）。
+
+1. 仓库页面 → **Settings → Secrets and variables → Codespaces** → **New repository secret**
+2. Name：`AMAP_KEY`；Secret：你的高德「Web服务」Key（32 位）
+3. （可选）再建 `DEEPSEEK_API_KEY`，用于 Agent 建议；不配则 Agent 区块为空，不影响主流程
+4. 让已有 Codespace 生效：**Codespace → Command Palette → Codespaces: Rebuild Container**
+   （或删除旧 Codespace 重新创建）
+5. 验证：
+   ```bash
+   grep AMAP_KEY .env            # 应能看到值（文件已被 gitignore）
+   curl -s "http://127.0.0.1:18080/api/v1/live/pois?lng=114.0579&lat=22.5431&radius=1000&keywords=ATM" \
+     | head -c 200                # 返回 enabled:true 即生效
+   ```
+
+> 注意：Codespaces Secrets 只对**你选择授权的仓库**生效；分发给评委的公开仓无需包含 Key，
+> 评委没有 Key 时实时层显示「未配置」，其余功能完全可用。
