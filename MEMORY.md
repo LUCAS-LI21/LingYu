@@ -1211,3 +1211,43 @@ https://uri.amap.com/search?keyword=<地址>&city=深圳&src=poi-intel
 可对接：公共接口免鉴权、`/api/v1/meta` 自描述、局域网 8080 实测 200、不需要 CORS。
 
 **ATM 策略（2026-11-20）**：库内 368 台（平安 212 / 招行 113 / OSM 43）为唯一可落库来源；缺口走高德 L2 实时周边（只展示不落库），详情面板「ATM」开关触发。未配 AMAP_KEY 时显示「未配置」并提示本地库不受影响。
+
+## 第二十九轮：完整启动跑通（2026-11-21 02:16）
+
+### 启动方式（本机，不用 Docker）
+
+```powershell
+# 后端：env 取自 .env（AUTH_SECRET / OPERATOR_PASSWORD / AMAP_KEY / DEEPSEEK_API_KEY），
+# 数据库用本地 MySQL 覆盖容器配置：DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=poi_intel DB_USER=root DB_PASSWORD=root
+cd backend
+mvn -B -DskipTests package
+java -jar target/poi-intel.jar
+```
+
+```powershell
+# 前端：vite 5173，/api 代理到 8080
+pnpm dev
+```
+
+### 本次修掉 3 个「起不来 / 首屏全挂」的 mapper 缺陷（`backend/src/main/resources/mapper/PoiMapper.xml`）
+
+| #   | 缺陷                                                                              | 现象                                                                    |
+| --- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1   | `bankCols`/`communityCols` 里 `address <> ''` 的 `<` 未转义                       | mapper XML 解析失败，**应用启动即崩**；改 `!=`（XML 安全且 MySQL 合法） |
+| 2   | 完整投影 `quality_score` 后多余逗号                                               | `/api/v1/pois` 500（`quality_score, FROM` 语法错）                      |
+| 3   | `bankLiteCols` 加了 address/phone/opening_hours，`communityLiteCols` 只加 address | UNION 列数不一致 → `/pois?lite=true` 500，**前端首屏静默回退本地种子**  |
+
+### 实测证据
+
+- `/api/v1/pois?size=20000&lite=true` → 200，**5428 条 / 1.98MB / 275ms**（gzip 关：本地回环）
+- 浏览器（Chrome + Playwright）：地图页 424 标记、列表 1491 条、洞察 1491 银行 / 3569 小区、后台登录后 9 个 Tab，**控制台 0 错误**；`apiCalls` 全 200（health/pois/stats/hotspots）
+- 登录：`POST /api/v1/auth/login` 200（operator + `.env` 口令）→ `/admin/overview` 200；无 token 401
+
+### 两个已知噪音（不影响功能）
+
+- 定时抓取 `job#462` 失败：`HttpTimeoutException`——本机 7892 代理没起，Overpass **必须走代理**（`HTTP_PROXY=http://127.0.0.1:7892`）；库里累计 failed 171 / success 9
+- 浏览器切页会打断 2MB 响应，后端打 `AsyncRequestNotUsableException`（ClientAbort）ERROR 日志，建议后续按 client-abort 降级为 DEBUG
+
+### 并行会话注意
+
+三线并行时 `target/poi-intel.jar` 会被并发重建甚至被占用锁住（`Unable to rename ... .original`）。本机运行改用副本 `target/poi-intel-live.jar`，避免构建互锁；重启前先 `taskkill` 占 8080 的 java。

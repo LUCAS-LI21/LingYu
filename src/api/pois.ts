@@ -279,6 +279,37 @@ export interface QueryOptions {
   pageSize?: number
 }
 
+/**
+ * 品牌打散：按完整度排序后，同一品牌最多连续 maxRun 条。
+ * 否则字段最全的那家银行会霸屏（广发官网字段最全，一度占了首屏全部）。
+ * 做法是稳定的贪心交换：遇到超限就向后找第一个不同品牌的记录换上来，其余顺序不变。
+ */
+function diversifyBrands(list: Poi[], maxRun = 2): Poi[] {
+  const brandOf = (poi: Poi): string => (poi.type === 'bank' ? poi.brand || '' : '')
+  const out = list.slice()
+  let runBrand = ''
+  let runCount = 0
+  for (let i = 0; i < out.length; i += 1) {
+    const brand = brandOf(out[i]!)
+    if (brand && brand === runBrand) {
+      runCount += 1
+      if (runCount > maxRun) {
+        // 找后面第一条不同品牌的记录，把它换到当前位置
+        const swapAt = out.findIndex((item, j) => j > i && brandOf(item) !== brand)
+        if (swapAt > i) {
+          const [moved] = out.splice(swapAt, 1)
+          out.splice(i, 0, moved!)
+          runBrand = brandOf(out[i]!)
+          runCount = 1
+        }
+      }
+    } else {
+      runBrand = brand
+      runCount = brand ? 1 : 0
+    }
+  }
+  return out
+}
 /** 数据完整度：地址/价格/年份等字段的加权分（与后端 quality_score 口径一致） */
 function qualityScore(poi: Poi): number {
   if (poi.type === 'bank') {
@@ -339,6 +370,7 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
       const diff = qualityScore(b) - qualityScore(a)
       return diff !== 0 ? diff : a.name.localeCompare(b.name, 'zh-CN')
     })
+    return diversifyBrands(result, 2)
   }
   if (sort === 'priceAsc' || sort === 'priceDesc') {
     const dir = sort === 'priceAsc' ? 1 : -1

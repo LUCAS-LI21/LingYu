@@ -214,3 +214,28 @@ describe('默认筛选（地图防拥挤）', () => {
     expect(DEFAULT_FILTERS.layers).toEqual(['bank'])
   })
 })
+describe('默认排序的品牌打散', () => {
+  it('同一品牌最多连续出现 2 条', () => {
+    const many = Array.from({ length: 6 }, (_, i) =>
+      bank(`cmb-${i}`, {
+        name: `招商银行${i}`,
+        brand: '招商银行',
+        address: '深南大道 1 号',
+        phone: '0755-1234',
+        openingHours: '09:00-17:00',
+      }),
+    )
+    const others = Array.from({ length: 3 }, (_, i) =>
+      bank(`icbc-${i}`, { name: `工商银行${i}`, brand: '中国工商银行', address: '深南大道 2 号' }),
+    )
+    const list = filterPois([...many, ...others], { filters: filters({ layers: ['bank'] }) })
+    let run = 0
+    let last = ''
+    for (const poi of list) {
+      const brand = poi.type === 'bank' ? poi.brand : ''
+      run = brand && brand === last ? run + 1 : 1
+      last = brand
+      expect(run).toBeLessThanOrEqual(2)
+    }
+  })
+})

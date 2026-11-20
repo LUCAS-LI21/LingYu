@@ -165,13 +165,33 @@
     </sql>
 
     <select id="query" resultType="com.poiintel.poi.PoiRow">
-        SELECT * FROM
         <choose>
-            <when test="lite"><include refid="liteSource"/></when>
-            <otherwise><include refid="source"/></otherwise>
+            <!-- 默认排序：按完整度打分，同时按品牌做轮转（brand_rank），
+                 避免字段最全的那家银行霸屏；等价于"同品牌最多连续 2 条"的宽松版 -->
+            <when test="sort == null or sort == '' or sort == 'default' or sort == 'quality'">
+                SELECT * FROM (
+                    SELECT p.*, ROW_NUMBER() OVER (
+                        PARTITION BY COALESCE(p.brand, '') ORDER BY p.quality_score DESC, p.name
+                    ) AS brand_rank
+                    FROM (
+                        <choose>
+                            <when test="lite"><include refid="liteSource"/></when>
+                            <otherwise><include refid="source"/></otherwise>
+                        </choose>
+                    ) p
+                ) poi_all
+                ORDER BY brand_rank, quality_score DESC, name
+            </when>
+            <otherwise>
+                SELECT * FROM
+                <choose>
+                    <when test="lite"><include refid="liteSource"/></when>
+                    <otherwise><include refid="source"/></otherwise>
+                </choose>
+                poi_all
+                <include refid="orderBy"/>
+            </otherwise>
         </choose>
-        poi_all
-        <include refid="orderBy"/>
         LIMIT #{size} OFFSET #{offset}
     </select>
 
