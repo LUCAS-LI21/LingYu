@@ -236,10 +236,6 @@ onBeforeUnmount(stopPolling)
           </div>
         </li>
       </ul>
-
-      <p class="border-t border-line px-4 py-2.5 text-[10px] leading-relaxed text-ink-400">
-        口径：query_log 近 7 天聚合，展示最新统计日；自动重算写入 hot_region，页面隐藏时暂停轮询。
-      </p>
     </div>
   </div>
 </template>

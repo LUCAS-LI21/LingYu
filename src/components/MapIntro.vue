@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
     <div class="map-intro__vignette" aria-hidden="true" />
 
     <header class="map-intro__brand">
-      <span class="map-intro__logo">邻</span>
+      <img src="/logo.svg" alt="邻域" class="map-intro__logo" width="32" height="32" />
       <div>
         <p class="map-intro__name">邻域</p>
         <p class="map-intro__en">NEIGHBORHOOD INTELLIGENCE</p>
@@ -440,15 +440,11 @@ onBeforeUnmount(() => {
 }
 
 .map-intro__logo {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 2rem;
   height: 2rem;
   border-radius: 0.6rem;
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
   box-shadow: 0 0 28px rgba(56, 189, 248, 0.38);
-  font-size: 0.85rem;
-  font-weight: 700;
 }
 
 .map-intro__name {

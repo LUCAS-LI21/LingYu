@@ -118,7 +118,6 @@ function reset(): void {
           class="mb-2 flex items-center justify-between text-[11px] font-medium tracking-wide text-ink-400"
         >
           <span>银行类型</span>
-          <span class="font-normal">地图同一时间只显示一种</span>
         </p>
         <div class="flex rounded-[10px] border border-line bg-surface-soft p-0.5">
           <button
@@ -141,9 +140,7 @@ function reset(): void {
       </section>
 
       <section>
-        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-400">
-          小区均价<span class="ml-1 text-[10px] font-normal text-amber-600">演示</span>
-        </p>
+        <p class="mb-2 text-[11px] font-medium tracking-wide text-ink-400">小区均价</p>
         <div class="relative">
           <select
             :value="priceKey"

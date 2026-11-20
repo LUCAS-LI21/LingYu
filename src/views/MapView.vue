@@ -718,8 +718,6 @@ function closeDetail(): void {
       <span class="flex items-center gap-1.5"
         ><span class="h-2 w-2 rounded-full bg-amber-500" />小区</span
       >
-      <span class="h-3 w-px bg-line-strong" />
-      <span>数据：OpenStreetMap contributors · ODbL</span>
     </div>
 
     <!-- 移动端列表 -->

@@ -79,15 +79,9 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 30rpx;
-  background: linear-gradient(145deg, #3b82f6, #1d4ed8);
   box-shadow:
     0 20rpx 50rpx rgba(37, 99, 235, 0.35),
     0 0 0 1rpx rgba(191, 219, 254, 0.25);
-  color: #fff;
-  font-size: 48rpx;
-  font-weight: 700;
-  line-height: 104rpx;
-  text-align: center;
 }
 
 .intro-name {

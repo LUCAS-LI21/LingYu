@@ -1,6 +1,6 @@
 <view wx:if="{{!authed}}" class="page">
   <view class="login-hero">
-    <view class="logo login-logo">邻</view>
+    <image class="logo login-logo" src="/assets/logo.png" mode="aspectFit" />
     <text class="login-title">管理后台</text>
     <text class="login-sub">运营审核与数据管理入口</text>
   </view>

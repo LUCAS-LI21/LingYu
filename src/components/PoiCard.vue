@@ -32,12 +32,8 @@ const subtitle = computed(() => {
   }
   const parts = [
     p.builtYear ? `${p.builtYear} 年` : '',
-    // 真实价优先；没有真实价时展示演示值并显式标注，避免被当成官方数据
-    p.avgPrice
-      ? `${p.avgPrice.toLocaleString()} 元/㎡`
-      : p.avgPriceDemo
-        ? `约 ${p.avgPriceDemo.toLocaleString()} 元/㎡（演示）`
-        : '',
+    // 只展示后端真实成交参考价；没有就留空，不再展示哈希生成的演示价
+    p.avgPrice ? `${p.avgPrice.toLocaleString()} 元/㎡` : '',
   ]
   return parts.filter(Boolean).join(' · ')
 })
@@ -110,13 +106,11 @@ const subtitle = computed(() => {
       </span>
 
       <span
+        v-if="poi.address"
         class="block truncate"
-        :class="[
-          isList ? 'mt-1.5 text-sm' : 'mt-1 text-xs',
-          poi.address ? 'text-ink-500' : 'text-ink-400/70',
-        ]"
+        :class="[isList ? 'mt-1.5 text-sm' : 'mt-1 text-xs', 'text-ink-500']"
       >
-        {{ poi.address || '地址待补充' }}
+        {{ poi.address }}
       </span>
 
       <span
@@ -131,13 +125,6 @@ const subtitle = computed(() => {
           #{{ poi.id.slice(-4) }}
         </span>
         <span v-if="subtitle" class="truncate">{{ subtitle }}</span>
-        <!-- 均价已有官方参考价时不再标「演示属性」，否则会误导；其余字段的演示标识在详情页说明 -->
-        <span
-          v-if="poi.type === 'community' && !poi.avgPrice && poi.avgPriceDemo"
-          class="shrink-0 text-amber-600"
-        >
-          演示属性
-        </span>
       </span>
     </span>
 

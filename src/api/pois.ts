@@ -65,20 +65,6 @@ const DISTRICT_ANCHORS = [
 ]
 
 /** FNV-1a：给演示属性一个稳定的伪随机源，同名小区每次刷新数值一致 */
-function hashCode(input: string): number {
-  let hash = 2166136261
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i)
-    hash = Math.imul(hash, 16777619)
-  }
-  return hash >>> 0
-}
-
-function seeded(seed: number, salt: number, min: number, max: number, step = 1): number {
-  const x = Math.sin(seed * 0.0001 + salt * 12.9898) * 43758.5453
-  const frac = x - Math.floor(x)
-  return Math.round((min + frac * (max - min)) / step) * step
-}
 
 function nearestDistrict(lng: number, lat: number): string {
   let best = DISTRICT_ANCHORS[0]!
@@ -137,15 +123,16 @@ function normalize(raw: Record<string, unknown>): Poi | null {
     }
   }
 
-  // 小区商业属性：OSM 不提供，用稳定伪随机生成并显式标记为「演示属性」
-  const seed = hashCode(base.id + base.name)
+  // 小区属性只认后端真实字段：没有就留空，不再用哈希生成「演示均价/年份/物业费」。
+  // 假数据一旦标成「演示」仍会被当成数据看，直接不展示更诚实。
   const community: CommunityPoi = {
     ...base,
     type: 'community',
-    builtYear: seeded(seed, 1, 1996, 2022),
-    avgPrice: seeded(seed, 2, 42000, 138000, 100),
-    propertyFee: seeded(seed, 3, 25, 98, 1) / 10,
-    demoAttributes: true,
+    builtYear: raw.builtYear === null || raw.builtYear === undefined ? null : Number(raw.builtYear),
+    avgPrice: raw.avgPrice === null || raw.avgPrice === undefined ? null : Number(raw.avgPrice),
+    propertyFee:
+      raw.propertyFee === null || raw.propertyFee === undefined ? null : Number(raw.propertyFee),
+    demoAttributes: false,
   }
   return community
 }

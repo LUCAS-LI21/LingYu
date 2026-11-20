@@ -103,10 +103,6 @@ function onClearRecent(): void {
           <h1 class="text-xl font-semibold tracking-tight text-ink-900">数据洞察</h1>
           <p class="mt-1 text-xs text-ink-500">基于本地库统计，随数据采集自动更新</p>
         </div>
-        <p class="hidden items-center gap-1.5 text-[11px] text-ink-400 sm:flex">
-          <span class="h-1.5 w-1.5 rounded-full bg-mint-500" />
-          搜索会被记录为查询行为，用于热点区域优先更新
-        </p>
       </div>
 
       <form
@@ -301,9 +297,6 @@ function onClearRecent(): void {
       <section class="rounded-card border border-line bg-surface p-5 shadow-card">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-ink-900">小区均价分布</h2>
-          <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-600"
-            >演示属性</span
-          >
         </div>
         <div v-if="loading" class="h-40 animate-pulse rounded bg-surface-soft" />
         <div v-else class="flex h-40 items-end gap-2">
@@ -320,10 +313,6 @@ function onClearRecent(): void {
             <span class="text-[10px] text-ink-400">{{ bucket.label }}</span>
           </div>
         </div>
-        <p class="mt-3 text-[11px] leading-relaxed text-ink-400">
-          仅统计有官方成交参考价的小区（{{ stats?.priceSample?.real_count ?? 0 }}
-          个）；演示值不计入分布。
-        </p>
       </section>
 
       <!-- 查询热点：query_log 聚合，前台可见（此前只在运营后台） -->
@@ -360,10 +349,6 @@ function onClearRecent(): void {
         <div class="flex items-start justify-between gap-4">
           <div>
             <h2 class="text-sm font-semibold text-ink-900">银行网点最密集的区域</h2>
-            <p class="mt-1 max-w-2xl text-[11px] leading-relaxed text-ink-500">
-              把深圳划成约 2 km × 2 km
-              的方格，统计每个方格里的银行网点数量；数字越大，说明这个片区的银行越密集。仅统计银行，不含小区。
-            </p>
           </div>
           <span class="shrink-0 text-[11px] text-ink-400">取前 6 名</span>
         </div>

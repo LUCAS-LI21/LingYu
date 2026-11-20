@@ -78,11 +78,13 @@ watch(
     <header class="sticky top-0 z-[1100] h-14 border-b border-line bg-surface/90 backdrop-blur">
       <div class="mx-auto flex h-full max-w-[1440px] items-center gap-3 px-3 sm:gap-5 sm:px-4">
         <RouterLink to="/" class="flex shrink-0 items-center gap-2">
-          <span
-            class="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-[13px] font-bold text-white shadow-card"
-          >
-            邻
-          </span>
+          <img
+            src="/logo.svg"
+            alt="邻域"
+            class="h-7 w-7 rounded-lg shadow-card"
+            width="28"
+            height="28"
+          />
           <span class="hidden text-sm font-semibold tracking-tight text-ink-900 sm:inline">
             邻域
           </span>

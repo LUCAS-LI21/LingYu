@@ -33,13 +33,9 @@ let introMode = false
 let introDoneEmitted = false
 let introFallback: number | null = null
 
-/** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建（5000+ 点位会卡） */
-const rendered = new Map<string, L.Marker | L.CircleMarker>()
+/** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建 */
+const rendered = new Map<string, L.Marker>()
 let renderTimer: number | null = null
-
-/** zoom 低于此值时按网格聚合，否则画单点 */
-const CLUSTER_MAX_ZOOM = 14
-const CLUSTER_GRID = 0.008 // 约 800m
 
 // 福田中心区，初始视野聚焦以便看清点位
 const SHENZHEN_CENTER: L.LatLngTuple = [22.5412, 114.0579]
@@ -53,19 +49,6 @@ function pinIcon(poi: Poi, active: boolean): L.DivIcon {
     html: `<span class="poi-pin poi-pin--${poi.type}${atmClass}${active ? ' is-active' : ''}"></span>`,
     iconSize: [18, 18],
     iconAnchor: [9, 9],
-  })
-}
-
-/** 聚合点：外环白、中间蓝底数字，和单点白环小点保持同一套视觉 */
-function clusterIcon(count: number, atmOnly: boolean): L.DivIcon {
-  const size = Math.min(40, 22 + Math.log2(count + 1) * 4)
-  return L.divIcon({
-    className: 'poi-marker',
-    html:
-      `<span class="poi-cluster${atmOnly ? ' poi-cluster--atm' : ''}" style="width:${size}px;height:${size}px">` +
-      `<span class="poi-cluster__count">${count > 99 ? '99+' : count}</span></span>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
   })
 }
 
@@ -118,84 +101,30 @@ function openPopup(marker: L.Marker, poi: Poi): void {
 function renderMarkers(): void {
   // 开场动画期间不铺点：地图还在远视角，铺了只会闪一下
   if (!map || !markerLayer || introMode) return
-  const zoom = map.getZoom()
   const bounds = map.getBounds().pad(0.12)
-  const next = new Map<string, L.Marker | L.CircleMarker>()
+  const next = new Map<string, L.Marker>()
 
-  if (zoom <= CLUSTER_MAX_ZOOM) {
-    // 聚合：同网格合并成一个圆点，点击放大
-    const cells = new Map<string, { lat: number; lng: number; count: number; atm: number }>()
-    for (const poi of props.pois) {
-      if (!bounds.contains([poi.lat, poi.lng])) continue
-      const gx = Math.floor(poi.lng / CLUSTER_GRID)
-      const gy = Math.floor(poi.lat / CLUSTER_GRID)
-      const key = `${gx}:${gy}`
-      const cell = cells.get(key)
-      if (cell) {
-        cell.count += 1
-        cell.lat += poi.lat
-        cell.lng += poi.lng
-        if (poi.type === 'bank' && poi.branchType === 'atm') cell.atm += 1
-      } else {
-        cells.set(key, {
-          lat: poi.lat,
-          lng: poi.lng,
-          count: 1,
-          atm: poi.type === 'bank' && poi.branchType === 'atm' ? 1 : 0,
-        })
-      }
+  // 统一用白环蓝心小点：不做聚合、不画大圆，任何缩放级别都是同一种标记
+  for (const poi of props.pois) {
+    const inside = bounds.contains([poi.lat, poi.lng])
+    if (!inside && poi.id !== props.selectedId) continue
+    let marker = rendered.get(poi.id) as L.Marker | undefined
+    if (!marker) {
+      marker = L.marker([poi.lat, poi.lng], {
+        icon: pinIcon(poi, poi.id === props.selectedId),
+        title: poi.name,
+        riseOnHover: true,
+      })
+      marker.on('click', () => {
+        emit('select', poi)
+        openPopup(marker as L.Marker, poi)
+      })
+      marker.addTo(markerLayer)
+    } else {
+      marker.setLatLng([poi.lat, poi.lng])
+      marker.setIcon(pinIcon(poi, poi.id === props.selectedId))
     }
-    for (const [key, cell] of cells) {
-      const markerKey = `cluster:${key}`
-      const lat = cell.lat / cell.count
-      const lng = cell.lng / cell.count
-      // 该网格里全是 ATM 时用天蓝，和网点区分（两类本来也互斥展示）
-      const onlyAtm = cell.atm === cell.count
-      let marker = rendered.get(markerKey) as L.Marker | undefined
-      if (!marker) {
-        marker = L.marker([lat, lng], {
-          icon: clusterIcon(cell.count, onlyAtm),
-          keyboard: false,
-          riseOnHover: true,
-        })
-        marker.on('click', () => {
-          // 用 marker 当前位置而不是闭包里的 lat/lng：聚合点会随视野变化移动，
-          // 闭包捕获的是创建时的坐标，拖动后点它会跳到旧位置
-          const current = marker?.getLatLng()
-          if (current) {
-            map?.setView(current, Math.min(17, (map?.getZoom() ?? zoom) + 2))
-          }
-        })
-        marker.addTo(markerLayer)
-      } else {
-        marker.setLatLng([lat, lng])
-        marker.setIcon(clusterIcon(cell.count, onlyAtm))
-      }
-      marker.bindTooltip(`${cell.count} 个点位`, { direction: 'top' })
-      next.set(markerKey, marker)
-    }
-  } else {
-    for (const poi of props.pois) {
-      const inside = bounds.contains([poi.lat, poi.lng])
-      if (!inside && poi.id !== props.selectedId) continue
-      let marker = rendered.get(poi.id) as L.Marker | undefined
-      if (!marker) {
-        marker = L.marker([poi.lat, poi.lng], {
-          icon: pinIcon(poi, poi.id === props.selectedId),
-          title: poi.name,
-          riseOnHover: true,
-        })
-        marker.on('click', () => {
-          emit('select', poi)
-          openPopup(marker as L.Marker, poi)
-        })
-        marker.addTo(markerLayer)
-      } else {
-        marker.setLatLng([poi.lat, poi.lng])
-        marker.setIcon(pinIcon(poi, poi.id === props.selectedId))
-      }
-      next.set(poi.id, marker)
-    }
+    next.set(poi.id, marker)
   }
 
   // 差量清理：把这次没出现的 marker 从地图上摘掉

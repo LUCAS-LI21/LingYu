@@ -11,7 +11,7 @@
   ></view>
 
   <view class="intro-content">
-    <view class="intro-logo">邻</view>
+    <image class="intro-logo" src="/assets/logo.png" mode="aspectFit" />
     <text class="intro-name">邻域</text>
     <text class="intro-tagline">深圳银行网点与小区情报</text>
     <text class="intro-hint">正在为你展开城市数据</text>

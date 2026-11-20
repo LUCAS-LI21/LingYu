@@ -222,14 +222,10 @@ const rows = computed(() => {
   return [
     { label: '地址', value: poi.address || '暂无' },
     { label: '建成年份', value: poi.builtYear ? `${poi.builtYear} 年` : '暂无' },
+    // 只展示官方成交参考价；没有就显示「暂无」，不展示哈希生成的演示价
     {
-      // 真实价与演示价彻底分开：成交参考价来自官方表，演示值只作为「示意」展示且带标注
-      label: poi.avgPrice ? '成交参考价' : '参考均价（演示）',
-      value: poi.avgPrice
-        ? `${poi.avgPrice.toLocaleString()} 元/㎡`
-        : poi.avgPriceDemo
-          ? `${poi.avgPriceDemo.toLocaleString()} 元/㎡（示意，不参与筛选）`
-          : '暂无',
+      label: '成交参考价',
+      value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无',
     },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
     // 政府租赁参考价：真实数据，命中不到就不显示（不要给个假的）
@@ -608,19 +604,6 @@ function changeRadius(value: number): void {
         <p class="text-[11px] font-medium text-ink-700">数据来源</p>
         <p class="mt-1 text-[11px] leading-relaxed text-ink-500">
           {{ poi.source }}<span v-if="poi.license"> · {{ poi.license }}</span>
-          <template v-if="poi.type === 'community' && poi.demoAttributes">
-            <br />
-            <span class="text-amber-600">
-              {{
-                poi.avgPriceSource === 'gov_reference'
-                  ? '成交参考价来自官方发布表，建成年份按竣工备案年份，不构成投资建议'
-                  : '均价为演示值（该小区未匹配到官方参考价），不构成投资建议'
-              }}
-            </span>
-            <span class="text-ink-400">
-              （建成年份/建设单位/物业费/租金若下方「数据来源」列出，则为公示来源）
-            </span>
-          </template>
         </p>
         <ul
           v-if="fieldSources.length"

@@ -1,7 +1,7 @@
 <view class="page page-tab me-page">
   <view class="me-hero">
     <view class="hero-brand-row">
-      <view class="hero-logo">邻</view>
+      <image class="hero-logo" src="/assets/logo.png" mode="aspectFit" />
       <view class="grow">
         <text class="hero-brand">邻域</text>
         <text class="hero-tagline">深圳银行网点与小区情报</text>

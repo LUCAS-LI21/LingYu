@@ -63,19 +63,18 @@ test.describe('地图交互', () => {
     await expect(page.getByText('已框选')).toBeHidden({ timeout: 5000 })
   })
 
-  test('低缩放级别使用聚合标记而不是逐个 marker', async ({ page }) => {
+  test('任何缩放级别都只用白环小点，不做聚合大圆', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20_000 })
     await page.waitForTimeout(2500)
 
-    // 聚合点已改为白环 + 蓝底数字的 divIcon（不再是 canvas 圆点），
-    // 所以断言「有聚合标记且没有单点 pin」= 走的是聚合分支。
-    const clusters = await page.locator('.poi-cluster').count()
+    // 统一标记：低缩放直接铺白环蓝心小点，不再有聚合大圆
     const pins = await page.locator('.poi-pin').count()
-    expect(clusters).toBeGreaterThan(0)
-    expect(pins).toBe(0)
+    const clusters = await page.locator('.poi-cluster').count()
+    expect(pins).toBeGreaterThan(0)
+    expect(clusters).toBe(0)
 
-    // 放大到 16 之后应改为单点 marker
+    // 放大后仍是同一种标记
     await page
       .getByRole('button', { name: '放大' })
       .click()

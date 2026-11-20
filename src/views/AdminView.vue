@@ -405,9 +405,6 @@ onBeforeUnmount(() => {
     <header class="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="text-xl font-semibold tracking-tight text-ink-900">管理后台</h1>
-        <p class="mt-1 text-xs text-ink-500">
-          查询行为 · 反馈审核 · Agent 建议 · 数据纠错 · 抓取任务 · 数据说明，一个后台完成运营闭环
-        </p>
       </div>
       <div class="flex items-center gap-2">
         <button

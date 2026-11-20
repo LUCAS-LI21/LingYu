@@ -2,7 +2,7 @@
   <view class="map-head">
     <view class="between">
       <view class="row gap-16">
-        <view class="logo">邻</view>
+        <image class="logo" src="/assets/logo.png" mode="aspectFit" />
         <view>
           <text class="brand-title">邻域</text>
           <text class="brand-sub">NEIGHBORHOOD INTELLIGENCE</text>
