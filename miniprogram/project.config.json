@@ -1,0 +1,18 @@
+{
+  "description": "邻域 POI 情报小程序（与 Web 共用 Spring Boot 后端）",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "poi-intel-miniprogram",
+  "miniprogramRoot": "./",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "ignoreUploadUnusedFiles": true
+  },
+  "condition": {}
+}

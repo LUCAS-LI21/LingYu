@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
+import { useRoute } from 'vue-router'
 
 import MapCanvas from '@/components/MapCanvas.vue'
+import MapIntro from '@/components/MapIntro.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import MobileSheet from '@/components/MobileSheet.vue'
 import PoiCard from '@/components/PoiCard.vue'
@@ -15,6 +17,7 @@ import {
   nearbyFromServer,
   type NearbyItem,
 } from '@/api/pois'
+import { hasPlayedIntro, markIntroPlayed } from '@/lib/introState'
 import { scheduleQueryLog, trackQueryNow } from '@/lib/queryTracker'
 import { DEFAULT_FILTERS, type Filters, type Poi } from '@/types/poi'
 
@@ -25,6 +28,19 @@ interface Bounds {
   west: number
 }
 
+interface PanelShard {
+  top: string
+  left: string
+  width: string
+  height: string
+  dx: string
+  dy: string
+  rot: string
+  delay: string
+  clip: string
+}
+
+const route = useRoute()
 const pois = ref<Poi[]>([])
 const loading = ref(true)
 const loadError = ref('')
@@ -57,13 +73,268 @@ function setBaseMap(kind: BaseMap): void {
 }
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 
+const reducedMotion =
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const forceIntro = route.query.intro === '1'
+const skipIntroForSpeed = route.query.intro === '0'
+const shouldIntro =
+  !skipIntroForSpeed &&
+  (forceIntro || (!navigator.webdriver && !reducedMotion && !hasPlayedIntro()))
+
+if (shouldIntro) markIntroPlayed()
+
+const introActive = ref(shouldIntro)
+const cardsReady = ref(!shouldIntro)
+const overlayDone = ref(!shouldIntro)
+const mapSettled = ref(!shouldIntro)
+const instantReveal = ref(!shouldIntro)
+
+let introFallbackTimer: number | null = null
+
+const SHARD_CLIPS = [
+  'polygon(0 0, 100% 18%, 78% 100%, 8% 82%)',
+  'polygon(0 8%, 100% 0, 84% 100%, 12% 88%)',
+  'polygon(10% 0, 100% 22%, 82% 100%, 0 70%)',
+  'polygon(0 20%, 100% 0, 86% 100%, 8% 76%)',
+  'polygon(0 0, 100% 24%, 84% 100%, 10% 74%)',
+  'polygon(0 12%, 100% 0, 88% 100%, 4% 82%)',
+]
+
+// 24 片：上 7 / 左 5 / 右 5 / 下 7，全部围绕卡片边缘汇聚
+const SHARD_SEEDS: Array<{
+  top: string
+  left: string
+  width: number
+  height: number
+  dx: number
+  dy: number
+  rot: number
+  delay: number
+}> = [
+  { top: '-18px', left: '0%', width: 26, height: 22, dx: -50, dy: -60, rot: -40, delay: 0 },
+  { top: '-12px', left: '15%', width: 40, height: 12, dx: -30, dy: -70, rot: 24, delay: 40 },
+  { top: '-20px', left: '29%', width: 20, height: 26, dx: -10, dy: -75, rot: -28, delay: 90 },
+  { top: '-10px', left: '44%', width: 34, height: 16, dx: 10, dy: -85, rot: 34, delay: 20 },
+  { top: '-18px', left: '59%', width: 24, height: 22, dx: 26, dy: -68, rot: -22, delay: 120 },
+  { top: '-12px', left: '74%', width: 30, height: 14, dx: 44, dy: -72, rot: 20, delay: 60 },
+  { top: '-20px', left: '88%', width: 18, height: 24, dx: 60, dy: -58, rot: -32, delay: 150 },
+  { top: '9%', left: '-16px', width: 16, height: 40, dx: -50, dy: -20, rot: 44, delay: 30 },
+  { top: '27%', left: '-12px', width: 22, height: 30, dx: -56, dy: 16, rot: -26, delay: 100 },
+  { top: '46%', left: '-18px', width: 14, height: 52, dx: -60, dy: 4, rot: 56, delay: 170 },
+  { top: '65%', left: '-10px', width: 24, height: 24, dx: -48, dy: 28, rot: -34, delay: 70 },
+  { top: '84%', left: '-14px', width: 18, height: 36, dx: -54, dy: 40, rot: 28, delay: 200 },
+  {
+    top: '7%',
+    left: 'calc(100% - 4px)',
+    width: 16,
+    height: 42,
+    dx: 54,
+    dy: -24,
+    rot: -42,
+    delay: 50,
+  },
+  {
+    top: '25%',
+    left: 'calc(100% - 8px)',
+    width: 22,
+    height: 28,
+    dx: 60,
+    dy: 10,
+    rot: 30,
+    delay: 130,
+  },
+  {
+    top: '44%',
+    left: 'calc(100% - 6px)',
+    width: 14,
+    height: 50,
+    dx: 56,
+    dy: 0,
+    rot: -50,
+    delay: 10,
+  },
+  {
+    top: '63%',
+    left: 'calc(100% - 12px)',
+    width: 24,
+    height: 22,
+    dx: 50,
+    dy: 26,
+    rot: 36,
+    delay: 180,
+  },
+  {
+    top: '82%',
+    left: 'calc(100% - 6px)',
+    width: 18,
+    height: 34,
+    dx: 58,
+    dy: 42,
+    rot: -28,
+    delay: 80,
+  },
+  {
+    top: 'calc(100% - 6px)',
+    left: '2%',
+    width: 24,
+    height: 18,
+    dx: -48,
+    dy: 54,
+    rot: 32,
+    delay: 20,
+  },
+  {
+    top: 'calc(100% - 10px)',
+    left: '16%',
+    width: 34,
+    height: 12,
+    dx: -30,
+    dy: 64,
+    rot: -20,
+    delay: 110,
+  },
+  {
+    top: 'calc(100% - 4px)',
+    left: '30%',
+    width: 18,
+    height: 24,
+    dx: -14,
+    dy: 58,
+    rot: 44,
+    delay: 160,
+  },
+  {
+    top: 'calc(100% - 8px)',
+    left: '44%',
+    width: 30,
+    height: 16,
+    dx: 4,
+    dy: 66,
+    rot: -34,
+    delay: 40,
+  },
+  {
+    top: 'calc(100% - 4px)',
+    left: '58%',
+    width: 20,
+    height: 22,
+    dx: 20,
+    dy: 60,
+    rot: 26,
+    delay: 140,
+  },
+  {
+    top: 'calc(100% - 10px)',
+    left: '72%',
+    width: 28,
+    height: 14,
+    dx: 36,
+    dy: 66,
+    rot: -24,
+    delay: 90,
+  },
+  {
+    top: 'calc(100% - 6px)',
+    left: '86%',
+    width: 18,
+    height: 26,
+    dx: 52,
+    dy: 54,
+    rot: 38,
+    delay: 190,
+  },
+]
+
+const panelShards: PanelShard[] = SHARD_SEEDS.map((seed, index) => ({
+  top: seed.top,
+  left: seed.left,
+  width: `${Math.round(seed.width * 1.3)}px`,
+  height: `${Math.round(seed.height * 1.3)}px`,
+  dx: `${seed.dx}px`,
+  dy: `${seed.dy}px`,
+  rot: `${seed.rot}deg`,
+  delay: `${Math.round(seed.delay * 0.5)}ms`,
+  clip: SHARD_CLIPS[index % SHARD_CLIPS.length] ?? SHARD_CLIPS[0],
+}))
+
+function shardOffsetX(value: string): string {
+  // 左右卡片：从地图内侧向卡片边缘汇聚
+  return `${Math.round(parseFloat(value) * -0.8)}px`
+}
+
+function shardOffsetY(value: string): string {
+  // 上下卡片：从卡片外侧向边缘汇聚
+  return `${Math.round(parseFloat(value) * 0.5)}px`
+}
+
+function shardStyle(shard: PanelShard): Record<string, string> {
+  return {
+    top: shard.top,
+    left: shard.left,
+    width: shard.width,
+    height: shard.height,
+    '--dx': shardOffsetX(shard.dx),
+    '--dy': shardOffsetY(shard.dy),
+    '--rot': shard.rot,
+    '--delay': shard.delay,
+    clipPath: shard.clip,
+  }
+}
 const visiblePois = computed(() =>
   filterPois(pois.value, { filters: filters.value, bounds: bounds.value }),
 )
 
 const selectedId = computed(() => selected.value?.id ?? null)
 
+function clearIntroFallback(): void {
+  if (introFallbackTimer !== null) {
+    window.clearTimeout(introFallbackTimer)
+    introFallbackTimer = null
+  }
+}
+
+function settleCards(): void {
+  if (!overlayDone.value || !mapSettled.value) return
+  cardsReady.value = true
+  clearIntroFallback()
+}
+
+function onIntroFormed(): void {
+  mapRef.value?.beginZoom()
+}
+
+function onIntroDone(): void {
+  overlayDone.value = true
+  introActive.value = false
+  settleCards()
+}
+
+function onMapSettled(): void {
+  mapSettled.value = true
+  settleCards()
+}
+
+function skipIntro(): void {
+  clearIntroFallback()
+  overlayDone.value = true
+  mapSettled.value = true
+  cardsReady.value = true
+  instantReveal.value = true
+  introActive.value = false
+  mapRef.value?.finishIntro()
+}
+
 onMounted(async () => {
+  if (shouldIntro) {
+    introFallbackTimer = window.setTimeout(() => {
+      overlayDone.value = true
+      mapSettled.value = true
+      cardsReady.value = true
+      instantReveal.value = true
+      introActive.value = false
+      mapRef.value?.finishIntro()
+    }, 6000)
+  }
   try {
     pois.value = await loadPois()
   } catch (error) {
@@ -71,6 +342,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  clearIntroFallback()
 })
 
 function trackPoiQuery(poi: Poi): void {
@@ -175,25 +450,41 @@ function closeDetail(): void {
 </script>
 
 <template>
-  <div class="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-canvas">
+  <div
+    class="relative h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-canvas"
+    :class="{ 'intro-instant': instantReveal }"
+  >
     <MapCanvas
       ref="mapRef"
       :pois="visiblePois"
       :selected-id="selectedId"
       :base-map="baseMap"
+      :cinematic="shouldIntro"
       class="absolute inset-0"
       @select="onSelect"
       @nearby="onMapNearby"
       @bounds="onBoxSelect"
+      @intro-done="onMapSettled"
     />
 
     <!-- 供 E2E 与无障碍读取的隐藏计数器（桌面/移动布局都可用） -->
     <span class="sr-only" data-testid="result-count">{{ visiblePois.length }}</span>
 
     <!-- 左：筛选 -->
-    <aside class="absolute bottom-4 left-4 top-4 z-[1000] hidden w-[248px] lg:block">
+    <aside
+      class="intro-panel absolute bottom-4 left-4 top-4 z-[1000] hidden w-[248px] lg:block"
+      :class="{ 'is-revealed': cardsReady }"
+    >
+      <span
+        v-for="(shard, index) in panelShards"
+        :key="index"
+        class="intro-shard"
+        :style="shardStyle(shard)"
+        aria-hidden="true"
+      />
       <div
-        class="flex h-full flex-col rounded-card border border-line bg-surface/95 p-4 shadow-float backdrop-blur"
+        class="intro-card flex h-full flex-col rounded-card border border-line bg-surface/95 p-4 shadow-float backdrop-blur"
+        :class="{ 'is-revealed': cardsReady }"
       >
         <div v-if="loading" class="space-y-3">
           <div v-for="i in 5" :key="i" class="h-8 animate-pulse rounded-lg bg-surface-soft" />
@@ -204,7 +495,8 @@ function closeDetail(): void {
 
     <!-- 中上：命令条 -->
     <div
-      class="absolute left-4 right-4 top-4 z-[1000] flex items-center gap-2 rounded-card border border-line bg-surface/95 p-2 shadow-float backdrop-blur lg:left-[268px] lg:right-[380px]"
+      class="intro-card absolute left-4 right-4 top-4 z-[1000] flex items-center gap-2 rounded-card border border-line bg-surface/95 p-2 shadow-float backdrop-blur lg:left-[268px] lg:right-[380px]"
+      :class="{ 'is-revealed': cardsReady }"
     >
       <div class="relative flex-1">
         <svg
@@ -323,9 +615,20 @@ function closeDetail(): void {
     </div>
 
     <!-- 右：结果 / 详情 -->
-    <aside class="absolute bottom-4 right-4 top-4 z-[1000] hidden w-[360px] lg:flex">
+    <aside
+      class="intro-panel absolute bottom-4 right-4 top-4 z-[1000] hidden w-[360px] lg:flex"
+      :class="{ 'is-revealed': cardsReady }"
+    >
+      <span
+        v-for="(shard, index) in panelShards"
+        :key="index"
+        class="intro-shard"
+        :style="shardStyle(shard)"
+        aria-hidden="true"
+      />
       <div
-        class="flex h-full w-full flex-col overflow-hidden rounded-card border border-line bg-surface/95 shadow-float backdrop-blur"
+        class="intro-card flex h-full w-full flex-col overflow-hidden rounded-card border border-line bg-surface/95 shadow-float backdrop-blur"
+        :class="{ 'is-revealed': cardsReady }"
       >
         <DetailPanel
           v-if="selected && isDesktop"
@@ -403,7 +706,8 @@ function closeDetail(): void {
 
     <!-- 图例 -->
     <div
-      class="absolute bottom-4 left-4 z-[900] hidden items-center gap-3 rounded-full border border-line bg-surface/90 px-3 py-1.5 text-[11px] text-ink-500 shadow-card backdrop-blur lg:left-[268px] lg:flex"
+      class="intro-card absolute bottom-4 left-4 z-[900] hidden items-center gap-3 rounded-full border border-line bg-surface/90 px-3 py-1.5 text-[11px] text-ink-500 shadow-card backdrop-blur lg:left-[268px] lg:flex"
+      :class="{ 'is-revealed': cardsReady }"
     >
       <span class="flex items-center gap-1.5"
         ><span class="h-2 w-2 rounded-full bg-brand-500" />银行网点</span
@@ -420,7 +724,8 @@ function closeDetail(): void {
 
     <!-- 移动端列表 -->
     <div
-      class="absolute inset-x-0 bottom-0 z-[1000] max-h-[42%] overflow-y-auto rounded-t-card border-t border-line bg-surface p-3 shadow-float lg:hidden"
+      class="intro-card absolute inset-x-0 bottom-0 z-[1000] max-h-[42%] overflow-y-auto rounded-t-card border-t border-line bg-surface p-3 shadow-float lg:hidden"
+      :class="{ 'is-revealed': cardsReady }"
     >
       <div class="mb-2 flex items-center justify-between">
         <span class="text-xs font-medium text-ink-700">查询结果</span>
@@ -437,6 +742,8 @@ function closeDetail(): void {
       </div>
     </div>
 
+    <MapIntro v-if="introActive" @formed="onIntroFormed" @done="onIntroDone" @skip="skipIntro" />
+
     <FeedbackDialog
       v-if="feedbackTarget"
       :poi="feedbackTarget.poi"
@@ -446,3 +753,128 @@ function closeDetail(): void {
     />
   </div>
 </template>
+
+<style scoped>
+.intro-card {
+  position: relative;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(12px) scale(0.98);
+  filter: blur(4px);
+}
+
+.intro-card.is-revealed {
+  visibility: visible;
+  pointer-events: auto;
+  animation: intro-card-assemble 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) 2.25s both;
+}
+
+/* 跳过动画 / 减少动效 / 自动化环境：立即显示，避免卡片透明但仍可点击 */
+.intro-instant .intro-card,
+.intro-instant .intro-card.is-revealed {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  animation: none !important;
+  transform: none;
+  filter: none;
+}
+
+.intro-instant .intro-card.is-revealed::after,
+.intro-instant .intro-shard {
+  display: none;
+}
+
+.intro-card.is-revealed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgba(219, 226, 236, 0.9),
+    0 18px 44px -28px rgba(15, 23, 42, 0.45);
+  animation: intro-card-glow 1.2s ease-out 0.1s both;
+}
+
+.intro-panel .intro-shard {
+  position: absolute;
+  z-index: 1200;
+  border: 1px solid rgba(100, 116, 139, 0.55);
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f7fb 40%, #dfe6ef 100%);
+  box-shadow:
+    0 4px 8px rgba(15, 23, 42, 0.14),
+    0 20px 40px -14px rgba(15, 23, 42, 0.45);
+  transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4);
+}
+
+.intro-panel.is-revealed .intro-shard {
+  animation: intro-shard-fly 2s cubic-bezier(0.16, 0.84, 0.3, 1) forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes intro-card-assemble {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(4px);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes intro-card-glow {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes intro-shard-fly {
+  0% {
+    opacity: 0.9;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4);
+  }
+  8% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0.9;
+  }
+  92% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-card {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  .intro-shard {
+    display: none;
+  }
+}
+</style>

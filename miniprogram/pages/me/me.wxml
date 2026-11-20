@@ -1,0 +1,106 @@
+<view class="page page-tab me-page">
+  <view class="me-hero">
+    <view class="hero-brand-row">
+      <view class="hero-logo">邻</view>
+      <view class="grow">
+        <text class="hero-brand">邻域</text>
+        <text class="hero-tagline">深圳银行网点与小区情报</text>
+      </view>
+    </view>
+
+    <text class="hero-title">在深圳，找到身边的银行与小区</text>
+    <text class="hero-sub">查网点、看小区、补充信息，一次完成。</text>
+
+    <view class="hero-actions">
+      <button class="hero-btn hero-btn-primary" bindtap="goMap">打开地图</button>
+      <button class="hero-btn" bindtap="goStats">看数据洞察</button>
+    </view>
+  </view>
+
+  <view class="card me-profile">
+    <view class="row gap-16">
+      <view class="profile-avatar">{{avatarText}}</view>
+      <view class="grow">
+        <text class="profile-name">你好，{{nickname || '访客'}}</text>
+        <text class="profile-hint">留个称呼和联系方式，反馈时方便回访</text>
+      </view>
+      <text wx:if="{{saved}}" class="tag tag-mint">已保存</text>
+    </view>
+
+    <view class="profile-field">
+      <text class="field-label">怎么称呼你</text>
+      <input
+        class="profile-input"
+        value="{{nickname}}"
+        placeholder="例如：小林"
+        placeholder-class="input-placeholder"
+        bindinput="onNickname"
+      />
+    </view>
+    <view class="profile-field">
+      <text class="field-label">联系方式（选填）</text>
+      <input
+        class="profile-input"
+        value="{{contact}}"
+        placeholder="手机号或邮箱"
+        placeholder-class="input-placeholder"
+        bindinput="onContact"
+      />
+    </view>
+
+    <view class="profile-actions">
+      <text class="profile-note">只保存在本机，不会公开展示</text>
+      <button class="btn btn-sm btn-primary" bindtap="saveProfile">保存</button>
+    </view>
+  </view>
+
+  <view class="card me-card">
+    <view class="card-heading">
+      <text class="card-title">我的服务</text>
+      <text class="card-note">已提交 {{feedbackCount}} 条 · 待审核 {{pendingCount}} 条</text>
+    </view>
+
+    <view
+      wx:for="{{services}}"
+      wx:key="key"
+      class="service-row"
+      data-key="{{item.key}}"
+      bindtap="onQuickAction"
+    >
+      <view class="service-icon">{{item.icon}}</view>
+      <view class="grow">
+        <text class="service-title">{{item.label}}</text>
+        <text class="service-hint">{{item.hint}}</text>
+      </view>
+      <text class="service-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="card me-card">
+    <view class="card-heading">
+      <text class="card-title">探索深圳</text>
+      <text class="card-note">更多本地数据</text>
+    </view>
+
+    <view
+      wx:for="{{explore}}"
+      wx:key="key"
+      class="service-row"
+      data-key="{{item.key}}"
+      bindtap="onExplore"
+    >
+      <view class="service-icon service-icon-warm">{{item.icon}}</view>
+      <view class="grow">
+        <text class="service-title">{{item.label}}</text>
+        <text class="service-hint">{{item.hint}}</text>
+      </view>
+      <text class="service-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="operator-row" data-key="admin" bindtap="onQuickAction">
+    <text>运营人员入口</text>
+    <text class="operator-arrow">›</text>
+  </view>
+  <text class="me-version">邻域 v{{version}}</text>
+</view>

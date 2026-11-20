@@ -1,0 +1,175 @@
+<view class="page">
+  <view wx:if="{{record}}" class="card card-pad success-card fade-up">
+    <view class="success-icon">✓</view>
+    <text class="success-title">反馈已提交</text>
+    <text class="success-sub">我们会尽快核对，感谢你的帮助。</text>
+
+    <view class="receipt mt-20">
+      <view class="between">
+        <text class="tiny">受理编号</text>
+        <text class="mono strong">{{record.code}}</text>
+      </view>
+      <view class="between mt-12">
+        <text class="tiny">当前状态</text>
+        <text class="tag tag-amber">待审核</text>
+      </view>
+      <view class="between mt-12">
+        <text class="tiny">点位</text>
+        <text class="receipt-value">{{record.poiName}}</text>
+      </view>
+      <view class="between mt-12">
+        <text class="tiny">提交时间</text>
+        <text class="receipt-value">{{record.createdAt}}</text>
+      </view>
+    </view>
+
+    <view class="row gap-12 mt-24">
+      <button class="btn btn-ghost grow" bindtap="goHistory">查看我的反馈</button>
+      <button class="btn btn-primary grow" bindtap="resetForm">继续纠错</button>
+    </view>
+  </view>
+
+  <block wx:else>
+    <view>
+      <text class="h1">纠错 / 补充</text>
+      <text class="muted">告诉我们哪里不对，我们会尽快处理</text>
+    </view>
+
+    <view class="notice notice-mint mt-16">
+      <text>请尽量附带可核对的依据；恶意提交会被记录并限制。</text>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="step-head">
+        <view class="step-no">1</view>
+        <view class="grow">
+          <text class="section-title">选择点位</text>
+          <text class="section-sub">按名称、地址或区域搜索</text>
+        </view>
+        <text class="tiny">{{selected ? '已选择' : '必填'}}</text>
+      </view>
+
+      <view wx:if="{{!selected}}" class="mt-16">
+        <view class="search-box">
+          <text class="search-icon">⌕</text>
+          <input
+            class="search-input"
+            value="{{keyword}}"
+            placeholder="例如：招商银行、车公庙、万科"
+            placeholder-class="input-placeholder"
+            confirm-type="search"
+            bindinput="onKeywordInput"
+          />
+          <text wx:if="{{searching}}" class="tiny">搜索中…</text>
+        </view>
+
+        <view wx:if="{{searching}}" class="search-loading mt-12">
+          <view class="skeleton" style="width: 80%"></view>
+          <view class="skeleton mt-12" style="width: 56%"></view>
+        </view>
+        <view wx:elif="{{results.length}}" class="search-results mt-12">
+          <view
+            wx:for="{{results}}"
+            wx:key="id"
+            class="search-result"
+            data-index="{{index}}"
+            bindtap="onSelectPoi"
+          >
+            <view class="thumb thumb-sm {{item.type === 'community' ? 'thumb-community' : ''}}">
+              {{item.type === 'community' ? '宅' : '银'}}
+            </view>
+            <view class="grow">
+              <text class="result-name">{{item.name}}</text>
+              <text class="result-address">{{item.address || '地址待补充'}} · {{item.district || '深圳'}}</text>
+            </view>
+            <text class="tiny">选择</text>
+          </view>
+        </view>
+        <view wx:elif="{{searchTouched}}" class="tiny mt-12">没有找到匹配点位，试试更短的关键词。</view>
+      </view>
+
+      <view wx:else class="selected-poi mt-16">
+        <view class="thumb {{selected.type === 'community' ? 'thumb-community' : ''}}">
+          {{selected.type === 'community' ? '宅' : '银'}}
+        </view>
+        <view class="grow">
+          <text class="result-name">{{selected.name}}</text>
+          <text class="result-address">{{selected.address || '地址待补充'}} · {{selected.district || '深圳'}}</text>
+        </view>
+        <text class="link" bindtap="clearPoi">换一个</text>
+      </view>
+    </view>
+
+    <view class="card card-pad mt-20">
+      <view class="step-head">
+        <view class="step-no">2</view>
+        <view class="grow">
+          <text class="section-title">填写问题</text>
+          <text class="section-sub">说明越具体，处理越快</text>
+        </view>
+      </view>
+
+      <text class="label mt-20">反馈类型</text>
+      <view class="type-list">
+        <view
+          wx:for="{{typeOptions}}"
+          wx:key="value"
+          class="type-item {{type === item.value ? 'type-active' : ''}}"
+          data-value="{{item.value}}"
+          bindtap="onTypeChange"
+        >
+          <view class="type-radio {{type === item.value ? 'type-radio-on' : ''}}"></view>
+          <view class="grow">
+            <text class="type-label">{{item.label}}</text>
+            <text class="type-hint">{{item.hint}}</text>
+          </view>
+        </view>
+      </view>
+
+      <text class="label mt-20">问题字段</text>
+      <picker mode="selector" range="{{fieldOptions}}" bindchange="onFieldChange">
+        <view class="input picker-value">
+          <text>{{field}}</text>
+          <text class="tiny">▾</text>
+        </view>
+      </picker>
+
+      <text class="label mt-20">正确值（选填）</text>
+      <input
+        class="input"
+        value="{{newValue}}"
+        placeholder="例如：深圳市福田区深南大道 1000 号"
+        placeholder-class="input-placeholder"
+        bindinput="onNewValue"
+      />
+
+      <text class="label mt-20">问题说明 *</text>
+      <textarea
+        class="textarea"
+        value="{{description}}"
+        maxlength="300"
+        placeholder="请描述哪里不对、你看到的实际情况，或补充依据链接"
+        placeholder-class="textarea-placeholder"
+        bindinput="onDescription"
+      ></textarea>
+
+      <text class="label mt-20">联系方式（选填）</text>
+      <input
+        class="input"
+        value="{{contact}}"
+        placeholder="邮箱 / 手机，便于核对"
+        placeholder-class="input-placeholder"
+        bindinput="onContact"
+      />
+
+      <button
+        class="btn btn-primary btn-block mt-24 {{!canSubmit || submitting ? 'btn-disabled' : ''}}"
+        disabled="{{!canSubmit || submitting}}"
+        bindtap="submit"
+      >
+        {{submitting ? '提交中…' : (selected ? '提交反馈' : '请先选择点位')}}
+      </button>
+      <text class="submit-note">提交后我们会核对你的反馈。</text>
+    </view>
+  </block>
+</view>

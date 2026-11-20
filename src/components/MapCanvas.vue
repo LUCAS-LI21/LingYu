@@ -9,12 +9,15 @@ const props = defineProps<{
   selectedId?: string | null
   /** 底图：浅灰（默认）/ 彩色 / 卫星 */
   baseMap?: 'light' | 'color' | 'satellite'
+  /** 开场动画：地图先落在远视角，由 MapIntro 汇合后再飞入深圳 */
+  cinematic?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'select', poi: Poi): void
   (e: 'nearby', poi: Poi): void
   (e: 'bounds', bounds: { north: number; south: number; east: number; west: number }): void
+  (e: 'introDone'): void
 }>()
 
 const container = ref<HTMLDivElement | null>(null)
@@ -26,6 +29,9 @@ let boxRect: L.Rectangle | null = null
 let boxStart: L.LatLng | null = null
 let boxMode = false
 let tileErrors = 0
+let introMode = false
+let introDoneEmitted = false
+let introFallback: number | null = null
 
 /** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建（5000+ 点位会卡） */
 const rendered = new Map<string, L.Marker | L.CircleMarker>()
@@ -97,7 +103,8 @@ function openPopup(marker: L.Marker, poi: Poi): void {
 
 /** 只渲染当前视野内的点；低 zoom 时按网格聚合成带数字的圆点 */
 function renderMarkers(): void {
-  if (!map || !markerLayer) return
+  // 开场动画期间不铺点：地图还在远视角，铺了只会闪一下
+  if (!map || !markerLayer || introMode) return
   const zoom = map.getZoom()
   const bounds = map.getBounds().pad(0.12)
   const next = new Map<string, L.Marker | L.CircleMarker>()
@@ -299,11 +306,47 @@ function setBoxMode(enabled: boolean): void {
   }
 }
 
+function emitIntroDone(): void {
+  if (introDoneEmitted) return
+  introDoneEmitted = true
+  emit('introDone')
+}
+
+/** 粒子汇合结束：地图从远视角飞入深圳，然后铺点 */
+function beginZoom(): void {
+  if (!map) {
+    emitIntroDone()
+    return
+  }
+  if (!introMode) {
+    emitIntroDone()
+    return
+  }
+  map.flyTo(SHENZHEN_CENTER, INITIAL_ZOOM, { duration: 1.8, easeLinearity: 0.2 })
+  map.once('moveend', finishIntro)
+  // 兜底：瓦片或动画事件异常时也要落位
+  introFallback = window.setTimeout(finishIntro, 3200)
+}
+
+function finishIntro(): void {
+  if (!map) return
+  if (introFallback !== null) {
+    window.clearTimeout(introFallback)
+    introFallback = null
+  }
+  map.stop()
+  map.setView(SHENZHEN_CENTER, INITIAL_ZOOM, { animate: false })
+  introMode = false
+  renderMarkers()
+  emitIntroDone()
+}
+
 onMounted(() => {
   if (!container.value) return
+  introMode = Boolean(props.cinematic)
   map = L.map(container.value, {
-    center: SHENZHEN_CENTER,
-    zoom: INITIAL_ZOOM,
+    center: introMode ? ([18, 10] as L.LatLngTuple) : SHENZHEN_CENTER,
+    zoom: introMode ? 2 : INITIAL_ZOOM,
     zoomControl: false,
     attributionControl: true,
     preferCanvas: true,
@@ -351,6 +394,10 @@ onBeforeUnmount(() => {
     window.clearTimeout(renderTimer)
     renderTimer = null
   }
+  if (introFallback !== null) {
+    window.clearTimeout(introFallback)
+    introFallback = null
+  }
   rendered.clear()
   map?.remove()
   map = null
@@ -376,6 +423,8 @@ watch(
 )
 
 defineExpose({
+  beginZoom,
+  finishIntro,
   focusOn(lng: number, lat: number, zoom = 16) {
     map?.flyTo([lat, lng], zoom, { duration: 0.6 })
   },

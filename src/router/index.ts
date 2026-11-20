@@ -25,12 +25,6 @@ const router = createRouter({
       meta: { title: '数据洞察' },
     },
     {
-      path: '/compliance',
-      name: 'compliance',
-      component: () => import('@/views/ComplianceView.vue'),
-      meta: { title: '数据说明' },
-    },
-    {
       path: '/me',
       name: 'me',
       component: () => import('@/views/UserCenterView.vue'),
@@ -64,7 +58,7 @@ router.afterEach((to, from, failure) => {
     })
   }
   const title = to.meta.title
-  document.title = typeof title === 'string' ? `${title} · 邻域 POI` : '邻域 POI'
+  document.title = typeof title === 'string' ? `${title} · 邻域` : '邻域'
 })
 
 export default router

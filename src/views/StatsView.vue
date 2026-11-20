@@ -357,23 +357,30 @@ function onClearRecent(): void {
 
       <!-- 密度排行 -->
       <section class="rounded-card border border-line bg-surface p-5 shadow-card lg:col-span-2">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-ink-900">银行密度热点（2km 网格）</h2>
-          <span class="text-[11px] text-ink-400">用于驱动采集优先级</span>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-semibold text-ink-900">银行网点最密集的区域</h2>
+            <p class="mt-1 max-w-2xl text-[11px] leading-relaxed text-ink-500">
+              把深圳划成约 2 km × 2 km
+              的方格，统计每个方格里的银行网点数量；数字越大，说明这个片区的银行越密集。仅统计银行，不含小区。
+            </p>
+          </div>
+          <span class="shrink-0 text-[11px] text-ink-400">取前 6 名</span>
         </div>
-        <ul class="grid gap-3 sm:grid-cols-2">
+        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
           <li
             v-for="cell in stats?.gridTop"
             :key="cell.label"
-            class="flex items-center gap-3 rounded-soft border border-line bg-surface-soft px-3 py-2"
+            class="flex items-center gap-3 rounded-soft border border-line bg-surface-soft px-3 py-2.5"
           >
             <span
-              class="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-50 text-[11px] font-medium text-brand-600"
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-[11px] font-semibold text-brand-600"
+              :title="`${cell.value} 家银行`"
             >
               {{ cell.value }}
             </span>
             <span class="min-w-0 flex-1">
-              <span class="block text-[11px] text-ink-600">{{ cell.label }}</span>
+              <span class="block text-[11px] text-ink-600">中心 {{ cell.label }}</span>
               <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white">
                 <span
                   class="block h-full rounded-full bg-brand-500/70"
@@ -381,6 +388,7 @@ function onClearRecent(): void {
                 />
               </span>
             </span>
+            <span class="shrink-0 text-[10px] text-ink-400">家</span>
           </li>
         </ul>
       </section>

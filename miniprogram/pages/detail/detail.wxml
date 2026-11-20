@@ -1,0 +1,189 @@
+<view wx:if="{{loading}}" class="page">
+  <view class="card card-pad">
+    <view class="skeleton" style="width: 62%; height: 42rpx"></view>
+    <view class="skeleton mt-16" style="width: 86%"></view>
+    <view class="skeleton mt-12" style="width: 48%"></view>
+  </view>
+  <view class="card card-pad mt-20">
+    <view class="skeleton" style="width: 40%"></view>
+    <view class="skeleton mt-16" style="width: 100%; height: 140rpx"></view>
+  </view>
+</view>
+
+<view wx:elif="{{error}}" class="page">
+  <view class="card card-pad">
+    <view class="empty">
+      <view class="empty-icon">!</view>
+      <text class="empty-title">{{error}}</text>
+      <view class="mt-16">
+        <button class="btn btn-sm btn-primary" bindtap="retry">重新加载</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view wx:else class="page detail-page">
+  <view class="card card-pad hero-card fade-up">
+    <view class="row gap-16">
+      <view class="thumb {{poi.type === 'community' ? 'thumb-community' : ''}}">
+        {{poi.type === 'community' ? '宅' : '银'}}
+      </view>
+      <view class="grow">
+        <view class="row gap-8 wrap">
+          <text class="tag {{poi.type === 'community' ? 'tag-amber' : 'tag-brand'}}">
+            {{poi.type === 'community' ? '住宅小区' : (poi.branchType === 'atm' ? '银行 ATM' : '银行网点')}}
+          </text>
+          <text class="tag tag-gray">{{poi.district || '深圳'}}</text>
+          <text wx:if="{{poi.demoAttributes}}" class="tag tag-amber">仅供参考</text>
+        </view>
+        <text class="detail-title mt-8">{{poi.name}}</text>
+      </view>
+    </view>
+
+    <view class="address-box mt-20" bindtap="copyAddress">
+      <text class="detail-pin">⌖</text>
+      <text class="grow">{{poi.address || '地址待补充，欢迎纠错'}}</text>
+      <text class="tiny">复制</text>
+    </view>
+  </view>
+
+  <view wx:if="{{poi.type === 'community'}}" class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">小区画像</text>
+      <text class="section-sub">基本情况</text>
+    </view>
+    <view class="metric-grid">
+      <view class="metric">
+        <text class="metric-value">{{formatted.price}}</text>
+        <text class="metric-label">参考均价</text>
+        <text wx:if="{{formatted.priceNote}}" class="metric-hint">{{formatted.priceNote}}</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">{{formatted.year}}</text>
+        <text class="metric-label">建成年份</text>
+      </view>
+      <view class="metric">
+        <text class="metric-value">{{formatted.fee}}</text>
+        <text class="metric-label">物业费</text>
+      </view>
+    </view>
+
+    <view class="divider"></view>
+
+    <view wx:if="{{formatted.rent}}" class="kv-row">
+      <text class="kv-key">参考租金</text>
+      <text class="kv-value">{{formatted.rent}}</text>
+    </view>
+    <view wx:if="{{formatted.developer}}" class="kv-row">
+      <text class="kv-key">建设单位</text>
+      <text class="kv-value">{{formatted.developer}}</text>
+    </view>
+    <view class="kv-row">
+      <text class="kv-key">物业公司</text>
+      <text class="kv-value">{{poi.propertyCompany || '暂无物业公司信息'}}</text>
+    </view>
+    <view wx:if="{{poi.waterSavingYear}}" class="kv-row">
+      <text class="kv-key">节水小区</text>
+      <text class="kv-value">{{poi.waterSavingYear}} 年度</text>
+    </view>
+    <view class="kv-row">
+      <text class="kv-key">周边配套</text>
+      <text class="kv-value">
+        1 km 内 {{formatted.bankCount}} 家银行、{{formatted.atmCount}} 台 ATM、{{formatted.brandCount}} 个品牌；最近银行 {{formatted.nearest}}
+      </text>
+    </view>
+  </view>
+
+  <view wx:if="{{poi.type === 'bank'}}" class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">网点信息</text>
+    </view>
+    <view class="kv-row">
+      <text class="kv-key">所属品牌</text>
+      <text class="kv-value">{{poi.brand || '—'}}</text>
+    </view>
+    <view class="kv-row">
+      <text class="kv-key">网点类型</text>
+      <text class="kv-value">{{formatted.branch}}</text>
+    </view>
+    <view class="kv-row" bindtap="callPhone">
+      <text class="kv-key">联系电话</text>
+      <text class="kv-value brand-text">{{formatted.phone}}</text>
+    </view>
+    <view class="kv-row">
+      <text class="kv-key">营业时间</text>
+      <text class="kv-value">{{formatted.hours}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{nearby.length}}" class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">{{nearbyTitle}}</text>
+      <text class="section-sub">直线距离</text>
+    </view>
+    <view wx:for="{{nearby}}" wx:key="id" class="nearby-row">
+      <view class="nearby-icon">{{poi.type === 'community' ? '银' : '宅'}}</view>
+      <view class="grow">
+        <text class="nearby-name">{{item.name}}</text>
+        <text class="nearby-address">{{item.address || '地址待补充'}}</text>
+      </view>
+      <text class="nearby-distance">{{item.distance}}</text>
+    </view>
+  </view>
+
+  <view class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">实时地址</text>
+    </view>
+    <view class="row gap-12">
+      <button class="btn btn-sm btn-ghost" bindtap="loadLiveAddress">
+        {{liveState === 'loading' ? '查询中…' : (liveState === 'success' ? '重新查询' : '查实时地址')}}
+      </button>
+      <button class="btn btn-sm btn-ghost" bindtap="loadLivePois">
+        {{livePoiState === 'loading' ? '查询中…' : '查实时周边'}}
+      </button>
+    </view>
+
+    <view wx:if="{{liveState === 'success' && liveAddress}}" class="notice notice-brand mt-16">
+      <text>{{liveAddress}}</text>
+    </view>
+    <view wx:elif="{{liveState === 'unavailable' || liveState === 'error'}}" class="notice mt-16">
+      <text>{{liveMessage || '实时地址暂不可用'}}</text>
+    </view>
+    <view wx:elif="{{liveState === 'empty'}}" class="tiny mt-12">{{liveMessage}}</view>
+
+    <view wx:if="{{livePois.length}}" class="live-list mt-16">
+      <view wx:for="{{livePois}}" wx:key="name" class="live-row">
+        <view class="grow">
+          <text class="live-name">{{item.name}}</text>
+          <text class="live-address">{{item.address || '—'}} · {{item.type || 'POI'}}</text>
+        </view>
+        <text class="tiny">{{item.distance ? item.distance + ' m' : ''}}</text>
+      </view>
+    </view>
+    <view wx:elif="{{livePoiState === 'unavailable' || livePoiState === 'error'}}" class="tiny mt-12">
+      {{liveMessage}}
+    </view>
+  </view>
+
+  <view wx:if="{{sources.length}}" class="card card-pad mt-20">
+    <view class="section-head">
+      <text class="section-title">信息来源</text>
+      <text class="section-sub">记录信息来自哪里</text>
+    </view>
+    <view wx:for="{{sources}}" wx:key="field" class="source-row">
+      <text class="source-field">{{item.label}}</text>
+      <view class="grow">
+        <text class="source-name">{{item.source}}</text>
+        <text class="tiny">{{item.date}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-bottom-space"></view>
+</view>
+
+<view wx:if="{{poi}}" class="fixed-actions">
+  <button class="btn btn-ghost grow" bindtap="goFeedback">纠错 / 补充</button>
+  <button class="btn btn-primary grow" bindtap="openNav">导航到这里</button>
+</view>

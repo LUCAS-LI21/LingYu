@@ -7,7 +7,6 @@ import LandParcelPanel from '@/components/admin/LandParcelPanel.vue'
 import CommunityPendingPanel from '@/components/admin/CommunityPendingPanel.vue'
 import BankPendingPanel from '@/components/admin/BankPendingPanel.vue'
 import QueryBehaviorPanel from '@/components/admin/QueryBehaviorPanel.vue'
-import ComplianceDoc from '@/components/ComplianceDoc.vue'
 import CorrectionComposer from '@/components/CorrectionComposer.vue'
 import {
   approveFeedback,
@@ -34,7 +33,6 @@ type Tab =
   | 'land'
   | 'pending'
   | 'pendingBank'
-  | 'compliance'
 
 const tab = ref<Tab>('overview')
 const online = ref<boolean | null>(null)
@@ -108,7 +106,6 @@ const tabs: Array<{ key: Tab; label: string }> = [
   { key: 'land', label: '存量用地' },
   { key: 'pending', label: '待定位小区' },
   { key: 'pendingBank', label: '待定位网点' },
-  { key: 'compliance', label: '数据说明' },
 ]
 
 const kpis = computed(() => [
@@ -830,9 +827,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- 数据说明：与用户后台共用同一份合规文档 -->
-      <div v-else class="rounded-card border border-line bg-surface p-5 shadow-card">
-        <ComplianceDoc />
-      </div>
+      <div v-else class="rounded-card border border-line bg-surface p-5 shadow-card"></div>
     </template>
   </div>
 </template>

@@ -1,0 +1,107 @@
+.land-kpis {
+  display: flex;
+  gap: 12rpx;
+}
+
+.land-kpi {
+  flex: 1;
+  min-width: 0;
+  padding: 18rpx;
+  border-radius: 20rpx;
+  border: 1rpx solid #e6eaf0;
+  background: #fff;
+}
+
+.land-value {
+  display: block;
+  color: #0f172a;
+  font-size: 30rpx;
+  font-weight: 650;
+}
+
+.land-label {
+  display: block;
+  margin-top: 4rpx;
+  color: #94a3b8;
+  font-size: 19rpx;
+}
+
+.filter-pill {
+  min-height: 58rpx;
+  padding: 0 20rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #e6eaf0;
+  background: #fff;
+  color: #475569;
+  font-size: 23rpx;
+  line-height: 56rpx;
+}
+
+.housing-types {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.land-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.land-name {
+  flex: 1;
+  min-width: 0;
+  color: #0f172a;
+  font-size: 27rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.land-location {
+  display: block;
+  margin-top: 8rpx;
+  color: #64748b;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.land-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx 0;
+}
+
+.land-field {
+  width: 50%;
+  padding-right: 12rpx;
+}
+
+.land-key {
+  display: block;
+  color: #94a3b8;
+  font-size: 19rpx;
+}
+
+.land-val {
+  display: block;
+  margin-top: 2rpx;
+  color: #475569;
+  font-size: 22rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.land-note {
+  display: block;
+  padding: 10rpx 4rpx;
+  color: #94a3b8;
+  font-size: 19rpx;
+  line-height: 1.5;
+  text-align: center;
+}
