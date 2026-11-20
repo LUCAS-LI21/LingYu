@@ -183,6 +183,111 @@ public class LiveService {
         }
     }
 
+    /**
+     * L2 实时周边配套：学校 / 医院 / 地铁站 / 商场，一次 around 查询按类型归组。
+     *
+     * <p>库内小区只存了"周边银行/ATM"这类可授权落库的字段；学校、医院、地铁、商场
+     * 没有可落库的授权源，因此这里走 L2：即取即显、不写表、不缓存。
+     */
+    public Map<String, Object> facilities(double lng, double lat, int radius) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        if (amapKey.isBlank()) {
+            result.put("enabled", false);
+            result.put("reason", "未配置 AMAP_KEY：实时周边配套不可用");
+            return result;
+        }
+
+        double[] gcj = GeoCoord.wgs84ToGcj02(lng, lat);
+        LiveQuota.Decision gate = quota.acquire(true);
+        if (!gate.allowed()) {
+            return throttled(result, gate.reason());
+        }
+
+        // 141200=学校 090100=医院 150500=地铁站 060100=商场
+        String url = String.format(
+                "https://restapi.amap.com/v3/place/around?location=%.6f,%.6f&radius=%d"
+                        + "&types=%s&offset=25&page=1&extensions=base&key=%s",
+                gcj[0], gcj[1], Math.min(Math.max(radius, 300), 3000),
+                URLEncoder.encode("141200|090100|150500|060100", StandardCharsets.UTF_8), amapKey);
+
+        try {
+            JsonNode root = get(url);
+            if (!"1".equals(root.path("status").asText())) {
+                result.put("enabled", true);
+                result.put("throttled", false);
+                result.put("error", friendly(root.path("info").asText("高德返回异常")));
+                return result;
+            }
+
+            Map<String, Integer> counts = new LinkedHashMap<>();
+            counts.put("school", 0);
+            counts.put("hospital", 0);
+            counts.put("metro", 0);
+            counts.put("mall", 0);
+            List<Map<String, Object>> items = new ArrayList<>();
+
+            for (JsonNode poi : root.path("pois")) {
+                String typeText = poi.path("type").asText("");
+                String category = categoryOf(typeText);
+                if (category == null) {
+                    continue;
+                }
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("category", category);
+                item.put("name", poi.path("name").asText(""));
+                item.put("address", poi.path("address").asText(""));
+                item.put("type", typeText);
+                String distance = poi.path("distance").asText("");
+                if (!distance.isBlank()) {
+                    try {
+                        item.put("distance", (int) Double.parseDouble(distance));
+                    } catch (NumberFormatException ignored) {
+                        // 忽略异常距离
+                    }
+                }
+                items.add(item);
+                counts.merge(category, 1, Integer::sum);
+            }
+
+            result.put("enabled", true);
+            result.put("throttled", false);
+            result.put("source", "amap");
+            result.put("stored", false);
+            result.put("coord_sys", "gcj02");
+            result.put("radius", Math.min(Math.max(radius, 300), 3000));
+            result.put("counts", counts);
+            result.put("items", items);
+            return result;
+        } catch (Exception ex) {
+            log.warn("[live] 高德周边配套查询失败：{}", ex.getClass().getSimpleName());
+            result.put("enabled", true);
+            result.put("throttled", false);
+            result.put("error", "实时周边配套查询超时或失败");
+            return result;
+        }
+    }
+
+    /** 把高德类型文本归到四类配套；不认识的返回 null（不展示，避免噪音）。 */
+    private static String categoryOf(String typeText) {
+        if (typeText == null) {
+            return null;
+        }
+        if (typeText.contains("学校") || typeText.contains("小学") || typeText.contains("中学")
+                || typeText.contains("大学") || typeText.contains("幼儿园")) {
+            return "school";
+        }
+        if (typeText.contains("医院") || typeText.contains("医疗") || typeText.contains("诊所")) {
+            return "hospital";
+        }
+        if (typeText.contains("地铁")) {
+            return "metro";
+        }
+        if (typeText.contains("商场") || typeText.contains("购物") || typeText.contains("超市")) {
+            return "mall";
+        }
+        return null;
+    }
+
     private JsonNode get(String url) throws Exception {
         HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))

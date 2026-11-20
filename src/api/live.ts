@@ -61,3 +61,32 @@ export function fetchLiveAround(
   if (keywords) query.set('keywords', keywords)
   return getLive<LiveAroundResult>(`/api/v1/live/pois?${query.toString()}`)
 }
+
+export interface LiveFacilityItem {
+  category: 'school' | 'hospital' | 'metro' | 'mall'
+  name: string
+  address?: string
+  type?: string
+  distance?: number
+}
+
+export interface LiveFacilitiesResult {
+  enabled: boolean
+  counts?: Record<string, number>
+  items?: LiveFacilityItem[]
+  reason?: string
+  error?: string
+  throttled?: boolean
+  stored?: boolean
+}
+
+/** 周边配套（L2）：学校/医院/地铁/商场，一次查询按类型归组，不落库 */
+export function fetchLiveFacilities(
+  lng: number,
+  lat: number,
+  radius = 1000,
+): Promise<LiveFacilitiesResult> {
+  return getLive<LiveFacilitiesResult>(
+    `/api/v1/live/facilities?lng=${lng}&lat=${lat}&radius=${radius}`,
+  )
+}

@@ -24,6 +24,8 @@ export interface BankPoi extends BasePoi {
   branchType: BranchType
   phone: string
   openingHours: string
+  /** 服务类型：对公/对私/自助（逗号分隔）；空串表示来源未提供 */
+  serviceTypes?: string
 }
 
 export interface CommunityPoi extends BasePoi {

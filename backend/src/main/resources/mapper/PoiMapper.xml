@@ -13,7 +13,7 @@
     -->
 
     <sql id="bankCols">
-        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
+        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours, service_types,
         CAST(NULL AS SIGNED) AS built_year,
         CAST(NULL AS SIGNED) AS avg_price,
         CAST(NULL AS CHAR(32)) AS avg_price_source,
@@ -42,6 +42,7 @@
         id, 'community' AS type, name, address, district, lng, lat,
         CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
         CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
+        CAST(NULL AS CHAR(64)) AS service_types,
         built_year, avg_price, avg_price_source, avg_price_demo,
         property_fee, property_company, water_saving_year,
         surround_bank_count, surround_atm_count, nearest_bank_m, nearby_brand_count,
@@ -111,7 +112,7 @@
          5000 行 × 28 列 ≈ 2.7MB；精简后约 0.9MB，首屏渲染明显更快。
          详情接口仍走完整投影，字段不缺。 -->
     <sql id="bankLiteCols">
-        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours,
+        id, 'bank' AS type, name, address, district, lng, lat, brand, branch_type, phone, opening_hours, service_types,
         CAST(NULL AS SIGNED) AS built_year, CAST(NULL AS SIGNED) AS avg_price,
         CAST(NULL AS CHAR(32)) AS avg_price_source, CAST(NULL AS SIGNED) AS avg_price_demo,
         CAST(NULL AS DECIMAL(6,1)) AS property_fee, CAST(NULL AS CHAR(64)) AS property_company,
@@ -128,6 +129,7 @@
         id, 'community' AS type, name, address, district, lng, lat,
         CAST(NULL AS CHAR(64)) AS brand, CAST(NULL AS CHAR(16)) AS branch_type,
         CAST(NULL AS CHAR(64)) AS phone, CAST(NULL AS CHAR(128)) AS opening_hours,
+        CAST(NULL AS CHAR(64)) AS service_types,
         built_year, avg_price, avg_price_source, avg_price_demo,
         property_fee, property_company, demo_attributes,
         (

@@ -9,7 +9,13 @@ import {
   type NearbyCommunity,
   type NearestBank,
 } from '@/api/pois'
-import { fetchLiveAddress, fetchLiveAround, type LivePoiItem } from '@/api/live'
+import {
+  fetchLiveAddress,
+  fetchLiveAround,
+  fetchLiveFacilities,
+  type LiveFacilityItem,
+  type LivePoiItem,
+} from '@/api/live'
 import type { FieldSource } from '@/api/server'
 import { amapMarkerUrl, amapNavigationUrl, canNavigate, tencentNavigationUrl } from '@/lib/nav'
 import type { BankPoi, Poi } from '@/types/poi'
@@ -106,6 +112,64 @@ const livePois = ref<LivePoiItem[]>([])
 const livePoiState = ref<LiveState>('idle')
 /** 只查 ATM：库内 368 台覆盖不全，缺口用高德实时补（L2，不落库） */
 const livePoiAtmOnly = ref(false)
+
+// L2 周边配套：学校/医院/地铁/商场，一次查询按类型归组
+const facilityState = ref<LiveState>('idle')
+const facilityMessage = ref('')
+const facilityCounts = ref<Record<string, number>>({})
+const facilityItems = ref<LiveFacilityItem[]>([])
+const FACILITY_LABELS: Record<string, string> = {
+  school: '学校',
+  hospital: '医院',
+  metro: '地铁',
+  mall: '商场',
+}
+const facilityChips = computed(() =>
+  Object.entries(FACILITY_LABELS).map(([key, label]) => ({
+    key,
+    label,
+    count: facilityCounts.value[key] ?? 0,
+  })),
+)
+
+async function loadFacilities(): Promise<void> {
+  if (props.poi.type !== 'community') return
+  facilityState.value = 'loading'
+  facilityMessage.value = ''
+  facilityItems.value = []
+  facilityCounts.value = {}
+  try {
+    const result = await fetchLiveFacilities(props.poi.lng, props.poi.lat, 1000)
+    if (!result.enabled) {
+      facilityState.value = 'unavailable'
+      facilityMessage.value = result.reason ?? '周边配套查询未启用'
+      return
+    }
+    if (result.error) {
+      facilityState.value = 'error'
+      facilityMessage.value = result.error
+      return
+    }
+    facilityCounts.value = result.counts ?? {}
+    facilityItems.value = result.items ?? []
+    const total = Object.values(facilityCounts.value).reduce((sum, n) => sum + n, 0)
+    facilityState.value = total > 0 ? 'success' : 'empty'
+    facilityMessage.value = total > 0 ? '' : '1km 内没有查到学校/医院/地铁/商场'
+  } catch (e) {
+    facilityState.value = 'error'
+    facilityMessage.value = e instanceof Error ? e.message : '周边配套查询失败'
+  }
+}
+// 切换点位时清空上一次的配套结果（放在声明之后，避免 immediate watch 命中 TDZ）
+watch(
+  () => props.poi?.id,
+  () => {
+    facilityState.value = 'idle'
+    facilityMessage.value = ''
+    facilityCounts.value = {}
+    facilityItems.value = []
+  },
+)
 
 async function toggleLivePoiAtmOnly(): Promise<void> {
   livePoiAtmOnly.value = !livePoiAtmOnly.value
@@ -211,9 +275,16 @@ function distanceLabel(item: LivePoiItem): string {
 const rows = computed(() => {
   const poi = props.poi
   if (poi.type === 'bank') {
+    const serviceText = (poi.serviceTypes || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(' / ')
     return [
       { label: '地址', value: poi.address || '暂无' },
       { label: '类型', value: poi.branchType === 'atm' ? 'ATM 自助银行' : '营业网点' },
+      // 服务类型来自官网营业时间文本（含「对公/对私」才提取），无证据显示未提供
+      { label: '服务类型', value: serviceText || (poi.branchType === 'atm' ? '自助' : '未提供') },
       { label: '品牌', value: poi.brand || '暂无' },
       { label: '营业时间', value: poi.openingHours || '待核实' },
       { label: '联系电话', value: poi.phone || '暂无' },
@@ -768,6 +839,93 @@ function changeRadius(value: number): void {
         <p v-if="livePoiState === 'success'" class="text-[10px] leading-relaxed text-ink-400">
           来源：高德开放平台 · 实时展示（L2），不写入数据库 · 关闭页面即消失
         </p>
+      </section>
+
+      <!-- 周边配套（L2）：学校/医院/地铁/商场，只在点开时查一次，不落库 -->
+      <section
+        v-if="poi.type === 'community'"
+        class="space-y-2.5 rounded-soft border border-line bg-surface-soft p-3"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="flex items-center gap-1.5 text-xs font-medium text-ink-900">
+              周边配套
+              <span class="rounded bg-brand-50 px-1 py-0.5 text-[9px] font-normal text-brand-600">
+                L2
+              </span>
+            </p>
+            <p class="mt-0.5 text-[10px] leading-relaxed text-ink-400">
+              1km 内学校 / 医院 / 地铁 / 商场 · 实时查询，不写入数据库
+            </p>
+          </div>
+          <button
+            data-testid="live-facilities-action"
+            class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-500/30 bg-surface px-2.5 py-1 text-[11px] font-medium text-brand-600 transition hover:border-brand-500/60 hover:bg-brand-50 disabled:opacity-60"
+            :disabled="facilityState === 'loading'"
+            @click="loadFacilities"
+          >
+            {{
+              facilityState === 'loading'
+                ? '查询中…'
+                : facilityState === 'success' || facilityState === 'empty'
+                  ? '重新查询'
+                  : '查周边配套'
+            }}
+          </button>
+        </div>
+
+        <div v-if="facilityState === 'loading'" class="space-y-1.5">
+          <div v-for="i in 3" :key="i" class="h-6 animate-pulse rounded-lg bg-surface" />
+        </div>
+        <p
+          v-else-if="facilityState === 'unavailable' || facilityState === 'error'"
+          data-testid="live-facilities-status"
+          class="rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed"
+          :class="
+            facilityState === 'unavailable'
+              ? 'border-amber-200 bg-amber-50/70 text-amber-700'
+              : 'border-red-200 bg-red-50/60 text-red-600'
+          "
+        >
+          {{ facilityMessage }}
+        </p>
+        <p
+          v-else-if="facilityState === 'empty'"
+          data-testid="live-facilities-status"
+          class="rounded-lg border border-dashed border-line-strong bg-surface px-2.5 py-2 text-[11px] text-ink-400"
+        >
+          {{ facilityMessage }}
+        </p>
+        <template v-else-if="facilityState === 'success'">
+          <div class="flex flex-wrap gap-1.5">
+            <span
+              v-for="chip in facilityChips"
+              :key="chip.key"
+              class="rounded-full bg-surface px-2 py-0.5 text-[11px] text-ink-600 ring-1 ring-line"
+            >
+              {{ chip.label }}
+              <span class="font-medium tabular-nums text-ink-900">{{ chip.count }}</span>
+            </span>
+          </div>
+          <ul data-testid="live-facilities-list" class="space-y-1">
+            <li
+              v-for="(item, index) in facilityItems.slice(0, 4)"
+              :key="`${item.name}-${index}`"
+              class="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5"
+            >
+              <span class="min-w-0 flex-1 truncate text-[11px] text-ink-700">
+                <span class="mr-1 text-ink-400">{{ FACILITY_LABELS[item.category] }}</span>
+                {{ item.name }}
+              </span>
+              <span v-if="item.distance" class="shrink-0 text-[10px] tabular-nums text-ink-400">
+                {{ item.distance }}m
+              </span>
+            </li>
+          </ul>
+          <p class="text-[10px] leading-relaxed text-ink-400">
+            来源：高德开放平台 · 实时展示（L2），不写入数据库
+          </p>
+        </template>
       </section>
 
       <section

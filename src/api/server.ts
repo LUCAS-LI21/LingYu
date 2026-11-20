@@ -21,6 +21,8 @@ interface ServerPoi {
   branchType?: 'branch' | 'atm' | null
   phone?: string | null
   openingHours?: string | null
+  /** 服务类型：对公/对私/自助（逗号分隔，来自官网文本） */
+  serviceTypes?: string | null
   gcjLng?: number | null
   gcjLat?: number | null
   builtYear?: number | null
@@ -105,6 +107,7 @@ function toPoi(row: ServerPoi): Poi {
       branchType: row.branchType === 'atm' ? 'atm' : 'branch',
       phone: row.phone ?? '',
       openingHours: row.openingHours ?? '',
+      serviceTypes: row.serviceTypes ?? '',
     }
   }
   return {

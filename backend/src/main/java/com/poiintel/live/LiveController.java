@@ -41,4 +41,15 @@ public class LiveController {
                 .cacheControl(CacheControl.noStore())
                 .body(ApiResult.ok(liveService.searchAround(lng, lat, radius, keywords)));
     }
+
+    /** 实时周边配套（L2）：学校/医院/地铁/商场，一次查询按类型归组，不落库 */
+    @GetMapping("/facilities")
+    public ResponseEntity<ApiResult<Map<String, Object>>> facilities(
+            @RequestParam double lng,
+            @RequestParam double lat,
+            @RequestParam(defaultValue = "1000") int radius) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(ApiResult.ok(liveService.facilities(lng, lat, radius)));
+    }
 }

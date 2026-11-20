@@ -120,6 +120,7 @@ function normalize(raw: Record<string, unknown>): Poi | null {
       branchType: (raw.branchType === 'atm' ? 'atm' : 'branch') as BranchType,
       phone: String(raw.phone ?? ''),
       openingHours: String(raw.openingHours ?? ''),
+      serviceTypes: String(raw.serviceTypes ?? '').trim(),
     }
   }
 

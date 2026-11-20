@@ -29,6 +29,8 @@ public class PoiRow {
     private String branchType;
     private String phone;
     private String openingHours;
+    /** 服务类型：对公/对私/自助（来自官网文本，缺证据为空） */
+    private String serviceTypes;
     private Integer builtYear;
     private Integer avgPrice;
     /** demo=演示值 / gov_reference=政府成交参考价 */
