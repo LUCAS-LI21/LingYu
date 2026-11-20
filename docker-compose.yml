@@ -60,6 +60,14 @@ services:
       APP_AUTH_ALLOW_DEFAULT_PASSWORD: 'false'
       # 抓取代理：容器内访问宿主代理要用 host.docker.internal
       HTTP_PROXY: ${INGEST_PROXY:-}
+      # L2 实时层（高德）：留空则前端显示「未配置 AMAP_KEY」，主功能不受影响
+      AMAP_KEY: ${AMAP_KEY:-}
+      LIVE_DAILY_BUDGET: ${LIVE_DAILY_BUDGET:-300}
+      LIVE_DAILY_BUDGET_AROUND: ${LIVE_DAILY_BUDGET_AROUND:-100}
+      LIVE_MIN_INTERVAL_MS: ${LIVE_MIN_INTERVAL_MS:-200}
+      # Agent（可选）：不配置则「Agent 建议」为空，不影响主流程
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      AGENT_ENABLED: ${AGENT_ENABLED:-false}
       TZ: Asia/Shanghai
     extra_hosts:
       # Linux 上也能解析 host.docker.internal

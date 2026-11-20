@@ -306,6 +306,8 @@ def add_toc(doc, entries=None):
     run._r.append(instr)
     run._r.append(sep)
 
+    toc_pt = 11.0 if len(entries or []) > 30 else H1_PT
+
     if entries:
         for level, text, page in entries:
             item = doc.add_paragraph()
@@ -316,9 +318,9 @@ def add_toc(doc, entries=None):
             pf.space_after = Pt(0)
             pf.tab_stops.add_tab_stop(Cm(BODY_W_CM), 2, 1)
             r1 = item.add_run(text)
-            set_font(r1, SONG, H1_PT, level == 1)
+            set_font(r1, SONG, toc_pt, level == 1)
             r2 = item.add_run("\t" + str(page))
-            set_font(r2, SONG, H1_PT, False)
+            set_font(r2, SONG, toc_pt, False)
         end_p = doc.paragraphs[-1]
     else:
         note = doc.add_paragraph()
@@ -384,12 +386,17 @@ def add_table(doc, rows):
     table.autofit = False
     cell_margins(table)
 
+    def disp(s):
+        # 中文按 2 个宽度计，避免中文列被算窄
+        return sum(2 if ord(ch) > 127 else 1 for ch in s)
+
     weights = []
     for c in range(cols):
-        longest = max(len(re.sub(r"[`*]", "", r[c])) for r in rows)
-        weights.append(max(longest, 4))
+        longest = max(disp(re.sub(r"[`*]", "", r[c])) for r in rows)
+        weights.append(min(max(longest, 6), 46))
     total = sum(weights)
-    widths = [max(BODY_W_CM * w / total, 2.2 if i == 0 else 1.6) for i, w in enumerate(weights)]
+    widths = [BODY_W_CM * w / total for w in weights]
+    widths = [max(w, 1.25) for w in widths]
     scale = BODY_W_CM / sum(widths)
     widths = [w * scale for w in widths]
 
@@ -529,9 +536,13 @@ def estimate_pages(blocks):
 
 # ---------------------------------------------------------------- 主流程
 DOCS = [
-    ("01-设计文档.md", "01_设计文档（精简版）.docx", "01"),
-    ("02-可行性分析.md", "02_可行性分析.docx", "02"),
-    ("03-初步验证.md", "03_初步验证.docx", "03"),
+    ("01-需求分析.md", "01_需求分析.docx", "01"),
+    ("02-原型设计.md", "02_原型设计.docx", "02"),
+    ("03-数据库设计.md", "03_数据库设计.docx", "03"),
+    ("04-接口设计.md", "04_接口设计.docx", "04"),
+    ("05-初步验证.md", "05_初步验证.docx", "05"),
+    ("设计文档（精简版）.md", "设计文档（精简版）.docx", "design"),
+    ("可行性分析.md", "可行性分析.docx", "feasibility"),
 ]
 
 
@@ -569,8 +580,25 @@ def build(md_name, out_name, toc_entries=None, quiet=False):
     return blocks
 
 
-def extract_heading_pages(pdf_path, blocks):
-    """从 PDF 里找出每个一二级标题落在正文第几页（正文第 1 页 = PDF 第 3 页）。"""
+def detect_body_start(pdf_path, blocks):
+    """正文第一页在 PDF 里的页码（1-based）：目录页里的条目带点线，不会与标题行完全相等。"""
+    import pdfplumber
+
+    norm = lambda s: re.sub(r"\s+", "", s)
+    first_h1 = next((p for k, p in blocks if k == "h1"), None)
+    if not first_h1:
+        return 3
+    target = norm(first_h1)
+    with pdfplumber.open(pdf_path) as pdf:
+        for idx, page in enumerate(pdf.pages, 1):
+            lines = [norm(l) for l in (page.extract_text() or "").split("\n")]
+            if target in lines:
+                return idx
+    return 3
+
+
+def extract_heading_pages(pdf_path, blocks, offset):
+    """从 PDF 里找出每个一二级标题落在正文第几页；offset = 正文首页之前的前置页数。"""
     import pdfplumber
 
     norm = lambda s: re.sub(r"\s+", "", s)
@@ -581,8 +609,17 @@ def extract_heading_pages(pdf_path, blocks):
             text = page.extract_text() or ""
             for line in text.split("\n"):
                 key = norm(line)
-                if key in wanted and key not in found:
-                    found[key] = idx - 2  # 去掉封面与目录
+                hit = key if key in wanted else None
+                if hit is None:
+                    # 标题可能与后文粘在同一行，做前缀容错
+                    for cand in wanted:
+                        if key.startswith(cand) and len(key) <= len(cand) + 8:
+                            hit = cand
+                            break
+                if hit and hit not in found:
+                    page_no = idx - offset + 1
+                    if page_no >= 1:
+                        found[hit] = page_no
     return {wanted[k][1]: v for k, v in found.items()}
 
 
@@ -597,8 +634,9 @@ def cmd_extract():
         if not os.path.exists(pdf):
             print(f"  ! 缺少 {pdf}")
             continue
-        mapping[key] = extract_heading_pages(pdf, blocks)
-        print(f"  {key}: 识别 {len(mapping[key])} 个标题页码")
+        offset = detect_body_start(pdf, blocks)
+        mapping[key] = extract_heading_pages(pdf, blocks, offset)
+        print(f"  {key}: 正文起始 PDF 第 {offset} 页，识别 {len(mapping[key])} 个标题页码")
     os.makedirs(os.path.join(OUT, "build"), exist_ok=True)
     with open(os.path.join(OUT, "build", "toc-pages.json"), "w", encoding="utf-8") as f:
         json.dump(mapping, f, ensure_ascii=False, indent=2)

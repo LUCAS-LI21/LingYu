@@ -1,13 +1,13 @@
 {
   "base": "http://127.0.0.1:18080",
-  "stamp": "2026-11-18 19:26:58",
+  "stamp": "2026-11-19 17:31:55",
   "rows": [
     {
       "name": "健康检查",
       "method": "GET",
       "path": "/api/v1/health",
       "status": 200,
-      "ms": 31,
+      "ms": 23,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -25,7 +25,7 @@
       "method": "GET",
       "path": "/api/v1/meta",
       "status": 200,
-      "ms": 4,
+      "ms": 6,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -137,7 +137,7 @@
       "method": "GET",
       "path": "/api/v1/pois?size=3&page=1",
       "status": 200,
-      "ms": 31,
+      "ms": 66,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -204,7 +204,7 @@
               "sourceLevel": "L1"
             }
           ],
-          "total": 5104,
+          "total": 5429,
           "page": 1,
           "size": 3
         }
@@ -215,7 +215,7 @@
       "method": "GET",
       "path": "/api/v1/pois?district=%E5%8D%97%E5%B1%B1%E5%8C%BA&size=2",
       "status": 200,
-      "ms": 16,
+      "ms": 26,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -263,7 +263,7 @@
               "sourceLevel": "L1"
             }
           ],
-          "total": 999,
+          "total": 1078,
           "page": 1,
           "size": 2
         }
@@ -274,7 +274,7 @@
       "method": "GET",
       "path": "/api/v1/pois?types=community&size=2",
       "status": 200,
-      "ms": 15,
+      "ms": 14,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -345,7 +345,7 @@
       "method": "GET",
       "path": "/api/v1/stats",
       "status": 200,
-      "ms": 26,
+      "ms": 27,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -353,13 +353,21 @@
         "code": 0,
         "message": "ok",
         "data": {
-          "total": 5104,
-          "bank": 1528,
-          "atm": 43,
+          "total": 5429,
+          "bank": 1853,
+          "atm": 368,
           "branch": 1485,
           "community": 3576,
-          "districts": 10,
+          "districts": 11,
           "brands": [
+            {
+              "label": "平安银行",
+              "value": 311
+            },
+            {
+              "label": "招商银行",
+              "value": 269
+            },
             {
               "label": "深圳农商银行",
               "value": 244
@@ -369,20 +377,12 @@
               "value": 160
             },
             {
-              "label": "招商银行",
-              "value": 156
-            },
-            {
               "label": "中国邮政储蓄银行",
               "value": 151
             },
             {
               "label": "中国农业银行",
               "value": 141
-            },
-            {
-              "label": "平安银行",
-              "value": 99
             },
             {
               "label": "中国工商银行",
@@ -395,52 +395,52 @@
           ],
           "byDistrict": [
             {
-              "bank": 335,
+              "bank": 399,
               "label": "福田区",
               "community": 741
             },
             {
-              "bank": 312,
+              "bank": 391,
               "label": "南山区",
               "community": 687
             },
             {
-              "bank": 289,
+              "bank": 334,
               "label": "宝安区",
               "community": 593
             },
             {
-              "bank": 102,
+              "bank": 109,
               "label": "光明区",
               "community": 476
             },
             {
-              "bank": 133,
+              "bank": 164,
               "label": "龙华区",
               "community": 411
             },
             {
-              "bank": 38,
+              "bank": 46,
               "label": "坪山区",
               "community": 274
             },
             {
-              "bank": 174,
+              "bank": 208,
               "label": "龙岗区",
               "community": 110
             },
             {
-              "bank": 23,
+              "bank": 35,
               "label": "盐田区",
               "community": 177
             },
             {
-              "bank": 101,
+              "bank": 142,
               "label": "罗湖区",
               "community": 67
             },
             {
-              "bank": 21,
+              "bank": 24,
               "label": "大鹏新区",
               "community": 40
             }
@@ -473,39 +473,39 @@
           },
           "gridTop": [
             {
-              "label": "114.05, 22.53",
-              "value": 54,
-              "lng": 114.05,
-              "lat": 22.53
-            },
-            {
               "label": "113.93, 22.53",
-              "value": 52,
+              "value": 63,
               "lng": 113.93,
               "lat": 22.53
             },
             {
+              "label": "114.05, 22.53",
+              "value": 62,
+              "lng": 114.05,
+              "lat": 22.53
+            },
+            {
               "label": "114.09, 22.55",
-              "value": 48,
+              "value": 59,
               "lng": 114.09,
               "lat": 22.55
             },
             {
               "label": "113.95, 22.55",
-              "value": 43,
+              "value": 51,
               "lng": 113.95,
               "lat": 22.55
             },
             {
               "label": "114.05, 22.55",
-              "value": 36,
+              "value": 44,
               "lng": 114.05,
               "lat": 22.55
             },
             {
-              "label": "113.89, 22.55",
-              "value": 34,
-              "lng": 113.89,
+              "label": "114.11, 22.55",
+              "value": 44,
+              "lng": 114.11,
               "lat": 22.55
             }
           ]
@@ -517,7 +517,7 @@
       "method": "GET",
       "path": "/api/v1/pois/nearby?lng=114.0579&lat=22.5431&radius=1000&limit=5",
       "status": 200,
-      "ms": 9,
+      "ms": 10,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -526,6 +526,26 @@
         "message": "ok",
         "data": {
           "items": [
+            {
+              "poi": {
+                "id": "import-1257246534",
+                "name": "深圳分行时代广场支行",
+                "address": "深圳市福田中心区卓越时代广场一楼",
+                "district": "福田区",
+                "lng": 114.058673,
+                "lat": 22.542872,
+                "gcjLng": 114.063788,
+                "gcjLat": 22.540156,
+                "brand": "招商银行",
+                "branchType": "atm",
+                "phone": "2",
+                "openingHours": "000000-240000",
+                "source": "招商银行官网（ATM）",
+                "license": "公开信息（官网自助设备查询）",
+                "sourceLevel": "L1"
+              },
+              "distance": 83.33610391851838
+            },
             {
               "poi": {
                 "id": "import-249265493",
@@ -605,26 +625,6 @@
                 "sourceLevel": "L1"
               },
               "distance": 275.48210383502857
-            },
-            {
-              "poi": {
-                "id": "osm-node-6544777125",
-                "name": "华夏银行",
-                "address": "",
-                "district": "福田区",
-                "lng": 114.058576,
-                "lat": 22.540362,
-                "gcjLng": 114.063691,
-                "gcjLat": 22.537646,
-                "brand": "华夏银行",
-                "branchType": "branch",
-                "phone": "",
-                "openingHours": "",
-                "source": "OpenStreetMap",
-                "license": "ODbL",
-                "sourceLevel": "L1"
-              },
-              "distance": 312.2669901554107
             }
           ],
           "total": 5
@@ -636,7 +636,7 @@
       "method": "GET",
       "path": "/api/v1/community-pending?size=3",
       "status": 200,
-      "ms": 11,
+      "ms": 18,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -684,7 +684,7 @@
       "method": "GET",
       "path": "/api/v1/land-parcels?limit=3",
       "status": 200,
-      "ms": 6,
+      "ms": 5,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -736,7 +736,7 @@
       "method": "GET",
       "path": "/api/v1/live/address?lng=114.0579&lat=22.5431",
       "status": 200,
-      "ms": 3,
+      "ms": 5,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -754,7 +754,7 @@
       "method": "GET",
       "path": "/api/v1/pois/osm-node-4866753941",
       "status": 200,
-      "ms": 6,
+      "ms": 4,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -821,20 +821,20 @@
               "distance": 218
             },
             {
-              "id": "osm-node-13288351469",
-              "name": "中国工商银行",
-              "brand": "中国工商银行",
-              "address": "",
-              "branchType": "branch",
-              "distance": 441
+              "id": "import-704332907",
+              "name": "深圳分行宝安支行",
+              "brand": "招商银行",
+              "address": "深圳市宝安区9区宝民路广场大厦首层",
+              "branchType": "atm",
+              "distance": 225
             },
             {
-              "id": "import-1291583170",
-              "name": "中信银行深圳宝城支行",
-              "brand": "中信银行",
-              "address": "深圳市宝安区8区建安一路东侧新华书店综合大楼一栋首层",
-              "branchType": "branch",
-              "distance": 481
+              "id": "import-1072081795",
+              "name": "平安银行ATM（宝安区宝安区西乡桃源居桃源盛世前进路188号）",
+              "brand": "平安银行",
+              "address": "深圳市宝安区宝安区西乡桃源居桃源盛世前进路188号",
+              "branchType": "atm",
+              "distance": 402
             }
           ]
         }
@@ -845,7 +845,7 @@
       "method": "POST",
       "path": "/api/v1/auth/login",
       "status": 200,
-      "ms": 34,
+      "ms": 53,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -853,9 +853,9 @@
         "code": 0,
         "message": "ok",
         "data": {
-          "token": "b3BlcmF0b3J8MTc5NTA3MzIxOA.3W-kM8eS9ksqe63CtDxbwNgTt42ByV5_tFSOKjpB1FY",
+          "token": "b3BlcmF0b3J8MTc5NTE1MjcxNQ.EoF-3ce1Vmv2IzGNXpYkNAPfviFrSGFJ_xHwU5Mp4bQ",
           "username": "operator",
-          "expiresAt": 1795073218
+          "expiresAt": 1795152715
         }
       }
     },
@@ -864,7 +864,7 @@
       "method": "GET",
       "path": "/api/v1/admin/overview",
       "status": 200,
-      "ms": 17,
+      "ms": 19,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -873,14 +873,14 @@
         "message": "ok",
         "data": {
           "pendingFeedback": 18,
-          "totalFeedback": 41,
-          "totalJobs": 438,
+          "totalFeedback": 43,
+          "totalJobs": 459,
           "successJobs": 9,
-          "failedJobs": 157,
+          "failedJobs": 177,
           "runningJobs": 0,
           "hotRegions": 96,
-          "versions": 4498,
-          "avgFreshHours": 152
+          "versions": 4507,
+          "avgFreshHours": 164
         }
       }
     },
@@ -889,7 +889,7 @@
       "method": "GET",
       "path": "/api/v1/admin/feedback?status=pending&size=3",
       "status": 200,
-      "ms": 6,
+      "ms": 8,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -955,7 +955,7 @@
       "method": "GET",
       "path": "/api/v1/admin/jobs?size=5",
       "status": 200,
-      "ms": 5,
+      "ms": 6,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -965,22 +965,22 @@
         "data": {
           "items": [
             {
-              "id": 439,
+              "id": 461,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
               "scopeType": "bbox",
               "scopeValue": "22.54000,113.94000,22.56000,113.96000",
-              "status": "failed",
-              "fetchedCount": 0,
+              "status": "partial",
+              "fetchedCount": 64,
               "insertedCount": 0,
-              "updatedCount": 0,
+              "updatedCount": 39,
               "failedCount": 0,
-              "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 03:25",
-              "finishedAt": "11-19 03:25"
+              "errorSummary": "跳过 1 条近期人工修改的网点；跳过 16 条近期人工修改的小区",
+              "createdAt": "11-20 01:22",
+              "finishedAt": "11-20 01:27"
             },
             {
-              "id": 438,
+              "id": 460,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
               "scopeType": "bbox",
@@ -990,12 +990,12 @@
               "insertedCount": 0,
               "updatedCount": 0,
               "failedCount": 0,
-              "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 03:17",
-              "finishedAt": "11-19 03:17"
+              "errorSummary": "IllegalStateException: java.net.http.HttpTimeoutException: request timed out",
+              "createdAt": "11-19 15:31",
+              "finishedAt": "11-20 00:49"
             },
             {
-              "id": 437,
+              "id": 459,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
               "scopeType": "bbox",
@@ -1006,11 +1006,11 @@
               "updatedCount": 0,
               "failedCount": 0,
               "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 03:07",
-              "finishedAt": "11-19 03:08"
+              "createdAt": "11-19 15:01",
+              "finishedAt": "11-19 15:01"
             },
             {
-              "id": 435,
+              "id": 458,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
               "scopeType": "bbox",
@@ -1021,11 +1021,11 @@
               "updatedCount": 0,
               "failedCount": 0,
               "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 02:56",
-              "finishedAt": "11-19 02:56"
+              "createdAt": "11-19 14:31",
+              "finishedAt": "11-19 14:31"
             },
             {
-              "id": 434,
+              "id": 457,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
               "scopeType": "bbox",
@@ -1036,11 +1036,11 @@
               "updatedCount": 0,
               "failedCount": 0,
               "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 02:51",
-              "finishedAt": "11-19 02:51"
+              "createdAt": "11-19 14:01",
+              "finishedAt": "11-19 14:01"
             }
           ],
-          "total": 438
+          "total": 459
         }
       }
     },
@@ -1225,7 +1225,7 @@
       "method": "GET",
       "path": "/api/v1/admin/overview",
       "status": 401,
-      "ms": 2,
+      "ms": 4,
       "ok": true,
       "expect": 401,
       "error": "",
@@ -1240,7 +1240,7 @@
       "method": "GET",
       "path": "/api/v1/not-exist",
       "status": 404,
-      "ms": 4,
+      "ms": 11,
       "ok": true,
       "expect": 404,
       "error": "",

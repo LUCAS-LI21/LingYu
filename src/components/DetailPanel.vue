@@ -104,6 +104,20 @@ const liveAddressMessage = ref('')
 // L2 实时周边（高德）：同样只在内存
 const livePois = ref<LivePoiItem[]>([])
 const livePoiState = ref<LiveState>('idle')
+/** 只查 ATM：库内 368 台覆盖不全，缺口用高德实时补（L2，不落库） */
+const livePoiAtmOnly = ref(false)
+
+async function toggleLivePoiAtmOnly(): Promise<void> {
+  livePoiAtmOnly.value = !livePoiAtmOnly.value
+  // 已查过就按新模式重查；没查过只改提示文案，避免无谓消耗配额
+  if (livePoiState.value === 'success' || livePoiState.value === 'empty') {
+    await loadLivePois()
+  } else {
+    livePoiState.value = 'idle'
+    livePois.value = []
+    livePoiMessage.value = ''
+  }
+}
 const livePoiMessage = ref('')
 
 async function loadLivePois(): Promise<void> {
@@ -111,7 +125,12 @@ async function loadLivePois(): Promise<void> {
   livePoiMessage.value = ''
   livePois.value = []
   try {
-    const result = await fetchLiveAround(props.poi.lng, props.poi.lat, 1000)
+    const result = await fetchLiveAround(
+      props.poi.lng,
+      props.poi.lat,
+      1000,
+      livePoiAtmOnly.value ? 'ATM' : undefined,
+    )
     if (!result.enabled) {
       livePoiState.value = 'unavailable'
       livePoiMessage.value = result.reason ?? '高德实时周边未启用'
@@ -658,33 +677,49 @@ function changeRadius(value: number): void {
                 </span>
               </p>
               <p class="mt-0.5 text-[10px] leading-relaxed text-ink-400">
-                1km 内点位 · 实时展示，不写入数据库
+                1km 内{{ livePoiAtmOnly ? ' ATM' : '点位' }} · 实时展示，不写入数据库
               </p>
             </div>
           </div>
-          <button
-            data-testid="live-around-action"
-            class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-500/30 bg-surface px-2.5 py-1 text-[11px] font-medium text-brand-600 transition hover:border-brand-500/60 hover:bg-brand-50 disabled:opacity-60"
-            :disabled="livePoiState === 'loading'"
-            @click="loadLivePois"
-          >
-            <svg
-              class="h-3 w-3"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
+          <div class="flex shrink-0 items-center gap-1.5">
+            <!-- 库内只有 368 台可溯源 ATM，缺口靠高德实时补：这里只切关键词，不碰数据库 -->
+            <button
+              data-testid="live-atm-toggle"
+              class="rounded-lg border px-2 py-1 text-[11px] transition"
+              :class="
+                livePoiAtmOnly
+                  ? 'border-sky-500/60 bg-sky-50 font-medium text-sky-700'
+                  : 'border-line text-ink-500 hover:border-line-strong hover:text-ink-700'
+              "
+              :aria-pressed="livePoiAtmOnly"
+              @click="toggleLivePoiAtmOnly"
             >
-              <path d="M20 12a8 8 0 11-2.3-5.7M20 4v4h-4" stroke-linecap="round" />
-            </svg>
-            {{
-              livePoiState === 'loading'
-                ? '查询中…'
-                : livePoiState === 'success' || livePoiState === 'empty'
-                  ? '重新查询'
-                  : '查 1km 内'
-            }}
-          </button>
+              ATM
+            </button>
+            <button
+              data-testid="live-around-action"
+              class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-brand-500/30 bg-surface px-2.5 py-1 text-[11px] font-medium text-brand-600 transition hover:border-brand-500/60 hover:bg-brand-50 disabled:opacity-60"
+              :disabled="livePoiState === 'loading'"
+              @click="loadLivePois"
+            >
+              <svg
+                class="h-3 w-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20 12a8 8 0 11-2.3-5.7M20 4v4h-4" stroke-linecap="round" />
+              </svg>
+              {{
+                livePoiState === 'loading'
+                  ? '查询中…'
+                  : livePoiState === 'success' || livePoiState === 'empty'
+                    ? '重新查询'
+                    : '查 1km 内'
+              }}
+            </button>
+          </div>
         </div>
 
         <p
