@@ -63,16 +63,16 @@ test.describe('地图交互', () => {
     await expect(page.getByText('已框选')).toBeHidden({ timeout: 5000 })
   })
 
-  test('低缩放级别使用聚合圆点而不是逐个 marker', async ({ page }) => {
+  test('低缩放级别使用聚合标记而不是逐个 marker', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('.leaflet-container')).toBeVisible({ timeout: 20_000 })
-    await page.waitForTimeout(2000)
+    await page.waitForTimeout(2500)
 
-    // 地图开了 preferCanvas：circleMarker 画在 canvas 上，不是 SVG path。
-    // 所以断言「有 canvas 且没有 div 图标」= 走的是聚合分支。
-    const canvas = await page.locator('.leaflet-overlay-pane canvas, .leaflet-pane canvas').count()
-    const pins = await page.locator('.poi-marker').count()
-    expect(canvas).toBeGreaterThan(0)
+    // 聚合点已改为白环 + 蓝底数字的 divIcon（不再是 canvas 圆点），
+    // 所以断言「有聚合标记且没有单点 pin」= 走的是聚合分支。
+    const clusters = await page.locator('.poi-cluster').count()
+    const pins = await page.locator('.poi-pin').count()
+    expect(clusters).toBeGreaterThan(0)
     expect(pins).toBe(0)
 
     // 放大到 16 之后应改为单点 marker
