@@ -55,7 +55,9 @@ async function main() {
   const stats = await get('/api/v1/stats')
   const pending = await get('/api/v1/community-pending?size=1')
   const parcels = await get('/api/v1/land-parcels?limit=1')
-  const overview = token ? await get('/api/v1/admin/overview', { Authorization: `Bearer ${token}` }) : null
+  const overview = token
+    ? await get('/api/v1/admin/overview', { Authorization: `Bearer ${token}` })
+    : null
 
   // strict=false 的是「会随定时任务持续增长」的快照型事实，允许与文档有出入
   const facts = [
@@ -84,7 +86,11 @@ async function main() {
   for (const [label, value, strict] of facts) {
     const hit = docs.filter((d) => d.text.includes(value)).map((d) => d.name.replace('.md', ''))
     if (hit.length === 0 && strict) missing += 1
-    const tail = hit.length ? hit.join('、') : strict ? '『缺失，需要同步』' : '（快照值，允许漂移）'
+    const tail = hit.length
+      ? hit.join('、')
+      : strict
+        ? '『缺失，需要同步』'
+        : '（快照值，允许漂移）'
     console.log(label.padEnd(20) + String(value).padEnd(14) + tail)
   }
 

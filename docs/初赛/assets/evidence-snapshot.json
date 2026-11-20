@@ -39,14 +39,8 @@
           "coord": {
             "storage": "WGS-84",
             "chineseMap": "GCJ-02",
-            "wgsFields": [
-              "lng",
-              "lat"
-            ],
-            "gcjFields": [
-              "gcjLng",
-              "gcjLat"
-            ]
+            "wgsFields": ["lng", "lat"],
+            "gcjFields": ["gcjLng", "gcjLat"]
           },
           "auth": {
             "type": "Bearer",
