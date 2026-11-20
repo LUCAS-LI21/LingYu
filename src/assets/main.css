@@ -90,6 +90,11 @@
   transform: translateY(4px);
 }
 
+/* 隐藏 Vue DevTools 的悬浮按钮：演示截图时不要挡住底部控件 */
+#__vue-devtools-container__ {
+  display: none !important;
+}
+
 /* ---------------- Leaflet 定制 ---------------- */
 /* 只有「浅灰」底图才做去饱和；彩色/卫星必须保持原色，否则切换没意义 */
 .leaflet-container[data-basemap='basemap-light'] .leaflet-tile-pane {

@@ -101,12 +101,14 @@ test.describe('邻域 POI 主流程', () => {
     await expect(page.getByText('E2E 用户后台：地址需要补充')).toBeVisible()
   })
 
-  test('数据说明页展示三级授权模型', async ({ page }) => {
-    await page.goto('/compliance')
+  test('开场粒子动画可跳过并展示卡片', async ({ page }) => {
+    await page.goto('/?intro=1')
+    await expect(page.getByTestId('map-intro')).toBeVisible()
+    await page.getByRole('button', { name: /跳过动画/ }).click()
 
-    await expect(page.getByRole('heading', { name: '数据来源与合规声明' })).toBeVisible()
-    await expect(page.getByText('L1 可入库').first()).toBeVisible()
-    await expect(page.getByText('L2 仅展示').first()).toBeVisible()
-    await expect(page.getByText('L3 禁用').first()).toBeVisible()
+    await expect(page.getByTestId('map-intro')).toBeHidden()
+    await expect(page.locator('[data-testid="poi-card"]:visible').first()).toBeVisible({
+      timeout: 20_000,
+    })
   })
 })

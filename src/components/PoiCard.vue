@@ -3,13 +3,19 @@ import { computed } from 'vue'
 
 import type { Poi } from '@/types/poi'
 
-const props = defineProps<{
-  poi: Poi
-  active?: boolean
-  distance?: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    poi: Poi
+    active?: boolean
+    distance?: number
+    /** 列表页用更舒展的排版，地图侧栏保持紧凑 */
+    size?: 'compact' | 'list'
+  }>(),
+  { size: 'compact' },
+)
 
 const isBank = computed(() => props.poi.type === 'bank')
+const isList = computed(() => props.size === 'list')
 const distanceText = computed(() => {
   if (props.distance === undefined) return ''
   return props.distance < 1000
@@ -41,20 +47,24 @@ const subtitle = computed(() => {
   <button
     type="button"
     data-testid="poi-card"
-    class="group flex w-full items-start gap-3 rounded-soft border bg-surface p-3 text-left transition-all duration-150"
-    :class="
+    class="group flex w-full items-start rounded-soft border bg-surface text-left transition-all duration-150"
+    :class="[
+      isList ? 'gap-4 p-4' : 'gap-3 p-3',
       active
         ? 'border-brand-500/70 shadow-card ring-1 ring-brand-500/10'
-        : 'border-line hover:-translate-y-px hover:border-line-strong hover:shadow-card'
-    "
+        : 'border-line hover:-translate-y-px hover:border-line-strong hover:shadow-card',
+    ]"
   >
     <span
-      class="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-[10px]"
-      :class="isBank ? 'bg-brand-50 text-brand-600' : 'bg-amber-50 text-amber-600'"
+      class="mt-0.5 grid shrink-0 place-items-center"
+      :class="[
+        isList ? 'h-11 w-11 rounded-xl' : 'h-9 w-9 rounded-[10px]',
+        isBank ? 'bg-brand-50 text-brand-600' : 'bg-amber-50 text-amber-600',
+      ]"
     >
       <svg
         v-if="isBank"
-        class="h-4 w-4"
+        :class="isList ? 'h-5 w-5' : 'h-4 w-4'"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -66,7 +76,7 @@ const subtitle = computed(() => {
       </svg>
       <svg
         v-else
-        class="h-4 w-4"
+        :class="isList ? 'h-5 w-5' : 'h-4 w-4'"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -79,7 +89,12 @@ const subtitle = computed(() => {
 
     <span class="min-w-0 flex-1">
       <span class="flex items-center gap-1.5">
-        <span class="truncate text-[13px] font-medium text-ink-900">{{ poi.name }}</span>
+        <span
+          class="truncate font-medium text-ink-900"
+          :class="isList ? 'text-[15px]' : 'text-[13px]'"
+        >
+          {{ poi.name }}
+        </span>
         <span
           v-if="poi.type === 'bank' && poi.branchType === 'atm'"
           class="shrink-0 rounded border border-line px-1 text-[10px] leading-4 text-ink-500"
@@ -95,13 +110,19 @@ const subtitle = computed(() => {
       </span>
 
       <span
-        class="mt-1 block truncate text-xs"
-        :class="poi.address ? 'text-ink-500' : 'text-ink-400/70'"
+        class="block truncate"
+        :class="[
+          isList ? 'mt-1.5 text-sm' : 'mt-1 text-xs',
+          poi.address ? 'text-ink-500' : 'text-ink-400/70',
+        ]"
       >
         {{ poi.address || '地址待补充' }}
       </span>
 
-      <span class="mt-1 flex items-center gap-2 text-[11px] text-ink-400">
+      <span
+        class="flex items-center gap-2 text-ink-400"
+        :class="isList ? 'mt-2 text-xs' : 'mt-1 text-[11px]'"
+      >
         <span>{{ poi.district }}</span>
         <span
           v-if="poi.type === 'bank' && !poi.address"

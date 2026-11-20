@@ -13,6 +13,7 @@ src/components.d.ts
 
 # 生成/构建产物
 public/data/pois.json
+public/data/world-land.json
 backend/src/main/resources/seed/pois.json
 backend/target
 backend/*.log
