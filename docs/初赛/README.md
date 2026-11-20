@@ -65,6 +65,13 @@ python scripts/build_initial_docs.py --with-toc
 python scripts/build_submission_list.py
 ```
 
+代码还在迭代时，先跑一次文档同步自检，再决定要不要重建：
+
+```bash
+node scripts/docs-sync-check.mjs
+# 逐项打印「库里的实时值 vs 文档里是否出现」；POI/银行/ATM/覆盖率等硬事实缺失时退出码 1
+```
+
 接口证据可随时复跑（需后端与数据库在运行）：
 
 ```bash

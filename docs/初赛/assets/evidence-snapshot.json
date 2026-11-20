@@ -1,13 +1,13 @@
 {
   "base": "http://127.0.0.1:18080",
-  "stamp": "2026-11-19 17:31:55",
+  "stamp": "2026-11-20 01:39:48",
   "rows": [
     {
       "name": "健康检查",
       "method": "GET",
       "path": "/api/v1/health",
       "status": 200,
-      "ms": 23,
+      "ms": 38,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -25,7 +25,7 @@
       "method": "GET",
       "path": "/api/v1/meta",
       "status": 200,
-      "ms": 6,
+      "ms": 9,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -39,8 +39,14 @@
           "coord": {
             "storage": "WGS-84",
             "chineseMap": "GCJ-02",
-            "wgsFields": ["lng", "lat"],
-            "gcjFields": ["gcjLng", "gcjLat"]
+            "wgsFields": [
+              "lng",
+              "lat"
+            ],
+            "gcjFields": [
+              "gcjLng",
+              "gcjLat"
+            ]
           },
           "auth": {
             "type": "Bearer",
@@ -137,7 +143,7 @@
       "method": "GET",
       "path": "/api/v1/pois?size=3&page=1",
       "status": 200,
-      "ms": 66,
+      "ms": 133,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -274,7 +280,7 @@
       "method": "GET",
       "path": "/api/v1/pois?types=community&size=2",
       "status": 200,
-      "ms": 14,
+      "ms": 22,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -345,7 +351,7 @@
       "method": "GET",
       "path": "/api/v1/stats",
       "status": 200,
-      "ms": 27,
+      "ms": 38,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -517,7 +523,7 @@
       "method": "GET",
       "path": "/api/v1/pois/nearby?lng=114.0579&lat=22.5431&radius=1000&limit=5",
       "status": 200,
-      "ms": 10,
+      "ms": 15,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -636,7 +642,7 @@
       "method": "GET",
       "path": "/api/v1/community-pending?size=3",
       "status": 200,
-      "ms": 18,
+      "ms": 25,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -684,7 +690,7 @@
       "method": "GET",
       "path": "/api/v1/land-parcels?limit=3",
       "status": 200,
-      "ms": 5,
+      "ms": 12,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -736,7 +742,7 @@
       "method": "GET",
       "path": "/api/v1/live/address?lng=114.0579&lat=22.5431",
       "status": 200,
-      "ms": 5,
+      "ms": 553,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -744,8 +750,12 @@
         "code": 0,
         "message": "ok",
         "data": {
-          "enabled": false,
-          "reason": "未配置 AMAP_KEY：实时地址查询不可用（这是合规设计，不是故障）"
+          "enabled": true,
+          "throttled": false,
+          "address": "广东省深圳市福田区莲花街道金田路市民广场",
+          "source": "amap",
+          "stored": false,
+          "coord_sys": "gcj02"
         }
       }
     },
@@ -754,7 +764,7 @@
       "method": "GET",
       "path": "/api/v1/pois/osm-node-4866753941",
       "status": 200,
-      "ms": 4,
+      "ms": 7,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -787,7 +797,7 @@
       "method": "GET",
       "path": "/api/v1/pois/osm-way-1447687402/sources",
       "status": 200,
-      "ms": 6,
+      "ms": 11,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -802,7 +812,7 @@
       "method": "GET",
       "path": "/api/v1/pois/osm-way-1447687402/nearest-banks?limit=3&radius=5000",
       "status": 200,
-      "ms": 7,
+      "ms": 12,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -845,7 +855,7 @@
       "method": "POST",
       "path": "/api/v1/auth/login",
       "status": 200,
-      "ms": 53,
+      "ms": 60,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -853,9 +863,9 @@
         "code": 0,
         "message": "ok",
         "data": {
-          "token": "b3BlcmF0b3J8MTc5NTE1MjcxNQ.EoF-3ce1Vmv2IzGNXpYkNAPfviFrSGFJ_xHwU5Mp4bQ",
           "username": "operator",
-          "expiresAt": 1795152715
+          "expiresAt": 1795181989,
+          "token": "b3BlcmF0b3J8MTc5NTE4MTk4OQ.1KfGd6Omq6xM3Hm5GUPNCRyqKRnUo2c7LY_0lxvZf8E"
         }
       }
     },
@@ -864,7 +874,7 @@
       "method": "GET",
       "path": "/api/v1/admin/overview",
       "status": 200,
-      "ms": 19,
+      "ms": 18,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -874,13 +884,13 @@
         "data": {
           "pendingFeedback": 18,
           "totalFeedback": 43,
-          "totalJobs": 459,
+          "totalJobs": 462,
           "successJobs": 9,
-          "failedJobs": 177,
+          "failedJobs": 180,
           "runningJobs": 0,
           "hotRegions": 96,
           "versions": 4507,
-          "avgFreshHours": 164
+          "avgFreshHours": 172
         }
       }
     },
@@ -889,7 +899,7 @@
       "method": "GET",
       "path": "/api/v1/admin/feedback?status=pending&size=3",
       "status": 200,
-      "ms": 8,
+      "ms": 7,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -965,6 +975,51 @@
         "data": {
           "items": [
             {
+              "id": 464,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-20 09:15",
+              "finishedAt": "11-20 09:15"
+            },
+            {
+              "id": 463,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-20 09:05",
+              "finishedAt": "11-20 09:06"
+            },
+            {
+              "id": 462,
+              "sourceCode": "osm_overpass",
+              "triggerType": "hotspot",
+              "scopeType": "bbox",
+              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
+              "status": "failed",
+              "fetchedCount": 0,
+              "insertedCount": 0,
+              "updatedCount": 0,
+              "failedCount": 0,
+              "errorSummary": "IllegalStateException: java.net.ConnectException",
+              "createdAt": "11-20 09:00",
+              "finishedAt": "11-20 09:01"
+            },
+            {
               "id": 461,
               "sourceCode": "osm_overpass",
               "triggerType": "hotspot",
@@ -993,54 +1048,9 @@
               "errorSummary": "IllegalStateException: java.net.http.HttpTimeoutException: request timed out",
               "createdAt": "11-19 15:31",
               "finishedAt": "11-20 00:49"
-            },
-            {
-              "id": 459,
-              "sourceCode": "osm_overpass",
-              "triggerType": "hotspot",
-              "scopeType": "bbox",
-              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
-              "status": "failed",
-              "fetchedCount": 0,
-              "insertedCount": 0,
-              "updatedCount": 0,
-              "failedCount": 0,
-              "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 15:01",
-              "finishedAt": "11-19 15:01"
-            },
-            {
-              "id": 458,
-              "sourceCode": "osm_overpass",
-              "triggerType": "hotspot",
-              "scopeType": "bbox",
-              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
-              "status": "failed",
-              "fetchedCount": 0,
-              "insertedCount": 0,
-              "updatedCount": 0,
-              "failedCount": 0,
-              "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 14:31",
-              "finishedAt": "11-19 14:31"
-            },
-            {
-              "id": 457,
-              "sourceCode": "osm_overpass",
-              "triggerType": "hotspot",
-              "scopeType": "bbox",
-              "scopeValue": "22.54000,113.94000,22.56000,113.96000",
-              "status": "failed",
-              "fetchedCount": 0,
-              "insertedCount": 0,
-              "updatedCount": 0,
-              "failedCount": 0,
-              "errorSummary": "IllegalStateException: java.net.ConnectException",
-              "createdAt": "11-19 14:01",
-              "finishedAt": "11-19 14:01"
             }
           ],
-          "total": 459
+          "total": 462
         }
       }
     },
@@ -1049,7 +1059,7 @@
       "method": "GET",
       "path": "/api/v1/admin/hotspots",
       "status": 200,
-      "ms": 6,
+      "ms": 7,
       "ok": true,
       "expect": "2xx",
       "error": "",
@@ -1225,7 +1235,7 @@
       "method": "GET",
       "path": "/api/v1/admin/overview",
       "status": 401,
-      "ms": 4,
+      "ms": 5,
       "ok": true,
       "expect": 401,
       "error": "",
@@ -1240,7 +1250,7 @@
       "method": "GET",
       "path": "/api/v1/not-exist",
       "status": 404,
-      "ms": 11,
+      "ms": 8,
       "ok": true,
       "expect": 404,
       "error": "",

@@ -4,7 +4,6 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import Icons from 'unplugin-icons/vite'
 import IconsResolver from 'unplugin-icons/resolver'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -19,19 +18,15 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       // Tailwind CSS v4 通过 postcss.config.js 接入（见该文件）
-      // 自动导入 Vue / Router / Pinia API，减少样板 import
+      // 自动导入 Vue / Router API，减少样板 import（Pinia 已移除：0 个 store）
       AutoImport({
-        imports: ['vue', 'vue-router', 'pinia'],
-        resolvers: [ElementPlusResolver({ importStyle: false })],
+        imports: ['vue', 'vue-router'],
         dts: 'src/auto-imports.d.ts',
         eslintrc: { enabled: false },
       }),
-      // 组件自动注册：Element Plus 按需 + 本地组件 + 图标
+      // 组件自动注册：本地组件 + 图标（Element Plus 已移除：全库 0 引用）
       Components({
-        resolvers: [
-          ElementPlusResolver({ importStyle: false }),
-          IconsResolver({ prefix: 'i', enabledCollections: ['ep'] }),
-        ],
+        resolvers: [IconsResolver({ prefix: 'i', enabledCollections: ['ep'] })],
         dirs: ['src/components'],
         dts: 'src/components.d.ts',
       }),
@@ -101,8 +96,7 @@ export default defineConfig(({ mode }) => {
           manualChunks(rawId: string) {
             const id = rawId.replace(/\\/g, '/')
             if (!id.includes('node_modules')) return
-            if (id.includes('element-plus')) return 'vendor-ui'
-            if (id.includes('/vue/') || id.includes('vue-router') || id.includes('pinia')) {
+            if (id.includes('/vue/') || id.includes('vue-router')) {
               return 'vendor-vue'
             }
             return 'vendor'

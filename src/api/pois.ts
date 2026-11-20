@@ -17,22 +17,34 @@ let serverMode: boolean | null = null
 /** 后端是否在线：null 未知 / true 在线 / false 离线（供页面提示降级用） */
 export const backendOnline = ref<boolean | null>(null)
 let probing: Promise<boolean> | null = null
+/** 上次探活结束时间：离线不再永久缓存，10s 后允许重试（否则后端晚启动一次就永远 339 条） */
+let lastProbeAt = 0
+const OFFLINE_RETRY_MS = 10_000
 
 /** 后端在线则走真实接口，否则整体降级到本地种子数据（离线也能演示） */
 export async function isServerMode(): Promise<boolean> {
-  if (serverMode !== null) return serverMode
+  if (serverMode === true) return true
+  // 离线状态：冷却期过后重新探活，避免一次超时把全站永久锁在 mock
+  if (serverMode === false && Date.now() - lastProbeAt < OFFLINE_RETRY_MS && !probing) {
+    return false
+  }
   if (!probing) {
     probing = probeServer()
       .then((value) => {
         serverMode = value
+        lastProbeAt = Date.now()
         // 页面横幅依赖这个响应式状态；之前只写了非响应式的 serverMode，横幅永远不出现
         backendOnline.value = value
         return value
       })
       .catch(() => {
         serverMode = false
+        lastProbeAt = Date.now()
         backendOnline.value = false
         return false
+      })
+      .finally(() => {
+        probing = null
       })
   }
   return probing

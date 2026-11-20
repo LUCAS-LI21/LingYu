@@ -99,12 +99,25 @@ public class IngestService {
             throw new IllegalStateException("已有抓取任务在执行，请稍后再试");
         }
         String scope = String.format("%.5f,%.5f,%.5f,%.5f", south, west, north, east);
-        jdbcTemplate.update("""
-                INSERT INTO ingest_job (source_code, trigger_type, scope_type, scope_value, status, feedback_code)
-                VALUES ('osm_overpass', ?, 'bbox', ?, 'pending', ?)
-                """, triggerType, scope, feedbackCode == null ? "" : feedbackCode);
-        Long id = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
-        return id == null ? 0L : id;
+        // 用 GeneratedKeyHolder 取主键：JdbcTemplate 每次调用可能拿到不同连接，
+        // 再写 SELECT LAST_INSERT_ID() 会读到别的连接的 0，导致 jobId=0、采集链永久锁死
+        org.springframework.jdbc.support.GeneratedKeyHolder keyHolder =
+                new org.springframework.jdbc.support.GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            java.sql.PreparedStatement ps = connection.prepareStatement("""
+                    INSERT INTO ingest_job (source_code, trigger_type, scope_type, scope_value, status, feedback_code)
+                    VALUES ('osm_overpass', ?, 'bbox', ?, 'pending', ?)
+                    """, java.sql.Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, triggerType);
+            ps.setString(2, scope);
+            ps.setString(3, feedbackCode == null ? "" : feedbackCode);
+            return ps;
+        }, keyHolder);
+        Number key = keyHolder.getKey();
+        if (key == null) {
+            throw new IllegalStateException("创建抓取任务失败：未拿到主键");
+        }
+        return key.longValue();
     }
 
     @Async
@@ -397,16 +410,9 @@ public class IngestService {
         if (rows.isEmpty()) {
             return new int[0];
         }
-        // 去重黑名单：dedupe_log 里记录的是「已判定为重复并删除」的点位，
-        // 但 OSM 每次抓取都会把同样的 id 再送回来，不挡住就会无限复活。
-        java.util.Set<String> blocked = new java.util.HashSet<>(
-                jdbcTemplate.queryForList("SELECT id FROM dedupe_log", String.class));
-        if (!blocked.isEmpty()) {
-            rows.removeIf(row -> row.length > 0 && blocked.contains(String.valueOf(row[0])));
-            if (rows.isEmpty()) {
-                return new int[0];
-            }
-        }
+        // 说明：这里原来有一个 dedupe_log 黑名单，但表里记录的是 import-* 编号，
+        // 而 OSM 行 id 是 osm-node-*，命名空间不同 → 永远不会命中（审计 B2）。
+        // 现在直接去掉这段死代码：OSM 重复点位靠下面 ON DUPLICATE KEY UPDATE（同 id 即更新）保证幂等。
         return jdbcTemplate.batchUpdate("""
                 INSERT INTO poi_bank
                     (id, name, brand, branch_type, address, district, lng, lat, phone, opening_hours,

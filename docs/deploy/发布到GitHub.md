@@ -56,7 +56,8 @@ git commit -am "docs: 替换仓库路径" && git push
 - [x] 无真实 API Key（高德/DeepSeek 均通过环境变量注入，缺省不启用）
 - [x] 默认口令已移除；空口令/默认口令会让后端拒绝启动
 - [x] 政府数据、OSM、Esri 的署名与许可说明齐全（`LICENSE` + `docs/design/数据源矩阵.md`）
-- [x] `target/`、`dist/`、`node_modules/`、`data/*.sql` 等构建产物已忽略
+- [x] `target/`、`dist/`、`node_modules/` 等构建产物已忽略
+- [ ] **`data/` 仍随仓库分发（18 文件 / 4.7MB，含政府开放数据与 PDF）**：政府数据条款禁止再分发，公开仓库前需评估或改为发布页下载（详见 docs/audit/report-data.md D1）
 
 ## 五、如果不想开 Codespaces
 
