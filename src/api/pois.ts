@@ -125,14 +125,19 @@ function normalize(raw: Record<string, unknown>): Poi | null {
 
   // 小区属性只认后端真实字段：没有就留空，不再用哈希生成「演示均价/年份/物业费」。
   // 假数据一旦标成「演示」仍会被当成数据看，直接不展示更诚实。
+  // 防御：后端若仍返回 demo_attributes=1 的历史演示值，年份/物业费一律不展示。
+  const demo = raw.demoAttributes === true || Number(raw.demoAttributes) === 1
   const community: CommunityPoi = {
     ...base,
     type: 'community',
-    builtYear: raw.builtYear === null || raw.builtYear === undefined ? null : Number(raw.builtYear),
+    builtYear:
+      demo || raw.builtYear === null || raw.builtYear === undefined ? null : Number(raw.builtYear),
     avgPrice: raw.avgPrice === null || raw.avgPrice === undefined ? null : Number(raw.avgPrice),
     propertyFee:
-      raw.propertyFee === null || raw.propertyFee === undefined ? null : Number(raw.propertyFee),
-    demoAttributes: false,
+      demo || raw.propertyFee === null || raw.propertyFee === undefined
+        ? null
+        : Number(raw.propertyFee),
+    demoAttributes: demo,
   }
   return community
 }
