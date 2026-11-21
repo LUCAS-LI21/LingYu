@@ -353,10 +353,13 @@ public class ImportService {
                     INSERT INTO poi_bank (id, name, brand, branch_type, address, district, lng, lat,
                                           phone, opening_hours, source, license, source_level, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'L1', 'active')
-                    """, id, row.name(), brandOrDerived(row),
-                    blankTo(row.branchType(), "branch"), blankTo(row.address(), ""),
+                    """, id, com.poiintel.common.TextNormalize.name(row.name()), brandOrDerived(row),
+                    blankTo(row.branchType(), "branch"),
+                    com.poiintel.common.TextNormalize.address(blankTo(row.address(), "")),
                     blankTo(row.district(), ""), row.lng(), row.lat(),
-                    blankTo(row.phone(), ""), blankTo(row.openingHours(), ""), source, license);
+                    com.poiintel.common.TextNormalize.phone(blankTo(row.phone(), "")),
+                    com.poiintel.common.TextNormalize.openingHours(blankTo(row.openingHours(), "")),
+                    source, license);
         } else {
             // 名称闸门：楼栋编号（29栋 / 36小区）不进库，避免列表第一屏全是编号
             if (com.poiintel.common.NameQuality.isBuildingLike(row.name())) {
@@ -368,7 +371,9 @@ public class ImportService {
                                                property_fee, property_company, water_saving_year,
                                                demo_attributes, source, license, source_level, status)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'L1', 'active')
-                    """, id, row.name(), blankTo(row.address(), ""), blankTo(row.district(), ""),
+                    """, id, com.poiintel.common.TextNormalize.name(row.name()),
+                    com.poiintel.common.TextNormalize.address(blankTo(row.address(), "")),
+                    blankTo(row.district(), ""),
                     row.lng(), row.lat(), row.builtYear(), row.avgPrice(), row.propertyFee(),
                     blankTo(row.propertyCompany(), ""), row.waterSavingYear(), source, license);
         }

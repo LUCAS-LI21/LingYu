@@ -132,6 +132,15 @@ public class AgentService {
             String sourceUrl = proposal.path("sourceUrl").asText("").trim();
             double confidence = proposal.path("confidence").asDouble(0);
 
+            // 域名白名单闸门（审计 D2）：不属于 L1 允许来源直接拒绝，不进入复核
+            if (!com.poiintel.common.SourcePolicy.allowed(sourceUrl)) {
+                String reason = com.poiintel.common.SourcePolicy.rejectReason(sourceUrl);
+                finishRun(runId, "rejected", reason, extract, null);
+                result.put("status", "rejected");
+                result.put("reason", reason);
+                return result;
+            }
+
             if (value.isEmpty()) {
                 finishRun(runId, "rejected", "抽取结果为空", extract, null);
                 result.put("status", "rejected");
