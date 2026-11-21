@@ -114,3 +114,10 @@ skills/         六阶段工程作业规程
 | `OPERATOR_PASSWORD`       | 运营默认口令                                                      |
 | `HTTP_PROXY`              | Overpass 抓取代理（Java 直连常被 502）                            |
 | `AMAP_KEY`                | 高德 Key，仅用于 L2 实时地址查询（不落库）；留空则该入口降级      |
+
+## 演示材料（2026-11-21）
+
+- **演示流程方案**：[docs/demo/演示流程.md](docs/demo/演示流程.md)（约 3 分钟，含话术与评委追问答案）
+- **自动录制视频**：[docs/demo/player.html](docs/demo/player.html)（浏览器打开，视频 + 中文字幕）
+  - 视频文件 `docs/demo/demo.webm`（1.8 MB，VP9），字幕 `docs/demo/demo.srt`
+  - 重新录制：`node scripts/record-demo.mjs`（需 Playwright；会自动生成 SRT 与播放页）
