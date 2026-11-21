@@ -1,22 +1,97 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><title>邻域 POI 演示</title>
-<style>body{font-family:system-ui,"Microsoft YaHei",sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:24px}
-video{width:100%;max-width:1100px;border-radius:12px;background:#000}
-table{border-collapse:collapse;margin-top:16px;font-size:13px}td{padding:4px 10px;border-bottom:1px solid #1e293b;color:#cbd5e1}
-h1{font-size:18px}</style></head>
-<body><h1>邻域 POI · 演示视频（约 45 秒）</h1>
-<video controls src="demo.webm"><track kind="subtitles" src="demo.srt" default></video>
-<table><tr><td>00:00:00,000</td><td>邻域 POI · 深圳银行网点与小区情报系统</td></tr>
-<tr><td>00:00:09,106</td><td>开场动画：从全球数据到深圳本地</td></tr>
-<tr><td>00:00:09,185</td><td>地图查询：银行网点 1,491 个</td></tr>
-<tr><td>00:00:13,803</td><td>ATM 与网点互斥展示，368 台自助设备</td></tr>
-<tr><td>00:00:15,709</td><td>点开点位：地址 / 营业时间 / 数据来源</td></tr>
-<tr><td>00:00:15,782</td><td>小区：3,569 个，支持按完整度排序</td></tr>
-<tr><td>00:00:21,471</td><td>小区详情：建成年份 / 成交参考价 / 物业费</td></tr>
-<tr><td>00:00:24,570</td><td>周边配套（L2）：学校 / 医院 / 地铁 / 商场，不落库</td></tr>
-<tr><td>00:00:24,624</td><td>列表：默认按数据完整度排序，品牌轮转</td></tr>
-<tr><td>00:00:30,043</td><td>排序：数据完整度 / 均价 / 年份 / 名称</td></tr>
-<tr><td>00:00:30,098</td><td>数据洞察：品牌分布 / 价格分布 / 分区对比</td></tr>
-<tr><td>00:00:36,008</td><td>用户查询热点：query_log → hot_region，驱动定时重抓</td></tr>
-<tr><td>00:00:36,067</td><td>用户纠错：提交后进入审核队列</td></tr>
-<tr><td>00:00:43,819</td><td>拿到受理编号，可凭编号查询处理进度</td></tr></table></body></html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>邻域 POI 演示</title>
+    <style>
+      body {
+        font-family: system-ui, 'Microsoft YaHei', sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        margin: 0;
+        padding: 24px;
+      }
+      video {
+        width: 100%;
+        max-width: 1100px;
+        border-radius: 12px;
+        background: #000;
+      }
+      table {
+        border-collapse: collapse;
+        margin-top: 16px;
+        font-size: 13px;
+      }
+      td {
+        padding: 4px 10px;
+        border-bottom: 1px solid #1e293b;
+        color: #cbd5e1;
+      }
+      h1 {
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>邻域 POI · 演示视频（约 45 秒）</h1>
+    <video controls src="demo.webm"><track kind="subtitles" src="demo.srt" default /></video>
+    <table>
+      <tr>
+        <td>00:00:00,000</td>
+        <td>邻域 POI · 深圳银行网点与小区情报系统</td>
+      </tr>
+      <tr>
+        <td>00:00:09,106</td>
+        <td>开场动画：从全球数据到深圳本地</td>
+      </tr>
+      <tr>
+        <td>00:00:09,185</td>
+        <td>地图查询：银行网点 1,491 个</td>
+      </tr>
+      <tr>
+        <td>00:00:13,803</td>
+        <td>ATM 与网点互斥展示，368 台自助设备</td>
+      </tr>
+      <tr>
+        <td>00:00:15,709</td>
+        <td>点开点位：地址 / 营业时间 / 数据来源</td>
+      </tr>
+      <tr>
+        <td>00:00:15,782</td>
+        <td>小区：3,569 个，支持按完整度排序</td>
+      </tr>
+      <tr>
+        <td>00:00:21,471</td>
+        <td>小区详情：建成年份 / 成交参考价 / 物业费</td>
+      </tr>
+      <tr>
+        <td>00:00:24,570</td>
+        <td>周边配套（L2）：学校 / 医院 / 地铁 / 商场，不落库</td>
+      </tr>
+      <tr>
+        <td>00:00:24,624</td>
+        <td>列表：默认按数据完整度排序，品牌轮转</td>
+      </tr>
+      <tr>
+        <td>00:00:30,043</td>
+        <td>排序：数据完整度 / 均价 / 年份 / 名称</td>
+      </tr>
+      <tr>
+        <td>00:00:30,098</td>
+        <td>数据洞察：品牌分布 / 价格分布 / 分区对比</td>
+      </tr>
+      <tr>
+        <td>00:00:36,008</td>
+        <td>用户查询热点：query_log → hot_region，驱动定时重抓</td>
+      </tr>
+      <tr>
+        <td>00:00:36,067</td>
+        <td>用户纠错：提交后进入审核队列</td>
+      </tr>
+      <tr>
+        <td>00:00:43,819</td>
+        <td>拿到受理编号，可凭编号查询处理进度</td>
+      </tr>
+    </table>
+  </body>
+</html>
