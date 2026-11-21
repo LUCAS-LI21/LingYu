@@ -189,8 +189,24 @@ public class PoiController {
         for (Map<String, Object> row : rows) {
             total += ((Number) row.get("queryCount")).longValue();
         }
+        // 面向用户的可读口径：热门搜索词（原始 2km 网格坐标只有运营后台需要）
+        List<Map<String, Object>> keywords = jdbcTemplate.queryForList("""
+                SELECT keyword, COUNT(*) AS searchCount
+                FROM query_log
+                WHERE keyword <> '' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                GROUP BY keyword
+                ORDER BY searchCount DESC
+                LIMIT ?
+                """, safeLimit);
         Map<String, Object> result = new java.util.LinkedHashMap<>();
         result.put("items", rows);
+        result.put("keywords", keywords);
+        // 热门搜索总次数单独算：totalQueries 是网格维度，两个口径不能混用
+        Long searches = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM query_log
+                WHERE keyword <> '' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                """, Long.class);
+        result.put("totalSearches", searches == null ? 0 : searches);
         result.put("totalQueries", total);
         return ApiResult.ok(result);
     }

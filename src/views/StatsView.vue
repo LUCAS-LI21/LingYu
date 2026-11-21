@@ -40,8 +40,6 @@ const maxBrand = computed(() => Math.max(1, ...(stats.value?.brands.map((b) => b
 const maxPrice = computed(() =>
   Math.max(1, ...(stats.value?.priceBuckets.map((b) => b.value) ?? [1])),
 )
-const maxGrid = computed(() => Math.max(1, ...(stats.value?.gridTop.map((b) => b.value) ?? [1])))
-
 const cards = computed(() => [
   { label: '银行网点', value: stats.value?.branch ?? 0, hint: '含柜台网点', tone: 'brand' },
   { label: 'ATM 自助', value: stats.value?.atm ?? 0, hint: '24 小时可用', tone: 'mint' },
@@ -315,67 +313,31 @@ function onClearRecent(): void {
         </div>
       </section>
 
-      <!-- 查询热点：query_log 聚合，前台可见（此前只在运营后台） -->
+      <!-- 热门搜索：把内部网格坐标换成普通用户能懂的搜索词 -->
       <section class="rounded-card border border-line bg-surface p-5 shadow-card">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-ink-900">用户查询热点（2km 网格）</h2>
+          <h2 class="text-sm font-semibold text-ink-900">大家都在搜</h2>
           <span class="text-[11px] text-ink-400"
-            >近 7 天共 {{ hotspots?.totalQueries ?? 0 }} 次查询</span
+            >近 7 天 {{ hotspots?.totalSearches ?? 0 }} 次搜索</span
           >
         </div>
         <ul class="space-y-2">
           <li
-            v-for="(item, index) in hotspots?.items ?? []"
-            :key="item.grid"
+            v-for="(item, index) in hotspots?.keywords ?? []"
+            :key="item.keyword"
             class="flex items-center gap-3 text-[11px]"
           >
             <span class="w-4 shrink-0 tabular-nums text-ink-300">{{ index + 1 }}</span>
-            <span class="min-w-0 flex-1 truncate text-ink-600">
-              网格 {{ item.grid
-              }}<span v-if="item.zeroResultCount > 0" class="text-amber-600">
-                · 空结果 {{ item.zeroResultCount }} 次</span
-              >
-            </span>
-            <span class="shrink-0 tabular-nums text-ink-700">{{ item.queryCount }} 次</span>
+            <span class="min-w-0 flex-1 truncate text-ink-600">{{ item.keyword }}</span>
+            <span class="shrink-0 tabular-nums text-ink-700">{{ item.searchCount }} 次</span>
           </li>
-          <li v-if="!(hotspots?.items ?? []).length" class="text-[11px] text-ink-400">
-            暂无查询记录：前台搜索、框选或查看点位后会写入 query_log
+          <li v-if="!(hotspots?.keywords ?? []).length" class="text-[11px] text-ink-400">
+            还没有搜索记录，去地图或列表搜一个试试
           </li>
         </ul>
-      </section>
-
-      <!-- 密度排行 -->
-      <section class="rounded-card border border-line bg-surface p-5 shadow-card lg:col-span-2">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h2 class="text-sm font-semibold text-ink-900">银行网点最密集的区域</h2>
-          </div>
-          <span class="shrink-0 text-[11px] text-ink-400">取前 6 名</span>
-        </div>
-        <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-          <li
-            v-for="cell in stats?.gridTop"
-            :key="cell.label"
-            class="flex items-center gap-3 rounded-soft border border-line bg-surface-soft px-3 py-2.5"
-          >
-            <span
-              class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-[11px] font-semibold text-brand-600"
-              :title="`${cell.value} 家银行`"
-            >
-              {{ cell.value }}
-            </span>
-            <span class="min-w-0 flex-1">
-              <span class="block text-[11px] text-ink-600">中心 {{ cell.label }}</span>
-              <span class="mt-1 block h-1 overflow-hidden rounded-full bg-white">
-                <span
-                  class="block h-full rounded-full bg-brand-500/70"
-                  :style="{ width: `${(cell.value / maxGrid) * 100}%` }"
-                />
-              </span>
-            </span>
-            <span class="shrink-0 text-[10px] text-ink-400">家</span>
-          </li>
-        </ul>
+        <p class="mt-3 text-[10px] leading-relaxed text-ink-400">
+          搜索热度会进入后台的采集优先级，热门区域会优先更新。
+        </p>
       </section>
     </div>
   </div>

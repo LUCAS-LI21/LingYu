@@ -223,8 +223,17 @@ export interface HotspotItem {
   lastDate?: string
 }
 
+export interface HotspotKeyword {
+  keyword: string
+  searchCount: number
+}
+
 export interface Hotspots {
   items: HotspotItem[]
+  /** 面向用户的热门搜索词（原始网格坐标只在运营后台用） */
+  keywords?: HotspotKeyword[]
+  /** 近 7 天关键词搜索总次数（与网格口径分开） */
+  totalSearches?: number
   totalQueries: number
 }
 
