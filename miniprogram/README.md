@@ -48,8 +48,8 @@
 
 必读：
 
-- `docs/miniprogram/后端契约.md`
-- `docs/architecture/文件架构.md`
+- `docs/miniprogram/backend-contract.md`
+- `docs/architecture/file-architecture.md`
 - `GET /api/v1/meta`：启动自检（坐标约定、接口清单）
 
 公共接口无需登录；运营接口使用 `Authorization: Bearer <token>`。地图/导航必须使用后端返回的 `gcjLng / gcjLat`，**不要**把 WGS-84 的 `lng/lat` 直接喂给微信地图。

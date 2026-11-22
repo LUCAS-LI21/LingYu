@@ -14,7 +14,7 @@
  *   node scripts/geocode-pending-osm.mjs --limit 5000
  *
  * 注意：公共 Overpass 实例限流严格（本项目曾被打回 HTML），脚本默认 3 秒/请求并带退避；
- * 若持续失败，改用自建 Overpass/Nominatim（见 docs/research/坐标方案调研.md）。
+ * 若持续失败，改用自建 Overpass/Nominatim（见 docs/research/coordinate-system-research.md）。
  */
 
 const API = process.env.API_BASE || 'http://127.0.0.1:8080'

@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 数据接入 Agent 的 P0：单实体单字段补全。
  *
- * 流程（对应 docs/design/数据接入Agent.md 第 3 节）：
+ * 流程（对应 docs/design/data-ingestion-agent.md 第 3 节）：
  *   搜索 → 抽取（LLM）→ 复核（LLM 独立上下文）→ 规则校验（代码）→ 出建议（不写库）
  *
  * 设计原则：LLM 只负责"读页面、写 JSON"，判定由代码做；最终仍要管理员点采纳。

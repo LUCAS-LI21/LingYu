@@ -95,7 +95,7 @@ async function main() {
   }
 
   if (missing) {
-    console.log(`\n有 ${missing} 项事实未出现在文档中：先更新 docs/初赛/src/*.md，再重跑构建。`)
+    console.log(`\n有 ${missing} 项事实未出现在文档中：先更新 docs/preliminary/src/*.md，再重跑构建。`)
     process.exitCode = 1
   } else {
     console.log('\n全部事实都能在文档中找到。')

@@ -71,7 +71,7 @@
 - **周边查询**：`ST_Distance_Sphere(POINT(lng,lat), POINT(?,?))`，MySQL 内置，返回米。
 - **框选**：`lng BETWEEN ? AND ? AND lat BETWEEN ? AND ?`，走 `(lat,lng)` 复合索引。
 - **网格聚合**：`FLOOR(lng/0.02)` / `FLOOR(lat/0.02)`，约 2.2km × 2.2km，与前端统计页口径一致。
-- 坐标系：全库统一 GCJ-02（OSM 原始为 WGS-84，导入时按同源处理；混源时需转换，见 `docs/requirements/03-合规与数据来源.md`）。
+- 坐标系：全库统一 GCJ-02（OSM 原始为 WGS-84，导入时按同源处理；混源时需转换，见 `docs/requirements/03-compliance-and-data-sources.md`）。
 
 ## 5. 已知限制（下一轮要补）
 

@@ -5,8 +5,8 @@
  *   API_BASE=http://127.0.0.1:18080 OPERATOR_PASSWORD=*** node scripts/evidence-snapshot.mjs
  *
  * 输出：
- *   docs/初赛/assets/evidence-snapshot.json  逐接口原始记录（状态码、耗时、响应）
- *   docs/初赛/assets/evidence-snapshot.md    可直接贴进文档的表格
+ *   docs/preliminary/assets/evidence-snapshot.json  逐接口原始记录（状态码、耗时、响应）
+ *   docs/preliminary/assets/evidence-snapshot.md    可直接贴进文档的表格
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'

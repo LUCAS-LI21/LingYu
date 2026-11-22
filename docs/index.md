@@ -23,13 +23,13 @@
 ### 项目需求（M0 产物）
 
 - [① 需求规格说明书](/requirements/01-SRS) — 用例、41 条功能需求、12 条非功能需求、三条闭环链路
-- [② 数据字典](/requirements/02-数据字典) — 9 张表、字段、索引意图
-- [③ 合规与数据来源](/requirements/03-合规与数据来源) — 来源分级、检查清单、法律红线
+- [② 数据字典](/requirements/02-data-dictionary) — 9 张表、字段、索引意图
+- [③ 合规与数据来源](/requirements/03-compliance-and-data-sources) — 来源分级、检查清单、法律红线
 
 ### 全流程方法（工程手册）
 
-- [需求分析](/01-需求分析) · [设计](/02-设计) · [实现](/03-实现) · [测试](/04-测试) · [部署](/05-部署) · [业务闭环](/06-业务闭环)
-- [命令速查](/07-命令速查)
+- [需求分析](/01-requirements-analysis) · [设计](/02-design) · [实现](/03-implementation) · [测试](/04-testing) · [部署](/05-deployment) · [业务闭环](/06-business-loop)
+- [命令速查](/07-command-reference)
 
 ## 三条闭环（核心卖点）
 

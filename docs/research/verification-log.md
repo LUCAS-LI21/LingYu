@@ -29,7 +29,7 @@
 
 ## 还欠的核验（进设计阶段前必做）
 
-- [x] 高德开放平台 Web 服务 API 的实际配额（2026-11-07 已核验，见 [ADR-0002](../adr/0002-高德服务选型与配额预算.md)）
+- [x] 高德开放平台 Web 服务 API 的实际配额（2026-11-07 已核验，见 [ADR-0002](../adr/0002-amap-selection-and-quota.md)）
 - [ ] **OSM 深圳覆盖度实测**：改用脚本（`curl` + 较长超时）跑 Overpass，统计福田/南山各 5km² 内的 bank/atm/residential 数量
 - [ ] 深圳市政府开放数据平台有哪些可下载数据集（opendata.sz.gov.cn），许可是否允许再分发
 - [ ] Leaflet 与 vue-leaflet 对 Vue 3.5 的兼容性（待装包后跑一次 demo 验证，不能只看 README）

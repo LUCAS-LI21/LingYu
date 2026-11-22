@@ -224,7 +224,7 @@ public class PoiController {
      * 待定位小区名录（有名称地址、缺坐标）。
      *
      * 定位靠「高德地图查看」外链：把地址交给用户在浏览器里打开，
-     * 我们不解析、不存储坐标（高德协议禁止存储，见 docs/design/数据源矩阵.md）。
+     * 我们不解析、不存储坐标（高德协议禁止存储，见 docs/design/data-source-matrix.md）。
      */
     @GetMapping("/community-pending")
     public ApiResult<Map<String, Object>> communityPending(
