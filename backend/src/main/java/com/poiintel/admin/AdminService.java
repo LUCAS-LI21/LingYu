@@ -33,7 +33,7 @@ public class AdminService {
 
     private static final List<String> NUMERIC_COLUMNS = List.of("built_year", "avg_price", "property_fee");
 
-    /** POI 类型 → 表名，必须是白名单（表名会拼进 SQL） */
+    /** POI 类型 → 表名白名单（表名会拼入 SQL） */
     private static final Map<String, String> TABLE_BY_TYPE = Map.of(
             "bank", "poi_bank",
             "community", "poi_community");
@@ -109,12 +109,12 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> approve(String code, String reviewer) {
-        // FOR UPDATE：并发双审时串行化，第二个请求会看到已变更状态并返回 409，避免双写版本
+        // FOR UPDATE：串行化并发审核，后到请求返回 409，避免双写版本
         Map<String, Object> feedback = jdbcTemplate.queryForMap(
                 "SELECT * FROM feedback WHERE code = ? FOR UPDATE", code);
         String currentStatus = String.valueOf(feedback.get("status"));
         if ("need_refetch".equals(currentStatus)) {
-            // 上次重抓因任务占用失败，允许再点一次审核重试；否则反馈会永久卡在 need_refetch
+            // 允许对 need_refetch 重试，避免反馈卡死
             int reset = jdbcTemplate.update(
                     "UPDATE feedback SET status = 'pending' WHERE code = ? AND status = 'need_refetch'", code);
             if (reset == 0) {
@@ -139,7 +139,7 @@ public class AdminService {
         }
 
         if ("add".equals(type)) {
-            // 新增点位不能凭空造：置为待重抓，并把锚点坐标回传，由控制器创建定向抓取任务
+            // 新增点位置为 need_refetch，回传锚点由控制器建抓取任务
             int updated = jdbcTemplate.update("""
                     UPDATE feedback SET status = 'need_refetch', reviewer = ?, reviewed_at = NOW(),
                         review_note = '新增点位需重新采集核实' WHERE code = ? AND status = 'pending'
@@ -155,7 +155,7 @@ public class AdminService {
                 result.put("anchorLng", ((Number) anchor.get("lng")).doubleValue());
                 result.put("anchorLat", ((Number) anchor.get("lat")).doubleValue());
             } catch (Exception ignored) {
-                // 锚点查不到就不建任务，只保留 need_refetch 状态
+            // 锚点缺失则不建任务，保留 need_refetch
             }
             return result;
         }
@@ -170,14 +170,14 @@ public class AdminService {
             Map<String, String> mapping = FIELD_WHITELIST.getOrDefault(poiType, Map.of());
             String column = mapping.get(field);
             if (column == null) {
-                // 字段不在白名单（如「网点状态」走 closed 分支），只记录审核通过
+                // 字段不在白名单时仅记录审核通过
                 applied.add("no-op:" + field);
             } else if (newValue != null && !newValue.isBlank()) {
                 Object value = NUMERIC_COLUMNS.contains(column) ? parseNumber(newValue) : newValue.trim();
                 jdbcTemplate.update("UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ?",
                         value, poiId);
                 applied.add(column + "=" + value);
-                // 字段级来源要跟着改：否则审核完用户改的电话，详情页还显示「银行官网」
+                // 字段级来源随审核结果更新
                 jdbcTemplate.update("""
                         INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
                         VALUES (?, ?, ?, ?, ?)
@@ -205,7 +205,7 @@ public class AdminService {
         return result;
     }
 
-    /** 关闭是单向操作，补一个重开入口，避免"关错了没法救" */
+    /** 关闭为单向操作，提供重开入口 */
     @Transactional
     public Map<String, Object> reopen(String poiId, String reviewer) {
         for (String table : TABLE_BY_TYPE.values()) {
@@ -230,8 +230,7 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> reject(String code, String reviewer, String note) {
-        // 允许驳回 pending 与 need_refetch：后者是「已标记待重抓」，
-        // 如果抓不到或用户撤诉，运营必须能关掉，否则这条反馈永远悬着（闭环没有出口）
+        // 允许驳回 pending 与 need_refetch，避免反馈无出口
         int updated = jdbcTemplate.update("""
                 UPDATE feedback SET status = 'rejected', reviewer = ?, reviewed_at = NOW(), review_note = ?
                 WHERE code = ? AND status IN ('pending', 'need_refetch')

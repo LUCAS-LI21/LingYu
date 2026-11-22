@@ -16,14 +16,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 政府开放数据导入（L1）。
- *
- * 数据来自官方发布文件（如深圳市政府数据开放平台），来源可追溯、允许入库。
- *
- * 合并规则（经复核修正）：
- * - 有 id：必须与库中同名，否则拒绝（防止改错对象）
- * - 无 id：同名 + 球面距离 ≤ 165m + 品牌/地址至少一项相容，才判定为同一实体
- * - 默认「只补空字段」，不覆盖已有值；显式 overwrite=true 才覆盖
+ * 政府开放数据（L1）导入：有 id 须同名，无 id 按同名 + 球面距离 ≤ 165m + 品牌/地址相容判定为同一实体。
+ * 默认只补空字段，overwrite=true 才覆盖。
  */
 @Service
 @RequiredArgsConstructor
@@ -31,12 +25,12 @@ public class ImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ImportService.class);
 
-    /** 深圳大致范围，挡住明显错误的坐标 */
+    /** 深圳经纬度范围，用于拦截明显错误的坐标 */
     private static final double LNG_MIN = 113.6, LNG_MAX = 114.7;
     private static final double LAT_MIN = 22.3, LAT_MAX = 22.9;
-    /** 同名判定为同一实体的球面距离（米） */
+    /** 判定同一实体的球面距离（米） */
     private static final double SAME_ENTITY_METERS = 165;
-    /** 单次导入行数上限，防止超大 payload */
+    /** 单次导入行数上限 */
     private static final int MAX_ROWS = 5000;
 
     private final JdbcTemplate jdbcTemplate;
@@ -64,10 +58,7 @@ public class ImportService {
             List<Row> rows) {
     }
 
-    /**
-     * 串行执行：导入是低频管理动作，用 synchronized 换掉「先查后插」的并发重复风险
-     * （多实例部署时需换成数据库唯一约束或分布式锁）。
-     */
+    /** 串行执行，规避「先查后插」的并发重复；多实例部署需改为数据库唯一约束。 */
     @Transactional
     public synchronized Map<String, Object> importRows(Request request) {
         if (request == null || request.rows() == null || request.rows().isEmpty()) {
@@ -81,8 +72,7 @@ public class ImportService {
         String source = blankTo(request.source(), "政府开放数据");
         String license = blankTo(request.license(), "政府公开信息");
         boolean overwrite = Boolean.TRUE.equals(request.overwrite());
-        // 补全模式：数据集只有名称+数值（如二手房参考价），没有坐标，
-        // 只能按名称匹配已有 POI 补字段，绝不新建无坐标的记录。
+        // 补全模式：仅按名称匹配已有 POI 补字段，不新建无坐标记录
         boolean enrich = Boolean.TRUE.equals(request.enrich());
 
         int inserted = 0, updated = 0, skipped = 0, conflicts = 0;
@@ -222,11 +212,11 @@ public class ImportService {
         return jdbcTemplate.queryForList("SELECT id FROM " + table + " WHERE name = ?", row.name());
     }
 
-    /** 包级可见：便于同包单测直接验证校验规则 */
+    /** 包级可见，便于单测校验规则 */
     String validate(Row row) {
         if (row == null) return "空行";
         if (blankTo(row.name(), "").isBlank()) return "缺少名称";
-        // OSM 的 bank 图层偶尔混入非银行机构或垃圾名，别让它们进主表
+        // 过滤 OSM 混入的非银行机构与无效名称
         String name = row.name().trim();
         if (name.matches("^(ATM|atm|subexits)$")) return "无效名称";
         if (name.contains("证券") || name.contains("保险") || name.contains("基金")) return "非银行机构";
@@ -237,13 +227,13 @@ public class ImportService {
         return null;
     }
 
-    /** 优先用传入品牌，没有就从名称推 */
+    /** 品牌优先取传入值，缺失时从名称推导 */
     private String brandOrDerived(Row row) {
         String brand = blankTo(row.brand(), "");
         return brand.isBlank() ? deriveBrand(row.name()) : brand;
     }
 
-    /** 从名称推品牌：OSM 常只给「招商银行深圳XX支行」或英文/繁体名，品牌列会空着 */
+    /** 从名称推导品牌（OSM 品牌列常为空）。 */
     static String deriveBrand(String name) {
         if (name == null) return "";
         String n = name.replace('國', '国').replace('郵', '邮').replace('儲', '储')
@@ -279,7 +269,7 @@ public class ImportService {
         for (String[] rule : rules) {
             if (n.startsWith(rule[0])) return rule[1];
         }
-        // 村镇银行：保留全名，别硬套成母行
+        // 村镇银行保留全名，不归并到母行
         int idx = n.indexOf("村镇银行");
         if (idx > 0) return n.substring(0, idx + 4);
         return "";
@@ -298,8 +288,7 @@ public class ImportService {
             return row.id();
         }
 
-        // 先用窗口粗筛，再用球面距离精筛，避免方形窗口的对角误差
-        // 注意：poi_community 没有 brand 列，按表取不同列集合
+        // 先按窗口粗筛、再按球面距离精筛；poi_community 无 brand 列
         String columns = "poi_bank".equals(table)
                 ? "id, name, lat, lng, brand, address"
                 : "id, name, lat, lng, '' AS brand, address";
@@ -322,7 +311,7 @@ public class ImportService {
         return null;
     }
 
-    /** 同名同位置还不够：品牌或地址要能对上，避免把相邻的两家网点合并 */
+    /** 品牌或地址需相容，避免合并相邻网点 */
     private boolean compatible(Row row, Map<String, Object> candidate) {
         String brand = blankTo(row.brand(), "");
         String existingBrand = String.valueOf(candidate.get("brand") == null ? "" : candidate.get("brand"));
@@ -361,7 +350,7 @@ public class ImportService {
                     com.poiintel.common.TextNormalize.openingHours(blankTo(row.openingHours(), "")),
                     source, license);
         } else {
-            // 名称闸门：楼栋编号（29栋 / 36小区）不进库，避免列表第一屏全是编号
+            // 名称闸门：楼栋编号不入库
             if (com.poiintel.common.NameQuality.isBuildingLike(row.name())) {
                 log.warn("[import] 跳过楼栋编号名称：{}", row.name());
                 return;
@@ -377,7 +366,7 @@ public class ImportService {
                     row.lng(), row.lat(), row.builtYear(), row.avgPrice(), row.propertyFee(),
                     blankTo(row.propertyCompany(), ""), row.waterSavingYear(), source, license);
         }
-        // 新增行也记字段来源
+        // 新增行同样记录字段来源
         List<String> fields = new ArrayList<>();
         if (!blankTo(row.address(), "").isBlank()) fields.add("address");
         if (!blankTo(row.district(), "").isBlank()) fields.add("district");
@@ -394,10 +383,7 @@ public class ImportService {
         recordFieldSources(type, id, fields, source, "");
     }
 
-    /**
-     * 默认只补空字段；overwrite=true 才覆盖。
-     * 返回实际改动的列数，0 表示没有变化（计入 unchanged）。
-     */
+    /** 默认只补空字段，overwrite=true 才覆盖；返回实际改动列数。 */
     private int updateRow(String table, String id, Row row, String source, String license, boolean overwrite) {
         Map<String, Object> before = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", id);
         List<String> sets = new ArrayList<>();
@@ -424,7 +410,7 @@ public class ImportService {
         jdbcTemplate.update("UPDATE " + table + " SET " + String.join(", ", sets) + " WHERE id = ?",
                 args.toArray());
 
-        // 字段级来源：只记真正被写入的数据列（source/license 是元数据，不算）
+        // 字段级来源只记被写入的数据列
         Map<String, Object> after = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", id);
         List<String> touched = changedFields(before, after);
         touched.removeAll(List.of("source", "license", "updated_at"));
@@ -436,7 +422,7 @@ public class ImportService {
         return "poi_bank".equals(table) ? "bank" : "community";
     }
 
-    /** 记录「某个字段最后由谁写入」，解决 enrich 改整行 source 掩盖真实来源的问题 */
+    /** 记录字段级来源，避免整行 source 掩盖真实来源 */
     private void recordFieldSources(String poiType, String id, List<String> fields, String source, String url) {
         for (String field : fields) {
             jdbcTemplate.update("""

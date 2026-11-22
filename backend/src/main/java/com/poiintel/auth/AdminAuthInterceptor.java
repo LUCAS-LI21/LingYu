@@ -9,13 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 运营接口鉴权。
- *
- * 用拦截器而不是 Filter：Filter 拿到的 getRequestURI 是未解码的原始串，
- * `/api/v1/%61dmin/**` 这种编码路径能绕过 startsWith 前缀判断；拦截器由 Spring
- * 在解析后的处理器映射上匹配，路径已经是解码+规范化之后的。
- */
+/** 运营接口鉴权。使用拦截器而非 Filter：Filter 的 URI 未解码，编码路径可绕过前缀判断。 */
 @Component
 @RequiredArgsConstructor
 public class AdminAuthInterceptor implements HandlerInterceptor {
@@ -36,7 +30,7 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
         if (username.isEmpty()) {
             return reject(response, HttpServletResponse.SC_UNAUTHORIZED, 401, "未登录或登录已过期");
         }
-        // 只验 token 不验角色等于"任何登录用户都是管理员"；这里补上角色校验
+        // 校验角色，避免任意登录用户获得管理权限
         String role = authService.roleOf(username.get()).orElse("");
         if (!"operator".equals(role) && !"admin".equals(role)) {
             return reject(response, HttpServletResponse.SC_FORBIDDEN, 403, "无运营权限");

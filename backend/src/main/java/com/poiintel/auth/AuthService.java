@@ -21,10 +21,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
-/**
- * 轻量鉴权：PBKDF2 存口令 + HMAC-SHA256 签 token。
- * 不引 Spring Security 是为了保持依赖最小；生产环境应换成标准 OIDC/JWT 库。
- */
+/** 轻量鉴权：PBKDF2 存口令 + HMAC-SHA256 签 token。 */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -41,7 +38,7 @@ public class AuthService {
     @Value("${app.auth.ttl-minutes:720}")
     private long ttlMinutes;
 
-    /** 未配置密钥时生成临时随机值，避免默认密钥被拿去伪造 token */
+    /** 未配置密钥时生成临时随机值，防止默认密钥被用于伪造 token */
     @PostConstruct
     void initSecret() {
         if (secret == null || secret.isBlank() || secret.startsWith("dev-only")) {
@@ -72,7 +69,7 @@ public class AuthService {
         return Optional.of(new Session(sign(username, expiresAt), username, expiresAt));
     }
 
-/** 取用户角色（operator / viewer / 其它）。账号不存在返回空。 */
+    /** 取用户角色（operator/viewer）；账号不存在返回空。 */
     public java.util.Optional<String> roleOf(String username) {
         try {
             return jdbcTemplate.queryForList("SELECT role FROM sys_user WHERE username = ? AND status = 1",
@@ -139,7 +136,7 @@ public class AuthService {
         return matches(raw, stored);
     }
 
-    /** 校验明文口令与库里存的 base64(salt)$base64(hash) 是否一致（静态版，供 Seeder 复用） */
+    /** 校验明文口令与 base64(salt)$base64(hash) 是否一致。 */
     public static boolean matches(String raw, String stored) {
         try {
             String[] parts = stored.split("\\$");

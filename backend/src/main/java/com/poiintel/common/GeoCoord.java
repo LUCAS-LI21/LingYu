@@ -1,14 +1,8 @@
 package com.poiintel.common;
 
 /**
- * WGS-84 ⇄ GCJ-02 坐标转换（ADR-0002 §6）。
- *
- * <p>背景：OSM / GPS / 浏览器定位给的是 WGS-84，而高德全线服务（含逆地理编码、周边搜索）
- * 按 GCJ-02 处理，且这两个接口没有坐标系入参。直接传会系统性偏移数百米——
- * 在深圳足以把"某某大厦"查成隔壁小区。
- *
- * <p>这是纯本地算法，不消耗任何高德配额；比调用"坐标转换 API"（同样吃基础 LBS 配额）更省。
- * 与采集侧 {@code scripts/lib/coord.mjs} 使用同一算法，保证"入库统一 WGS-84、出站按目标平台转换"的口径一致。
+ * WGS-84 ⇄ GCJ-02 坐标转换：OSM/GPS/浏览器为 WGS-84，高德按 GCJ-02，直接传会偏移数百米。
+ * 纯本地算法，不消耗高德配额；入库统一 WGS-84，出站按目标平台转换。
  */
 public final class GeoCoord {
 
@@ -21,8 +15,7 @@ public final class GeoCoord {
 
     /**
      * WGS-84 → GCJ-02。
-     *
-     * @return {@code [lng, lat]}；境外坐标原样返回（GCJ-02 只在中国大陆加偏）
+     * @return {@code [lng, lat]}；境外坐标原样返回（GCJ-02 仅中国大陆加偏）
      */
     public static double[] wgs84ToGcj02(double lng, double lat) {
         if (outOfChina(lng, lat)) {
@@ -39,12 +32,7 @@ public final class GeoCoord {
         return new double[] {lng + dLng, lat + dLat};
     }
 
-    /**
-     * GCJ-02 → WGS-84（一次反向近似，误差 &lt; 2 m，展示够用）。
-     *
-     * <p>用途：高德返回的周边 POI 坐标是 GCJ-02，而本项目地图底图是 WGS-84，
-     * 直接画会偏；出口统一转回 WGS-84，保证接口对外只有一种坐标系。
-     */
+    /** GCJ-02 → WGS-84：一次反向近似，误差 &lt; 2 m，出口统一为 WGS-84。 */
     public static double[] gcj02ToWgs84(double lng, double lat) {
         if (outOfChina(lng, lat)) {
             return new double[] {lng, lat};

@@ -4,13 +4,8 @@ import java.time.Clock;
 import java.time.LocalDate;
 
 /**
- * L2 调用闸门（ADR-0002 §7）：每日预算 + 全局最小间隔。
- *
- * <p>目的不是限制用户，而是防止"地图一动就查 / 输入框每敲一下就查"这类误用把配额打爆：
- * 个人认证开发者基础搜索只有 <b>5,000 次/月</b>（周边搜索与输入提示共用），
- * 基础 LBS 是 15 万次/月。超量后 30 元/万次，且 3 QPS 会先被限死。
- *
- * <p>纯内存计数：重启归零；只记次数，不记任何返回内容——符合协议 3.5 与 ADR-0001。
+ * L2 调用闸门：每日预算 + 全局最小间隔，防止误用打爆高德配额。
+ * 纯内存计数，重启归零；只记次数，不记返回内容。
  */
 public final class LiveQuota {
 
@@ -50,8 +45,7 @@ public final class LiveQuota {
 
     /**
      * 尝试占用一次调用额度。
-     *
-     * @param around 是否为周边搜索（配额更少，单独计数）
+     * @param around 是否为周边搜索（配额独立计数）
      */
     public synchronized Decision acquire(boolean around) {
         LocalDate today = LocalDate.now(clock);
@@ -81,7 +75,7 @@ public final class LiveQuota {
         return Decision.allow();
     }
 
-    /** 今日已用次数（两个接口合计），只用于日志/排查。 */
+    /** 今日已用次数（合计），仅用于日志排查。 */
     public synchronized int usedToday() {
         return used;
     }

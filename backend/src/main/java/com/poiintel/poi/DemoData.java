@@ -3,10 +3,7 @@ package com.poiintel.poi;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * 演示属性生成器：OSM 不提供小区均价/建成年份，用与前端一致的稳定哈希生成，
- * 保证同一条数据在前端本地兜底与后端服务两种模式下数值一致。
- */
+/** 演示属性生成器：与前端一致的稳定哈希，保证两端数值一致。 */
 public final class DemoData {
 
     private DemoData() {

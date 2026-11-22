@@ -11,12 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 待定位网点暂存。
- *
- * 有些银行官网只给「名称/地址/电话/营业时间」，不给经纬度（如兴业银行）。
- * 没有坐标就写进 poi_bank 等于编造位置，所以先存这里，等有地理编码能力再转正。
- */
+/** 待定位网点暂存：无坐标数据不写入 poi_bank，待补全坐标后再转正。 */
 @Service
 @RequiredArgsConstructor
 public class PendingBankService {
@@ -30,10 +25,7 @@ public class PendingBankService {
     }
 
     @Transactional
-    /**
-     * 从「新增点位」反馈里取出要暂存的网点名称。
-     * 用户填的名字在 new_value，留空时退回 description；都没有就返回 null（不落脏数据）。
-     */
+    /** 从「新增点位」反馈取网点名称：优先 new_value，留空退回 description，均无返回 null。 */
     public Map<String, Object> feedbackOf(String code) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT poi_type, new_value, description FROM feedback WHERE code = ? AND type = 'add'", code);
@@ -55,7 +47,7 @@ public class PendingBankService {
         return result;
     }
 
-    /** 用户反馈里「新增小区」可能自带地址（写在 description 的「地址：」后面） */
+    /** 取用户反馈中的地址（description 的「地址：」之后） */
     public String addressOf(String code) {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT description FROM feedback WHERE code = ?", code);

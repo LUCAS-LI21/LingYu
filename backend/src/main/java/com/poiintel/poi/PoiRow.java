@@ -7,10 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
- * v_poi 视图的行对象：银行与小区共用一个出参结构，前端无需区分两个接口。
- *
- * {@code NON_NULL}：列表一次可能返回 5000 行，每行 28 个字段里有一半是另一类型不用的 null，
- * 全量序列化约 3.6MB。省略 null 后体积约减半（前端本来就用 ?? 兜底，undefined 等价于 null）。
+ * v_poi 视图行对象：银行与小区共用出参结构。
+ * NON_NULL：列表可达 5000 行，省略 null 可将响应体积减半。
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -22,7 +20,7 @@ public class PoiRow {
     private String district;
     private Double lng;
     private Double lat;
-    /** GCJ-02 坐标：高德/腾讯等国内地图用，前端导航跳转直接取这两个值（WGS-84 直接喂给高德会偏 500 米） */
+    /** GCJ-02 坐标：国内地图/导航跳转使用（WGS-84 直接使用会偏移）。 */
     private Double gcjLng;
     private Double gcjLat;
     private String brand;
@@ -35,7 +33,7 @@ public class PoiRow {
     private Integer avgPrice;
     /** demo=演示值 / gov_reference=政府成交参考价 */
     private String avgPriceSource;
-    /** 演示均价：仅用于展示并标注「演示」，不参与价格筛选/排序/统计 */
+    /** 演示均价：仅展示并标注「演示」，不参与筛选/排序/统计。 */
     private Integer avgPriceDemo;
     private BigDecimal propertyFee;
     /** 物业公司（政府物业项目库） */

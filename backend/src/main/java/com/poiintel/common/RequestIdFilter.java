@@ -17,13 +17,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * 给每个请求分配 request-id，写入响应头与日志 MDC。
- *
- * 为什么需要：评审指出"出问题只能翻容器日志，无法把一次前端报错对应到后端日志"。
- * 有了 X-Request-Id，前端报错时带上这个 id，后端用 grep 就能定位整条链路。
- *
- * 规则：优先复用上游（nginx / 调用方）传的 X-Request-Id，没有就生成 12 位短 id。
- * 日志格式在 application.yml 的 logging.pattern 里用 %X{requestId} 输出。
+ * 为每个请求分配 requestId，写入响应头 X-Request-Id 与日志 MDC。
+ * 优先复用上游传入值，否则生成 12 位短 id。
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -49,7 +44,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         } finally {
             long costMs = (System.nanoTime() - started) / 1_000_000;
-            // 只记慢请求与错误，避免日志被 5MB 全量查询刷屏
+            // 仅记录慢请求与错误响应
             if (costMs >= 300 || response.getStatus() >= 400) {
                 log.info("{} {} -> {} {}ms", request.getMethod(), request.getRequestURI(),
                         response.getStatus(), costMs);

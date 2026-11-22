@@ -15,7 +15,7 @@ public class QueryLogService {
 
     private final JdbcTemplate jdbcTemplate;
 
-    /** 查询日志是热点闭环的原料；失败不影响主流程，只降级为告警日志 */
+    /** 记录查询日志；失败不影响主流程，仅告警。 */
     public void log(String kind, String keyword, String district, String grid, int resultCount, long costMs) {
         try {
             jdbcTemplate.update("""
@@ -27,7 +27,7 @@ public class QueryLogService {
         }
     }
 
-    /** 0.02° 网格（约 2.2km），与统计页的密度网格口径一致 */
+    /** 0.02° 网格（约 2.2km），与统计页口径一致 */
     public static String gridOf(Double lng, Double lat) {
         if (lng == null || lat == null) {
             return "";

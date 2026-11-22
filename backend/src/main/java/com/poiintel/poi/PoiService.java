@@ -40,10 +40,7 @@ public class PoiService {
         return row;
     }
 
-    /**
-     * 补 GCJ-02 坐标：库里存 WGS-84，高德/腾讯导航要 GCJ-02。
-     * 前端做「导航」跳转时直接用 gcjLng/gcjLat，不要自己拿 lng/lat 拼链接。
-     */
+    /** 补 GCJ-02 坐标：库内为 WGS-84，导航需用 gcjLng/gcjLat。 */
     private void fillGcj(PoiRow row) {
         if (row == null || row.getLng() == null || row.getLat() == null) {
             return;
@@ -63,7 +60,7 @@ public class PoiService {
         return result;
     }
 
-    /** 反向关联：某银行网点周边的小区（与「小区周边银行」互为镜像） */
+    /** 反向关联：某银行网点周边的小区。 */
     public List<NearbyItem> nearbyCommunities(double lng, double lat, double radius, int limit) {
         List<PoiRow> rows = poiMapper.nearbyCommunities(lng, lat, radius, limit);
         List<NearbyItem> result = new ArrayList<>(rows.size());

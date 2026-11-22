@@ -37,11 +37,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 /**
- * OSM 采集：走 Overpass 公共实例，遵守 ODbL 与限速。
- * 只处理可入库（L1）数据；同样逻辑不允许用在高德等 L2 源上（见 docs/requirements/03）。
- *
- * 设计要点：银行与小区分两次请求。landuse=residential 的查询很重，
- * 公共实例常排队超时；拆开后银行能先落库，小区失败只记 partial，不让整任务失败。
+ * OSM 采集（Overpass 公共实例，ODbL，限速）；仅处理可入库（L1）数据。
+ * 银行与小区分两次请求：小区查询重，失败仅记 partial，不影响银行落库。
  */
 @Service
 @RequiredArgsConstructor
@@ -49,7 +46,7 @@ public class IngestService {
 
     private static final Logger log = LoggerFactory.getLogger(IngestService.class);
 
-    /** 表名白名单：版本写入需要拼表名，必须挡住外部输入 */
+    /** 表名白名单：版本写入需拼表名，禁止外部输入 */
     private static final Set<String> TABLES = Set.of("poi_bank", "poi_community");
 
     /** 与 upsert 参数顺序严格对应（第 0 位是 id） */
@@ -62,7 +59,7 @@ public class IngestService {
     private final ObjectMapper objectMapper;
     private final PlatformTransactionManager transactionManager;
 
-    /** 每段写库单独一个短事务：网络抓取在事务外，避免长事务锁表 */
+    /** 每段写库单独短事务；网络抓取在事务外，避免长事务锁表 */
     private TransactionTemplate transactionTemplate;
 
     @PostConstruct
@@ -79,18 +76,12 @@ public class IngestService {
     @Value("${app.ingest.endpoints:https://overpass-api.de/api/interpreter}")
     private String endpoints;
 
-    /**
-     * 创建任务。synchronized + 在跑任务检查：单实例下不会并发起两个采集，
-     * 否则两个 job 会同时 upsert 同一批 POI（评审 P1-7）。多实例部署需换成 DB 级锁。
-     */
+    /** 创建任务；synchronized + 运行中检查避免并发采集，多实例需 DB 级锁。 */
     public synchronized long createJob(String triggerType, double south, double west, double north, double east) {
         return createJob(triggerType, south, west, north, east, "");
     }
 
-    /**
-     * 带反馈编号的版本：「新增点位」审核后建的任务会带上 feedback code，
-     * 任务结束回写反馈状态，用户才能看到"重抓完了"（闭环最后一跳）。
-     */
+    /** 带反馈编号创建任务，结束后回写反馈状态。 */
     public synchronized long createJob(String triggerType, double south, double west, double north,
                                        double east, String feedbackCode) {
         Integer running = jdbcTemplate.queryForObject(
@@ -99,8 +90,7 @@ public class IngestService {
             throw new IllegalStateException("已有抓取任务在执行，请稍后再试");
         }
         String scope = String.format("%.5f,%.5f,%.5f,%.5f", south, west, north, east);
-        // 用 GeneratedKeyHolder 取主键：JdbcTemplate 每次调用可能拿到不同连接，
-        // 再写 SELECT LAST_INSERT_ID() 会读到别的连接的 0，导致 jobId=0、采集链永久锁死
+        // 用 GeneratedKeyHolder 取主键：LAST_INSERT_ID() 可能读到其他连接的 0
         org.springframework.jdbc.support.GeneratedKeyHolder keyHolder =
                 new org.springframework.jdbc.support.GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -132,7 +122,7 @@ public class IngestService {
         List<String> notes = new ArrayList<>();
 
         try {
-            // 第一段：银行/ATM，节点查询，通常几十秒内返回
+            // 第一段：银行/ATM 节点查询
             String bankQuery = String.format("""
                     [out:json][timeout:120];
                     node["amenity"~"^(bank|atm)$"](%.5f,%.5f,%.5f,%.5f);
@@ -183,7 +173,7 @@ public class IngestService {
                 }
             }
 
-            // 第二段：小区面，重查询，失败不影响银行已入库的部分
+            // 第二段：小区面查询，失败不影响已入库的银行
             try {
                 String communityQuery = String.format("""
                         [out:json][timeout:150];
@@ -247,7 +237,7 @@ public class IngestService {
             log.info("[ingest] job {} {}：抓取 {}，新增 {}，更新 {}", jobId, status, fetched, inserted, updated);
             writeBackFeedback(jobId, status, inserted + updated, null);
         } catch (Exception ex) {
-            // 失败也要回写已完成的计数，否则任务显示 0 条、实际已写入部分数据（评审 P1-8）
+            // 失败也回写已完成计数，避免任务显示 0 条
             jdbcTemplate.update("""
                     UPDATE ingest_job
                     SET status = 'failed', fetched_count = ?, inserted_count = ?, updated_count = ?,
@@ -259,10 +249,7 @@ public class IngestService {
         }
     }
 
-    /**
-     * 闭环最后一跳：任务结束后把结果写回发起它的反馈。
-     * 成功/部分成功 → approved（用户能看到"已重抓并入库"）；失败 → need_refetch（保留可再试的出口）。
-     */
+    /** 任务结束后回写反馈：成功/部分成功 → approved，失败 → need_refetch。 */
     private void writeBackFeedback(long jobId, String jobStatus, int touched, String error) {
         try {
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(
@@ -288,10 +275,7 @@ public class IngestService {
         }
     }
 
-    /**
-     * 采集侧也写版本：先对比库中旧值，只把真正变化的字段记成一条 poi_version。
-     * 这样"这条数据哪天被谁改的"在抓取链路上也成立，而不只是审核链路。
-     */
+    /** 采集侧写版本：仅把真正变化的字段记一条 poi_version。 */
     private void recordVersions(String table, String poiType, List<Object[]> rows, List<String> columns) {
         if (rows.isEmpty()) {
             return;
@@ -387,11 +371,7 @@ public class IngestService {
         }
     }
 
-    /**
-     * 近期被人工审核改过的 POI 不参与本次覆盖（评审 P0-2）。
-     * 否则刚审核通过的电话/营业时间会在下一轮抓取里被 OSM 空值冲掉，反馈闭环就白做了。
-     * 30 天窗口是折中：人工修正优先，但不至于永久冻结数据。
-     */
+    /** 近 30 天被人工审核改过的 POI 不参与本次覆盖，人工修正优先。 */
     private int dropHumanEdited(String poiType, List<Object[]> rows) {
         Set<String> locked = new HashSet<>(jdbcTemplate.queryForList("""
                 SELECT DISTINCT poi_id FROM poi_version
@@ -410,9 +390,6 @@ public class IngestService {
         if (rows.isEmpty()) {
             return new int[0];
         }
-        // 说明：这里原来有一个 dedupe_log 黑名单，但表里记录的是 import-* 编号，
-        // 而 OSM 行 id 是 osm-node-*，命名空间不同 → 永远不会命中（审计 B2）。
-        // 现在直接去掉这段死代码：OSM 重复点位靠下面 ON DUPLICATE KEY UPDATE（同 id 即更新）保证幂等。
         return jdbcTemplate.batchUpdate("""
                 INSERT INTO poi_bank
                     (id, name, brand, branch_type, address, district, lng, lat, phone, opening_hours,
@@ -431,8 +408,7 @@ public class IngestService {
         if (rows.isEmpty()) {
             return new int[0];
         }
-        // 名称闸门：OSM 里「29栋 / 36小区」这类单栋楼编号不是完整小区名，
-        // 入库会让第一屏看起来像没审核，直接丢弃并计数（审计可查 ingest_job.failed_count）
+        // 名称闸门：楼栋编号不入库，丢弃并计入 failed_count
         int before = rows.size();
         rows.removeIf(row -> row.length > 1 && com.poiintel.common.NameQuality.isBuildingLike(
                 row[1] == null ? null : String.valueOf(row[1])));
@@ -456,8 +432,7 @@ public class IngestService {
         String body = "data=" + URLEncoder.encode(query, StandardCharsets.UTF_8);
         RuntimeException last = null;
         String[] hosts = endpoints.split(",");
-        // 两轮：第一轮按顺序试所有镜像，全挂则退避后重来一次。
-        // 公共实例 504/限流是常态，一次失败就放弃会让定时任务大面积 failed（实测成功率 8/352）。
+        // 两轮重试：先顺序试所有镜像，全挂则退避后重来一次
         for (int round = 1; round <= 2; round++) {
             for (String endpoint : hosts) {
                 String url = endpoint.trim();
@@ -471,8 +446,7 @@ public class IngestService {
                             .POST(HttpRequest.BodyPublishers.ofString(body))
                             .timeout(timeout)
                             .build();
-                    // 用 sendAsync + orTimeout 做硬上限：代理 CONNECT 阶段挂住时，
-                    // HttpRequest.timeout 不一定生效，sync send 会永久阻塞（实测卡死 12 分钟以上）
+                    // sendAsync + orTimeout 做硬上限：HttpRequest.timeout 在代理 CONNECT 挂起时不生效
                     HttpResponse<String> response = client
                             .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                             .orTimeout(timeout.toSeconds() + 15, TimeUnit.SECONDS)
@@ -516,7 +490,7 @@ public class IngestService {
                 try {
                     builder.proxy(ProxySelector.of(new InetSocketAddress(parts[0], Integer.parseInt(parts[1]))));
                 } catch (NumberFormatException ignored) {
-                    // 代理配置非法则退回直连
+                // 代理配置非法时退回直连
                 }
             }
         }

@@ -1,8 +1,6 @@
 package com.poiintel.poi;
 
-/**
- * 深圳 10 区近似中心：用于把坐标归到行政区（MVP 用最近质心，后续可换成点面判定）。
- */
+/** 深圳 10 区近似中心：按最近质心把坐标归到行政区。 */
 public final class Districts {
 
     private static final String[] NAMES = {

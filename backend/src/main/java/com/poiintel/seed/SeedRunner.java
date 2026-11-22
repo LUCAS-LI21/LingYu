@@ -20,10 +20,7 @@ import com.poiintel.poi.Districts;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 首次启动时把 OSM 种子数据（ODbL）导入本地库。
- * 小区均价/年份 OSM 不提供，这里用与前端一致的稳定哈希生成演示值，并打 demo_attributes 标记。
- */
+/** 首次启动导入 OSM 种子数据（ODbL）；均价/年份为稳定哈希演示值，标记 demo_attributes。 */
 @Component
 @RequiredArgsConstructor
 public class SeedRunner implements ApplicationRunner {

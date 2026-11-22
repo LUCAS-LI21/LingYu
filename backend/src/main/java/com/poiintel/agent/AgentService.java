@@ -16,12 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 数据接入 Agent 的 P0：单实体单字段补全。
- *
- * 流程（对应 docs/design/data-ingestion-agent.md 第 3 节）：
- *   搜索 → 抽取（LLM）→ 复核（LLM 独立上下文）→ 规则校验（代码）→ 出建议（不写库）
- *
- * 设计原则：LLM 只负责"读页面、写 JSON"，判定由代码做；最终仍要管理员点采纳。
+ * 数据接入 Agent：搜索 → LLM 抽取 → LLM 独立复核 → 规则校验 → 出建议（不写库）。
  */
 @Service
 @RequiredArgsConstructor
@@ -38,7 +33,7 @@ public class AgentService {
             "phone", "联系电话",
             "openingHours", "营业时间");
 
-    /** 白名单：表名与列名只能从这里取，绝不拼接外部字符串 */
+    /** 表名/列名白名单，禁止拼接外部字符串 */
     private static final Map<String, String> TABLE_BY_TYPE = Map.of(
             "bank", "poi_bank",
             "community", "poi_community");
@@ -47,7 +42,7 @@ public class AgentService {
             "phone", "phone",
             "openingHours", "opening_hours");
 
-    /** 简易节流：两次 propose 至少间隔 1.2 秒，避免被刷爆额度 */
+    /** 两次 propose 最小间隔 1.2s */
     private static final long MIN_INTERVAL_MS = 1200;
     private static long lastProposeAt = 0;
 
@@ -69,7 +64,7 @@ public class AgentService {
             throw new IllegalArgumentException("非法实体类型或字段：" + entityType + "/" + field);
         }
         throttle();
-        // 同一实体同一字段若已有进行中的运行，直接返回，避免重复烧钱
+        // 同一实体同一字段已有进行中运行时直接返回
         Integer running = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM agent_run
                 WHERE entity_type = ? AND entity_id = ? AND field = ? AND status = 'running'
@@ -132,7 +127,7 @@ public class AgentService {
             String sourceUrl = proposal.path("sourceUrl").asText("").trim();
             double confidence = proposal.path("confidence").asDouble(0);
 
-            // 域名白名单闸门（审计 D2）：不属于 L1 允许来源直接拒绝，不进入复核
+            // 域名白名单闸门：非 L1 来源直接拒绝，不进入复核
             if (!com.poiintel.common.SourcePolicy.allowed(sourceUrl)) {
                 String reason = com.poiintel.common.SourcePolicy.rejectReason(sourceUrl);
                 finishRun(runId, "rejected", reason, extract, null);
@@ -148,7 +143,7 @@ public class AgentService {
                 return result;
             }
 
-            // ③ 复核（独立上下文，只看值与证据，不给它看抽取过程的推理）
+            // ③ 复核：独立上下文，仅传入值与证据
             DeepSeekClient.ChatResult verify = deepSeek.chatJson(VERIFY_SYSTEM,
                     "字段：" + FIELD_LABEL.getOrDefault(field, field) + "\n候选值：" + value
                             + "\n证据原文：" + evidence + "\n来源：" + sourceUrl, 200);
@@ -159,10 +154,10 @@ public class AgentService {
                     "reason", verdict.path("reason").asText(""),
                     "tokens", verify.promptTokens() + verify.completionTokens())));
 
-            // ④ 规则校验（代码，不依赖模型）
+            // ④ 规则校验（不依赖模型）
             List<String> problems = new ArrayList<>();
             if (!supported) problems.add("复核未通过：" + verdict.path("reason").asText("证据不足"));
-            // 关键：不信任模型给的 evidence，回到原始搜索结果里复现
+            // 不信任模型给出的 evidence，回到原始搜索结果复现
             if (!normalize(evidence).contains(normalize(value))) {
                 problems.add("证据中找不到该值（疑似幻觉）");
             }
@@ -176,12 +171,12 @@ public class AgentService {
             }
             if ("address".equals(field)) {
                 if (!value.contains("深圳")) problems.add("地址不含'深圳'，存疑");
-                // 防"张冠李戴"：同名网点可能有多家，地址必须落在实体所属区
+                // 地址须落在实体所属区，避免同名网点误配
                 String entityDistrict = String.valueOf(entity.getOrDefault("district", "")).trim();
                 if (!entityDistrict.isEmpty() && !value.contains(entityDistrict)) {
                     problems.add("地址与所属区不一致（该点位在" + entityDistrict + "）");
                 }
-                // 身份校验：实体名若只有品牌（如"交通银行"），无法确认搜到的是不是同一个网点
+                // 名称须含网点级别，否则无法确认与搜索结果同一网点
                 if (!BRANCH_LEVEL.matcher(name).find()) {
                     problems.add("名称未含网点级别（支行/分行/营业部等），无法确认与搜索结果是否同一网点");
                 }
@@ -216,12 +211,7 @@ public class AgentService {
     }
 
     /**
-     * 管理员采纳：写入主表 + 版本记录（同一事务）。
-     *
-     * 复核发现的三个问题都在这修：
-     * - 并发重复版本 → SELECT ... FOR UPDATE 锁住 run 行，状态机 ready→applying 兜底
-     * - 失败半写 → @Transactional，主表/版本/run 一起提交或回滚
-     * - 覆盖人工修改 → 只允许写空字段；若期间被人工改过则拒绝
+     * 管理员采纳：写主表 + 版本记录（同一事务）；仅允许写空字段，期间被人工改过则拒绝。
      */
     @org.springframework.transaction.annotation.Transactional
     public Map<String, Object> apply(long runId, String reviewer) {
@@ -232,7 +222,7 @@ public class AgentService {
         }
         String entityType = String.valueOf(run.get("entity_type"));
         String field = String.valueOf(run.get("field"));
-        // 白名单：不信任库里存的字符串
+        // 白名单：不信任库中字符串
         String table = TABLE_BY_TYPE.get(entityType);
         String column = COLUMN_BY_FIELD.get(field);
         if (table == null || column == null) {
@@ -250,7 +240,7 @@ public class AgentService {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT * FROM " + table + " WHERE id = ? FOR UPDATE", entityId);
         if (rows.isEmpty()) {
-            // 实体已不存在（多半是被去重合并删掉了），把建议标成 stale，避免反复重试
+            // 实体已不存在，标记建议为 stale，避免反复重试
             jdbcTemplate.update("UPDATE agent_run SET status = 'stale' WHERE id = ?", runId);
             throw new IllegalStateException("实体已不存在（可能被去重合并），建议作废");
         }
@@ -258,11 +248,11 @@ public class AgentService {
         Object current = before.get(column);
         String currentText = current == null ? "" : String.valueOf(current).trim();
         if (!currentText.isEmpty()) {
-            // 起草时为空、采纳时已有值 → 期间被人改过，拒绝覆盖
+            // 起草时为空、采纳时已有值，视为期间被人工修改，拒绝覆盖
             throw new IllegalStateException("该字段已有人填写（" + currentText + "），请重新生成建议");
         }
 
-        // 条件更新：只有仍为空时才写，防止并发下互相覆盖
+        // 仅当字段仍为空时写入，防止并发互相覆盖
         int changed = jdbcTemplate.update(
                 "UPDATE " + table + " SET " + column + " = ?, updated_at = NOW() WHERE id = ? AND (" + column + " = '' OR " + column + " IS NULL)",
                 value, entityId);
@@ -271,7 +261,7 @@ public class AgentService {
         }
 
         Map<String, Object> after = jdbcTemplate.queryForMap("SELECT * FROM " + table + " WHERE id = ?", entityId);
-        // operator 列只有 64 字符，记「谁 + 来源域名」，完整 URL 在 agent_run.result_json 里
+        // operator 列长 64，记「谁@来源域名」；完整 URL 存 agent_run.result_json
         String operator = ("agent:" + reviewer + "@" + hostOf(url));
         if (operator.length() > 64) {
             operator = operator.substring(0, 64);
@@ -280,7 +270,7 @@ public class AgentService {
                 INSERT INTO poi_version (poi_type, poi_id, change_type, before_json, after_json, changed_fields, operator)
                 VALUES (?, ?, 'update', ?, ?, ?, ?)
                 """, entityType, entityId, toJson(before), toJson(after), column, operator);
-        // 字段级来源：Agent 写入的字段要能追到具体 URL
+        // 字段级来源：Agent 写入的字段需可追到具体 URL
         jdbcTemplate.update("""
                 INSERT INTO poi_field_source (poi_type, poi_id, field, source, source_url)
                 VALUES (?, ?, ?, ?, ?)
@@ -305,11 +295,7 @@ public class AgentService {
                 """, limit);
     }
 
-    /**
-     * 数据质量巡检（规则版，不调大模型）：
-     * 扫描小区名里的楼栋编号、纯数字等，给出待处理清单。
-     * 这是「Agent 审核数据」的第一道闸门——比事后靠人翻列表可靠。
-     */
+    /** 数据质量巡检（规则版，不调模型）：扫描楼栋编号、纯数字等异常名称。 */
     public Map<String, Object> quality() {
         List<Map<String, Object>> flagged = jdbcTemplate.queryForList("""
                 SELECT id, name, district, source,
@@ -333,10 +319,7 @@ public class AgentService {
         return result;
     }
 
-    /**
-     * 批量补全：挑出缺该字段的实体，逐个跑 propose。
-     * 只出建议、不写库；返回各类结果计数，便于判断要不要继续投人审。
-     */
+    /** 批量补全：挑出缺该字段的实体逐个 propose，只出建议不写库。 */
     public Map<String, Object> batch(String entityType, String field, int limit, boolean branchOnly) {
         String table = "bank".equals(entityType) ? "poi_bank" : "poi_community";
         String column = switch (field) {
@@ -349,7 +332,7 @@ public class AgentService {
 
         String sql = "SELECT id FROM " + table + " p WHERE " + column + " = ''"
                 + (branchOnly ? " AND name REGEXP '支行|分行|营业部|分理处|储蓄所|ATM'" : "")
-                // 跳过已有待处理建议、或最近 7 天已被判定无结果的点位，避免重复烧钱
+                // 跳过已有待处理建议或近 7 天已判定无结果的点位
                 + " AND NOT EXISTS (SELECT 1 FROM agent_run r WHERE r.entity_type = ? AND r.entity_id = p.id"
                 + "   AND r.field = ? AND (r.status IN ('running','ready')"
                 + "   OR (r.status = 'rejected' AND r.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY))))"
@@ -451,7 +434,7 @@ public class AgentService {
                 runId);
     }
 
-    /** 回到原始搜索结果核验：URL 必须是我们真的搜到过的，且正文里确实有这个值 */
+    /** 核验：URL 必须出现在搜索结果中，且正文含该值 */
     private boolean evidenceInHits(List<DeepSeekClient.SearchHit> hits, String sourceUrl, String value) {
         String target = normalize(value);
         for (DeepSeekClient.SearchHit hit : hits) {

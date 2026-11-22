@@ -2,12 +2,7 @@ package com.poiintel.common;
 
 import java.util.regex.Pattern;
 
-/**
- * 字段清洗归一：把各来源格式不一的文本压成统一形态。
- *
- * <p>来源差异很实际：官网地址带「广东省深圳市」前缀、电话带 +86/空格/全角、
- * 名称带首尾空白或全角括号。这里只做**无损归一**，不猜内容。
- */
+/** 字段清洗归一（无损）：统一空白、全角字符、电话与地址前缀，不猜测内容。 */
 public final class TextNormalize {
 
     private static final Pattern MULTI_SPACE = Pattern.compile("[\\s\\u00A0]+");
@@ -32,10 +27,7 @@ public final class TextNormalize {
                 .replace('）', ')');
     }
 
-    /**
-     * 地址：去空白，统一「深圳市」写法。
-     * 只处理明确前缀，不动门牌等实质内容。
-     */
+    /** 地址：去空白并统一「深圳市」写法，不改动门牌等实质内容。 */
     public static String address(String value) {
         String normalized = text(value)
                 .replace("深圳巿", "深圳市")

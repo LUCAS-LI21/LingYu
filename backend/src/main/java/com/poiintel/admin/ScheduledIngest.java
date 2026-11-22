@@ -12,10 +12,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 定时抓取：把"热点驱动"从手动按钮变成自动动作。
- * 优先抓最近查询最多的网格；没有热点时退回福田中心区默认范围。
- */
+/** 定时抓取：优先最近查询最多的网格，无热点时退回福田中心区默认范围。 */
 @Component
 @RequiredArgsConstructor
 public class ScheduledIngest {
@@ -24,7 +21,7 @@ public class ScheduledIngest {
 
     /** 默认范围：福田中心区，半径约 3km */
     private static final double[] DEFAULT_CENTER = {114.055, 22.541};
-    // 单次抓取范围约 2.2km：早期用 0.03（约 6.6km）时 Overpass 频繁 504，任务大面积 partial
+    // 半跨度 0.01°（约 2.2km）；范围过大会导致 Overpass 频繁 504
     private static final double HALF_SPAN = 0.01;
 
     private final JdbcTemplate jdbcTemplate;
@@ -34,7 +31,7 @@ public class ScheduledIngest {
     @Value("${app.ingest.enabled:true}")
     private boolean enabled;
 
-    /** 每日重算热点，避免调度器读到过期排名（评审 P2-12） */
+    /** 每日重算热点，避免调度读取过期排名 */
     @Scheduled(cron = "${app.hotspot.recompute-cron:0 30 2 * * *}")
     public void recomputeHotspotsDaily() {
         try {

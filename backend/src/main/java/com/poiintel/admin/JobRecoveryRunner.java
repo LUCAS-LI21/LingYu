@@ -9,10 +9,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 启动自愈：进程被杀时残留的 pending/running 任务会永久占住调度锁（评审 P1-8）。
- * 启动时统一标记为失败，让下一次调度能正常开始。
- */
+/** 启动自愈：将残留的 pending/running 任务标记为失败，释放调度锁。 */
 @Component
 @RequiredArgsConstructor
 public class JobRecoveryRunner implements ApplicationRunner {

@@ -16,10 +16,7 @@ import com.poiintel.common.ApiResult;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 数据接入 Agent 接口（仅管理员）。
- * propose 只产出建议，不写库；apply 才落地并写版本。
- */
+/** 数据接入 Agent 接口（仅管理员）：propose 只出建议，apply 才写库。 */
 @RestController
 @RequestMapping("/api/v1/admin/agent")
 @RequiredArgsConstructor
@@ -41,7 +38,7 @@ public class AgentController {
         return ApiResult.ok(deepSeekClient.status());
     }
 
-    /** 数据质量巡检：楼栋编号、纯数字、过短名称（规则版，不消耗大模型配额） */
+    /** 数据质量巡检：楼栋编号、纯数字、过短名称（规则版）。 */
     @GetMapping("/quality")
     public ApiResult<Map<String, Object>> quality() {
         return ApiResult.ok(agentService.quality());

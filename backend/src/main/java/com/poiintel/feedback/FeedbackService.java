@@ -28,14 +28,11 @@ public class FeedbackService {
     private final JdbcTemplate jdbcTemplate;
     private final AdminService adminService;
 
-    /**
-     * 是否允许匿名反馈直接改主表。默认关闭：匿名输入 + 自动生效 = 任何人都能改数据，
-     * 演示/公网都不可接受；需要时用 app.feedback.auto-apply=true 显式打开。
-     */
+    /** 是否允许匿名反馈直接改主表：默认关闭，需 app.feedback.auto-apply=true 开启。 */
     @Value("${app.feedback.auto-apply:false}")
     private boolean autoApplyEnabled;
 
-    /** 低风险字段：可由系统直接采纳生效；坐标/名称/关闭状态与新增点位必须人工审核 */
+    /** 低风险字段：系统可直接采纳；坐标/名称/关闭状态与新增点位必须人工审核。 */
     private static final Set<String> LOW_RISK_FIELDS = Set.of("电话", "营业时间", "均价", "物业费", "建成年份");
 
     public Map<String, Object> submit(FeedbackRequest request) {
@@ -65,13 +62,12 @@ public class FeedbackService {
             return ps;
         }, keyHolder);
 
-        // 用自增 id 生成对外编号，避免 MAX(id)+1 在并发下撞唯一键
+        // 用自增 id 生成对外编号，避免并发撞唯一键
         long id = keyHolder.getKey() == null ? 0L : keyHolder.getKey().longValue();
         String code = "FB" + LocalDate.now().format(DAY) + "-" + String.format("%04d", id);
         jdbcTemplate.update("UPDATE feedback SET code = ? WHERE id = ?", code, id);
 
-        // 低风险字段走「系统自动审核」：复用同一套生效逻辑，保证版本留痕一致。
-        // 默认关闭（app.feedback.auto-apply），匿名请求不能直接改主表。
+        // 低风险字段走自动审核，复用同一套生效逻辑保证版本留痕；默认关闭。
         boolean autoApply = autoApplyEnabled
                 && !"add".equals(request.type())
                 && LOW_RISK_FIELDS.contains(request.field())
@@ -82,7 +78,7 @@ public class FeedbackService {
                 adminService.approve(code, "system");
                 status = "approved";
             } catch (Exception ex) {
-                // 自动生效失败则退回人工队列，不让用户白填
+                // 自动生效失败则退回人工队列
                 status = "pending";
             }
         }

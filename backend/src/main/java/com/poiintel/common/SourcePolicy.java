@@ -4,13 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 来源域名白名单：Agent 只能引用"允许入库"的站点，防止把任意网页内容写进主库。
- *
- * <p>背景（审计 D2）：原来只校验 https，等于任何站点都能成为 L1 入库来源；
- * 这里按 L1 域名白名单收口：银行官网 + 政府开放数据 + OSM。
- * 不在名单里的来源直接拒绝，不写入 agent_run。
- */
+/** 来源域名白名单：Agent 只能引用 L1 允许的站点（银行官网/政府/OSM），且须为 https。 */
 public final class SourcePolicy {
 
     /** 允许作为 L1 入库依据的域名后缀 */
@@ -20,7 +14,7 @@ public final class SourcePolicy {
             "spdb.com.cn", "cib.com.cn", "ecitic.com", "cebbank.com", "pingan.com",
             "hxb.com.cn", "psbc.com", "szrcb.com", "cgbchina.com.cn", "bosc.cn",
             "citicbank.com", "cmbc.com.cn", "bankofchina.com",
-            // 政府 / 开放数据
+            // 政府开放数据
             "gov.cn", "sz.gov.cn", "zjj.sz.gov.cn", "szggzy.com",
             // 开放数据源
             "openstreetmap.org", "openstreetmap.com");

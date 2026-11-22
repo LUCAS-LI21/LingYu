@@ -29,7 +29,7 @@ public class AdminController {
     private final com.poiintel.poi.CommunityLocateService communityLocateService;
     private final AuthService authService;
 
-    /** 审核人必须来自 token 主体，不能信请求体（否则可伪造审核记录） */
+    /** 审核人取自 token 主体，不信任请求体 */
     private String reviewerOf(String authorization) {
         if (authorization != null && authorization.startsWith("Bearer ")) {
             return authService.verify(authorization.substring(7)).orElse("unknown");
@@ -56,15 +56,12 @@ public class AdminController {
             @RequestHeader(value = "Authorization", required = false) String authorization) {
         Map<String, Object> result = adminService.approve(code, reviewerOf(authorization));
 
-        // 「新增点位」类反馈：审核通过后自动围绕锚点建一个定向抓取任务（闭环 B）
+        // 「新增点位」审核通过后：先入待定位暂存表，再围绕锚点重抓
         if ("need_refetch".equals(result.get("status"))) {
-            // 1) 先落到待定位暂存表：OSM 里没有的网点只靠重抓是补不回来的，
-            //    落库后后台「待定位」里能看到，可人工补坐标/信息再转正。
             try {
                 Map<String, Object> fb = pendingBankService.feedbackOf(code);
                 if (fb != null) {
-                    // 按点位类型分流：银行进 bank_pending，小区进 community_pending，
-                    // 否则小区的「新增」会被误写进银行暂存表
+                    // 按点位类型分流到 bank_pending / community_pending
                     String poiType = String.valueOf(fb.get("poiType"));
                     String name = String.valueOf(fb.get("name"));
                     String address = fb.get("address") == null ? "" : String.valueOf(fb.get("address"));
@@ -83,17 +80,17 @@ public class AdminController {
                 result.put("pendingError", ex.getMessage());
             }
 
-            // 2) 再围绕锚点重抓一次，补 OSM 里可能存在的邻居点位
+            // 围绕锚点重抓，补齐 OSM 邻居点位
             if (result.get("anchorLng") != null) {
                 double lng = ((Number) result.get("anchorLng")).doubleValue();
                 double lat = ((Number) result.get("anchorLat")).doubleValue();
-                double span = 0.012; // 约 1.3km
+                double span = 0.012; // 0.012° ≈ 1.3km
                 try {
                     long jobId = ingestService.createJob("feedback", lat - span, lng - span, lat + span, lng + span, code);
                     ingestService.runJob(jobId, lat - span, lng - span, lat + span, lng + span);
                     result.put("jobId", jobId);
                 } catch (IllegalStateException busy) {
-                    // 抓取任务被占用不算失败：点位已进暂存表，可稍后重试审核
+                    // 任务被占用不算失败：点位已入暂存表，可稍后重试
                     result.put("jobError", busy.getMessage());
                 }
             }
@@ -110,7 +107,7 @@ public class AdminController {
         return ApiResult.ok(adminService.reject(code, reviewerOf(authorization), note));
     }
 
-    /** 关闭是单向操作，这里提供恢复入口（评审 P1-10） */
+    /** 关闭为单向操作，提供恢复入口 */
     @PostMapping("/pois/{id}/reopen")
     public ApiResult<Map<String, Object>> reopen(
             @PathVariable String id,
@@ -118,19 +115,13 @@ public class AdminController {
         return ApiResult.ok(adminService.reopen(id, reviewerOf(authorization)));
     }
 
-    /**
-     * 导入政府开放数据（L1）：官方数据集人工下载后，按列映射成 JSON 行提交。
-     * 与抓取不同，这里的数据来自官方发布的文件，来源可追溯、允许入库。
-     */
+    /** 导入政府开放数据（L1）：官方文件按列映射后提交，来源可追溯。 */
     @PostMapping("/import")
     public ApiResult<Map<String, Object>> importPois(@RequestBody ImportService.Request request) {
         return ApiResult.ok(importService.importRows(request));
     }
 
-    /**
-     * 导入「有名称地址但无坐标」的网点到暂存表（如兴业银行）。
-     * 没有坐标就不写 poi_bank，避免编造位置。
-     */
+    /** 导入无坐标网点到暂存表；无坐标不写 poi_bank。 */
     @PostMapping("/pending/import")
     public ApiResult<Map<String, Object>> importPending(@RequestBody PendingBankService.Request request) {
         return ApiResult.ok(pendingBankService.importRows(request));
@@ -140,7 +131,7 @@ public class AdminController {
     public ApiResult<Map<String, Object>> pending(
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "50") int limit) {
-        // 与其它列表接口保持同一形态：{items,total,limit}，不要返回裸数组
+        // 列表统一返回 {items,total,limit}
         List<Map<String, Object>> items = pendingBankService.list(status, limit);
         Map<String, Object> page = new java.util.LinkedHashMap<>();
         page.put("items", items);
@@ -149,7 +140,7 @@ public class AdminController {
         return ApiResult.ok(page);
     }
 
-/** 驳回待定位小区（rejected 状态此前没有任何入口） */
+    /** 驳回待定位小区 */
     @PostMapping("/community-pending/{id}/reject")
     public ApiResult<Map<String, Object>> rejectCommunityPending(
             @PathVariable String id,
@@ -171,7 +162,7 @@ public class AdminController {
 
     // ---------- 待定位小区：众包坐标 ----------
 
-    /** 管理员直接标注坐标：立即转正成 poi_community（用户提交则走下面的审核队列） */
+    /** 管理员标注坐标：直接转正；用户提交走审核队列。 */
     @PostMapping("/community-pending/{id}/locate")
     public ApiResult<Map<String, Object>> locateCommunity(
             @PathVariable String id,
@@ -213,7 +204,7 @@ public class AdminController {
         return ApiResult.ok(adminService.jobs(page, Math.min(Math.max(size, 1), 100)));
     }
 
-    /** 手动触发一次 OSM 采集：默认取福田中心区，避免一次拉全城拖垮公共实例 */
+    /** 手动触发 OSM 采集：默认福田中心区范围。 */
     @PostMapping("/jobs")
     public ApiResult<Map<String, Object>> createJob(@RequestBody(required = false) Map<String, Object> body) {
         double south = number(body, "south", 22.520);

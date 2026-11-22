@@ -29,7 +29,7 @@ public interface PoiMapper {
 
     List<Map<String, Object>> priceBuckets();
 
-    /** 小区总数与其中「有官方参考价」的数量，用于在洞察页标注样本口径 */
+    /** 小区总数与有官方参考价的数量，用于标注样本口径。 */
     Map<String, Object> priceSampleCount();
 
     List<Map<String, Object>> gridTop(@Param("limit") int limit);
@@ -37,7 +37,7 @@ public interface PoiMapper {
     /** 区域维度：每个区的银行数与小区数，供洞察页画图 */
     List<Map<String, Object>> countsByDistrict();
 
-    /** 反向关联：某个银行网点周边的住宅小区（赛题三.3） */
+    /** 反向关联：某银行网点周边的住宅小区。 */
     List<PoiRow> nearbyCommunities(@Param("lng") double lng,
                                    @Param("lat") double lat,
                                    @Param("radius") double radius,

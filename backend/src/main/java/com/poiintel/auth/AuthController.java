@@ -24,7 +24,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    /** 每个 IP 的登录尝试时间窗，用于限流（单实例内存足够，多实例需换 Redis） */
+    /** 登录尝试时间窗（单实例内存；多实例需换 Redis） */
     private static final Map<String, Deque<Long>> ATTEMPTS = new ConcurrentHashMap<>();
     private static final long WINDOW_MS = 60_000;
 
@@ -51,10 +51,7 @@ public class AuthController {
                 .orElseThrow(() -> new com.poiintel.common.UnauthorizedException("用户名或口令错误"));
     }
 
-    /**
-     * 简单的滑窗限流：同一 IP 每分钟最多 N 次登录尝试。
-     * 运营口令只有几十位熵，不限制的话可以被在线爆破。
-     */
+    /** 滑动窗口限流：同一 IP 每分钟最多 N 次登录尝试。 */
     private void enforceRateLimit(String ip) {
         long now = System.currentTimeMillis();
         Deque<Long> window = ATTEMPTS.computeIfAbsent(ip, key -> new ArrayDeque<>());
@@ -69,11 +66,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * 取真实客户端 IP。
-     * 只信 X-Forwarded-For 的**最后一段**（最近代理追加的那段）；
-     * 第一段可以随意伪造，用它做限流等于没限流。
-     */
+    /** 取真实客户端 IP：只信 X-Forwarded-For 最后一段，首段可伪造。 */
     private String clientIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {

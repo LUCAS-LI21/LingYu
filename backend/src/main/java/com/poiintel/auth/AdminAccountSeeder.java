@@ -13,15 +13,8 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 内置运营账号：口令来自配置，库里只存 PBKDF2 哈希。
- *
- * 两条规则：
- * 1. 账号不存在 → 创建
- * 2. 账号存在，但显式配置了 OPERATOR_PASSWORD，且与配置值不一致 → **更新成配置值**
- *
- * 为什么要有第 2 条：部署时常用真实数据覆盖容器初始化库（mysqldump 导入），
- * 导入的 sys_user 会盖掉环境变量设的口令，导致 .env 里的密码"看起来没生效"。
- * 让环境变量成为唯一权威，部署行为才可预期。
+ * 内置运营账号：口令来自配置，库中只存 PBKDF2 哈希。
+ * 显式配置 OPERATOR_PASSWORD 时以配置值为准，覆盖库中已有口令。
  */
 @Component
 @RequiredArgsConstructor
@@ -39,18 +32,18 @@ public class AdminAccountSeeder implements ApplicationRunner {
     @Value("${app.auth.operator-password:" + DEFAULT_PASSWORD + "}")
     private String password;
 
-    // 用 String 接收再宽松解析：环境变量为空串时 Spring 的布尔转换会直接抛 Invalid boolean value
+    // 用 String 接收并宽松解析：空串会导致布尔转换异常
     @Value("${app.auth.allow-default-password:false}")
     private String allowDefaultPasswordRaw;
 
     @Override
     public void run(ApplicationArguments args) {
-        // 空口令是最弱的默认值：无论什么环境都拒绝（之前只拦 operator123，空串能直接登录）
+        // 空口令一律拒绝
         if (password == null || password.isBlank()) {
             throw new IllegalStateException(
                     "OPERATOR_PASSWORD 为空，拒绝启动；请设置为随机强口令（不允许空口令登录）");
         }
-        // 默认口令：非开发环境 fail-fast（评审指出"换个默认值等于没改"）
+        // 使用默认口令时非开发环境启动失败
         boolean allowDefaultPassword = "true".equalsIgnoreCase(
                 allowDefaultPasswordRaw == null ? "" : allowDefaultPasswordRaw.trim());
         if (DEFAULT_PASSWORD.equals(password) && !allowDefaultPassword) {
@@ -71,7 +64,7 @@ public class AdminAccountSeeder implements ApplicationRunner {
             return;
         }
 
-        // 已存在：仅在显式配置了非默认口令时校准，避免默认值反复覆盖运维改过的密码
+        // 已存在账号仅在配置非默认口令时校准密码
         if (DEFAULT_PASSWORD.equals(password)) {
             return;
         }

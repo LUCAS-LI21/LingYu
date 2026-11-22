@@ -19,14 +19,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * 极简数据库迁移器：把 SQL 迁移文件按文件名顺序执行，记在 schema_version 里，只跑一次。
- *
- * 为什么不用 Flyway：本项目没有额外依赖预算，规则又简单（顺序执行 + 已执行跳过）；
- * 重点是**单一真相**——库结构只能由 db/migration/*.sql 演化，不再靠"手工 ALTER + schema.sql 猜"。
- *
- * 约定：
- *   V{n}__{描述}.sql，按 n 升序执行；语句以分号分隔。
- *   "Duplicate column/key/table" 视为已应用（老库手工改过时不会卡住）。
+ * 极简迁移器：按文件名顺序执行 db/migration/*.sql，记录于 schema_version，仅执行一次。
+ * "Duplicate column/key/table" 视为已应用。
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -90,7 +84,7 @@ public class SchemaMigrator implements ApplicationRunner {
         }
     }
 
-    /** 按分号切分；去掉纯注释行，避免把注释当语句执行 */
+    /** 按分号切分语句，跳过纯注释行 */
     private List<String> splitStatements(String sql) {
         List<String> out = new ArrayList<>();
         for (String raw : sql.split(";")) {
@@ -119,7 +113,7 @@ public class SchemaMigrator implements ApplicationRunner {
         while (cause != null) {
             if (cause instanceof SQLException sql) {
                 String state = sql.getSQLState();
-                // 42S21 = Duplicate column；42S01 = Table exists；42000 里含 Duplicate key/索引
+                // 42S21 = Duplicate column；42S01 = Table exists；42000 含 Duplicate key/索引
                 return "42S21".equals(state) || "42S01".equals(state)
                         || (sql.getMessage() != null && sql.getMessage().contains("Duplicate"));
             }

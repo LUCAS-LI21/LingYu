@@ -13,16 +13,8 @@ import com.poiintel.common.GeoCoord;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 待定位小区的「众包标注位置」。
- *
- * 背景：全市 4 941 个小区只有名称与地址、没有坐标，而公开数据里没有小区级坐标，
- * 商业地图（高德/腾讯）的坐标又不能落库（协议 3.5）。唯一合规的办法是**自己产生数据**：
- * 用户或管理员在地图上点一下，坐标就是旁证可查的一手数据。
- *
- * 规则：
- * - 管理员标注（source=admin）→ 直接转正；
- * - 用户提交（source=user）→ 进 coordinate_submission 待审，管理员通过后才转正；
- * - 转正时写 poi_community（来源标注「用户贡献/管理员标注」）+ poi_field_source 逐字段留痕。
+ * 待定位小区众包标注：管理员标注直接转正，用户提交进 coordinate_submission 待审。
+ * 转正时写 poi_community 并通过 poi_field_source 逐字段留痕。
  */
 @Service
 @RequiredArgsConstructor
@@ -39,10 +31,7 @@ public class CommunityLocateService {
         }
     }
 
-    /**
-     * 把「用户反馈新增小区」暂存进 community_pending，等运营标注坐标后转正。
-     * 与银行那条链路对称：反馈 → 暂存 → 标注 → 转正 → 地图可见。
-     */
+    /** 将「反馈新增小区」暂存进 community_pending，待标注坐标后转正。 */
     public String stagePending(String name, String address, String source, String feedbackCode) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("小区名称不能为空");
@@ -65,9 +54,7 @@ public class CommunityLocateService {
         return id;
     }
 
-    /**
-     * 提交坐标。管理员直接转正并返回 poiId，用户提交进审核队列。
-     */
+    /** 提交坐标：管理员直接转正返回 poiId，用户提交进审核队列。 */
     @Transactional
     public Map<String, Object> submit(String pendingId, double lng, double lat, String source,
             String submitter, String note) {
@@ -145,10 +132,7 @@ public class CommunityLocateService {
         return Map.of("status", "rejected");
     }
 
-/**
-     * 驳回一个待定位小区：状态置 rejected，从「待定位」列表消失。
-     * 此前 rejected 状态在 schema 里定义了但没有任何写入口，等于永远到不了。
-     */
+    /** 驳回待定位小区：状态置 rejected，不再出现在待定位列表。 */
     public Map<String, Object> rejectPending(String pendingId, String reviewer, String reason) {
         int updated = jdbcTemplate.update("""
                 UPDATE community_pending SET status = 'rejected', geocode_source = ?, geocoded_at = NOW()
@@ -164,10 +148,7 @@ public class CommunityLocateService {
         return result;
     }
 
-    /**
-     * 把待定位小区转正成 poi_community：写坐标、来源、字段级留痕。
-     * 调用前坐标已校验。
-     */
+    /** 转正为 poi_community：写坐标、来源与字段级留痕；调用前坐标已校验。 */
     private String promote(Map<String, Object> pending, double lng, double lat, String operator) {
         String pendingId = String.valueOf(pending.get("id"));
         String name = String.valueOf(pending.get("name"));
@@ -180,7 +161,7 @@ public class CommunityLocateService {
 
         String poiId = "cp-" + pendingId;
         String source = operator.startsWith("admin") ? "管理员标注" : "用户贡献";
-        // 待定位小区若已挂官方成交参考价，转正时一并带入，避免转正后价格又变成演示值
+        // 已挂官方成交参考价的，转正时一并带入
         Object price = pending.get("avg_price");
         Object priceSource = pending.get("avg_price_source");
         jdbcTemplate.update("""
@@ -220,7 +201,7 @@ public class CommunityLocateService {
         return poiId;
     }
 
-    /** 前端画点用：给待定位小区一个建议中心（区中心），没有坐标时用来初始化地图 */
+    /** 返回区中心作为地图初始中心。 */
     public Map<String, Object> hint(String district) {
         Map<String, Object> result = new LinkedHashMap<>();
         double[] center = switch (district == null ? "" : district) {
@@ -236,7 +217,7 @@ public class CommunityLocateService {
             case "大鹏新区" -> new double[]{114.479, 22.596};
             default -> new double[]{114.057, 22.543};
         };
-        // 给前端也备一份 GCJ-02，避免它自己转
+        // 同时返回 GCJ-02，避免前端自行转换
         double[] gcj = GeoCoord.wgs84ToGcj02(center[0], center[1]);
         result.put("lng", center[0]);
         result.put("lat", center[1]);

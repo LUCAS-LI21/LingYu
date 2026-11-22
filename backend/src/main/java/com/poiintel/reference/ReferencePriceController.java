@@ -11,10 +11,7 @@ import com.poiintel.common.ApiResult;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 二手房参考价（L1 展示层，不绑定 POI）。
- * 数据来源：深圳市政府数据开放平台，使用须注明来源。
- */
+/** 二手房参考价（L1 展示层，不绑定 POI）；数据来自深圳市政府数据开放平台，须注明来源。 */
 @RestController
 @RequestMapping("/api/v1/reference-price")
 @RequiredArgsConstructor

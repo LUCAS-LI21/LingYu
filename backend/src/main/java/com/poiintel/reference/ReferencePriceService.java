@@ -17,15 +17,9 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 
 /**
- * 二手房成交参考价（深圳市政府数据开放平台，市住建局发布）。
- *
- * 为什么不入库、不绑定 POI：
- * 实测 463 条与库内 OSM 小区精确同名仅 1 条——官方表是"商品房项目"，OSM 记的是
- * "住宅区/村/花园"，两套命名体系且都没有共同主键（无地址、无坐标）。
- * 强行映射会制造错误关联，所以这里只做「按区/街道的行情参考」，独立展示。
- *
- * 数据来源：深圳市政府数据开放平台 · 深圳市住宅小区二手住房成交参考价格表
- * 许可：政府公开信息，使用须注明来源，不得转让/再分发。
+ * 二手房成交参考价（深圳市政府数据开放平台·市住建局）。
+ * 不绑定 POI：官方表与 OSM 命名体系无共同主键，强行映射会产生错误关联。
+ * 数据为政府公开信息，须注明来源，不得转让/再分发。
  */
 @Service
 public class ReferencePriceService {
@@ -48,11 +42,11 @@ public class ReferencePriceService {
         }
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                 resource.getInputStream(),
-                // 官方导出的 CSV 偶有非法字节，默认解码器会直接抛异常导致只读到一半
+                // CSV 含非法字节，替换解码避免中断读取
                 StandardCharsets.UTF_8.newDecoder()
                         .onMalformedInput(java.nio.charset.CodingErrorAction.REPLACE)
                         .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPLACE)))) {
-            String line = reader.readLine(); // 表头
+            String line = reader.readLine(); // 跳过表头
             while ((line = reader.readLine()) != null) {
                 String[] cells = line.split(",", -1);
                 if (cells.length < 4) continue;
@@ -121,7 +115,7 @@ public class ReferencePriceService {
         return result;
     }
 
-    /** 官方数据写「罗湖」，库里写「罗湖区」，统一成带「区」的形式 */
+    /** 区名统一为带「区」的形式。 */
     private String normalizeDistrict(String raw) {
         if (raw == null || raw.isBlank()) return "未知";
         String value = raw.trim();

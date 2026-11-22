@@ -9,12 +9,7 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * 每日定时用 Agent 补一批字段（默认关闭，需配置 app.agent.schedule-enabled=true）。
- *
- * 对应赛题「支持定时自动抓取」+「业务闭环」：只产出建议，仍需管理员采纳，
- * 避免自动写入错误数据。
- */
+/** 每日定时批量补全（默认关闭，需 app.agent.schedule-enabled=true）；仅产出建议。 */
 @Component
 @RequiredArgsConstructor
 public class ScheduledAgent {
@@ -30,7 +25,7 @@ public class ScheduledAgent {
     @org.springframework.beans.factory.annotation.Value("${app.agent.batch-size:10}")
     private int batchSize;
 
-    /** 每天 03:30 跑一批，避开高峰（价格便宜一半） */
+    /** 每天 03:30 执行一批 */
     @Scheduled(cron = "${app.agent.cron:0 30 3 * * *}")
     public void dailyEnrich() {
         if (!enabled) {

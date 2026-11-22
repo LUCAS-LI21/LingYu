@@ -22,11 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * DeepSeek 客户端：只做三件事——结构化抽取（JSON 模式，关闭思考）、网页搜索、记账。
- *
- * 思考模式默认开启，抽取类任务不需要，显式 disabled 可省一半输出 token。
- */
+/** DeepSeek 客户端：JSON 结构化抽取、网页搜索与用量记账。 */
 @Component
 @RequiredArgsConstructor
 public class DeepSeekClient {
@@ -63,7 +59,7 @@ public class DeepSeekClient {
         body.put("model", model);
         body.put("max_tokens", maxTokens);
         body.put("response_format", objectMapper.createObjectNode().put("type", "json_object"));
-        // 关键：关闭思考模式（默认开启），抽取任务不需要
+        // 关闭思考模式（默认开启），抽取任务不需要
         body.set("thinking", objectMapper.createObjectNode().put("type", "disabled"));
         var messages = objectMapper.createArrayNode();
         messages.addObject().put("role", "system").put("content", system);
@@ -81,7 +77,7 @@ public class DeepSeekClient {
         return new ChatResult(content, prompt, completion, latency);
     }
 
-    /** 平台自带搜索：5 元/1000 次 */
+    /** 平台搜索接口 */
     public List<SearchHit> search(String query, int count) {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("query", query);

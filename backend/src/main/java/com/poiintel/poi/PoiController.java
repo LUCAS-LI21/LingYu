@@ -34,10 +34,7 @@ public class PoiController {
         return ApiResult.ok(Map.of("status", "ok", "db", one != null && one == 1 ? "up" : "down"));
     }
 
-    /**
-     * 元信息：给小程序/第三方客户端做自描述，避免每次对契约文档。
-     * 只描述常量与接口清单，不含业务数据。
-     */
+    /** 接口元信息：返回常量与接口清单，供客户端自描述。 */
     @GetMapping("/meta")
     public ApiResult<Map<String, Object>> meta() {
         Map<String, Object> coord = new java.util.LinkedHashMap<>();
@@ -121,17 +118,17 @@ public class PoiController {
         query.setEast(east);
         query.setNorth(north);
         query.setSort(sort == null ? "default" : sort);
-        // 上限 20000：小区已扩到 3600+，加上银行超过 5000，卡太低会导致前端静默丢点位
+        // 上限 20000：数据量已超 5000，上限过低会导致前端丢点位
         int safeSize = Math.min(Math.max(size, 1), 20000);
         query.setSize(safeSize);
-        // 页码上限 + long 运算：page 传极大值时 (page-1)*size 会整型溢出成负数
+        // 页码上限 + long 运算：避免 (page-1)*size 整型溢出
         int safePage = Math.min(Math.max(page, 1), 100_000);
         query.setOffset((int) Math.min((long) (safePage - 1) * safeSize, Integer.MAX_VALUE));
 
         long started = System.currentTimeMillis();
         PoiService.PageResult result = poiService.list(query);
 
-        // 查询日志 → 热点闭环的原料（失败不影响主流程）
+        // 记录查询日志；失败不影响主流程
         Double centerLng = (west != null && east != null) ? (west + east) / 2 : null;
         Double centerLat = (south != null && north != null) ? (south + north) / 2 : null;
         queryLogService.log("list", keyword, district, QueryLogService.gridOf(centerLng, centerLat),
@@ -149,7 +146,7 @@ public class PoiController {
             @RequestParam(required = false, defaultValue = "all") String branchType,
             @RequestParam(defaultValue = "50") int limit) {
 
-        // NaN/Infinity 会一路传到 SQL 变 500，这里先挡掉；半径也给个上限
+        // 拦截 NaN/Infinity，避免传入 SQL 报 500
         if (!Double.isFinite(lng) || !Double.isFinite(lat) || !Double.isFinite(radius)) {
             throw new IllegalArgumentException("经纬度/半径必须是有效数字");
         }
@@ -169,10 +166,7 @@ public class PoiController {
         return ApiResult.ok(poiService.detail(id));
     }
 
-    /**
-     * 查询热点（公开）：query_log 聚合出来的热门网格。
-     * 之前只有运营后台能看到，前台/洞察看不到"大家都在搜哪"，闭环少了一半。
-     */
+    /** 查询热点（公开）：query_log 聚合的热门网格。 */
     @GetMapping("/hotspots")
     public ApiResult<Map<String, Object>> hotspots(
             @RequestParam(defaultValue = "8") int limit) {
@@ -189,7 +183,7 @@ public class PoiController {
         for (Map<String, Object> row : rows) {
             total += ((Number) row.get("queryCount")).longValue();
         }
-        // 面向用户的可读口径：热门搜索词（原始 2km 网格坐标只有运营后台需要）
+        // 面向用户的热门搜索词（网格坐标仅运营后台使用）
         List<Map<String, Object>> keywords = jdbcTemplate.queryForList("""
                 SELECT keyword, COUNT(*) AS searchCount
                 FROM query_log
@@ -201,7 +195,7 @@ public class PoiController {
         Map<String, Object> result = new java.util.LinkedHashMap<>();
         result.put("items", rows);
         result.put("keywords", keywords);
-        // 热门搜索总次数单独算：totalQueries 是网格维度，两个口径不能混用
+        // 热门搜索总次数独立统计，与网格维度 totalQueries 不混用
         Long searches = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM query_log
                 WHERE keyword <> '' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
@@ -211,7 +205,7 @@ public class PoiController {
         return ApiResult.ok(result);
     }
 
-    /** 字段级来源：每个字段最后由谁写入（政府/官网/Agent/审核），用于回答"这条数据哪来的" */
+    /** 字段级来源：各字段最后的写入方。 */
     @GetMapping("/pois/{id}/sources")
     public ApiResult<java.util.List<Map<String, Object>>> sources(@PathVariable String id) {
         return ApiResult.ok(jdbcTemplate.queryForList("""
@@ -220,12 +214,7 @@ public class PoiController {
                 """, id));
     }
 
-    /**
-     * 待定位小区名录（有名称地址、缺坐标）。
-     *
-     * 定位靠「高德地图查看」外链：把地址交给用户在浏览器里打开，
-     * 我们不解析、不存储坐标（高德协议禁止存储，见 docs/design/data-source-matrix.md）。
-     */
+    /** 待定位小区名录（有名称地址、缺坐标）；定位经高德外链，不解析不存储坐标。 */
     @GetMapping("/community-pending")
     public ApiResult<Map<String, Object>> communityPending(
             @RequestParam(required = false) String district,
@@ -271,16 +260,13 @@ public class PoiController {
         return ApiResult.ok(locateService.hint(district));
     }
 
-    /**
-     * 用户提交坐标（众包）：进入待审队列，管理员通过后才转正。
-     * 小程序/网页都能调，无需登录；管理员标注走 /admin 下的同名接口（直接生效）。
-     */
+    /** 用户提交坐标（众包）：进待审队列，管理员通过后转正。 */
     @PostMapping("/community-pending/{id}/locate")
     public ApiResult<Map<String, Object>> locate(
             @PathVariable String id,
             @RequestBody Map<String, Object> body,
             jakarta.servlet.http.HttpServletRequest http) {
-        // 匿名可写：按 IP 限流，避免单人刷爆坐标提交队列
+        // 匿名可写，按 IP 限流
         String forwarded = http.getHeader("X-Forwarded-For");
         String ip = forwarded == null || forwarded.isBlank()
                 ? (http.getRemoteAddr() == null ? "unknown" : http.getRemoteAddr())
@@ -302,10 +288,7 @@ public class PoiController {
         return Double.parseDouble(String.valueOf(value));
     }
 
-    /**
-     * 反向关联：某银行网点周边的小区（赛题「查询某银行服务范围内的小区信息」）。
-     * 与「小区周边银行」互为镜像，同样按球面距离升序。
-     */
+    /** 反向关联：某银行网点周边的小区，按球面距离升序。 */
     @GetMapping("/pois/{id}/nearby-communities")
     public ApiResult<Map<String, Object>> nearbyCommunities(
             @PathVariable String id,
@@ -335,10 +318,7 @@ public class PoiController {
         return ApiResult.ok(result);
     }
 
-    /**
-     * 最近 N 家银行：小区详情页用，按球面距离升序。
-     * 半径默认 5km，找不到就返回空列表（不编造"附近"）。
-     */
+    /** 最近 N 家银行，按球面距离升序；默认半径 5km，无结果返回空列表。 */
     @GetMapping("/pois/{id}/nearest-banks")
     public ApiResult<Map<String, Object>> nearestBanks(
             @PathVariable String id,
@@ -368,9 +348,7 @@ public class PoiController {
         return ApiResult.ok(result);
     }
 
-    /**
-     * 存量住宅用地（宗地级）：政府开放数据接入的旁证，和 POI 是两套语义，单独查询。
-     */
+    /** 存量住宅用地（宗地级）：政府开放数据旁证，独立查询。 */
     @GetMapping("/land-parcels")
     public ApiResult<Map<String, Object>> landParcels(
             @RequestParam(required = false) String district,

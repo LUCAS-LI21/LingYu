@@ -9,13 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * 匿名写接口的轻量限流（单实例内存窗口）。
- *
- * 背景：/feedback 与 /community-pending/{id}/locate 无需登录即可写，
- * 评审指出"匿名重接口零限流，单端即可打穿库"。这里按 IP + 场景做分钟级窗口，
- * 超限抛 RateLimitException → 429。
- *
- * 多实例部署时应换成 Redis 计数器；当前单实例编排够用。
+ * 匿名写接口限流（单实例内存窗口）：按 IP + 场景做分钟级窗口，超限抛 RateLimitException（429）。
+ * 多实例部署需换 Redis 计数器。
  */
 @Component
 public class AnonymousRateLimiter {

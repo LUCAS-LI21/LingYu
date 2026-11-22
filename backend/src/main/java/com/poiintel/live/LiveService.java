@@ -23,17 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.poiintel.common.GeoCoord;
 
 /**
- * L2 实时层（ADR-0001 / ADR-0002）：只展示、不落库。
- *
- * <p>高德服务协议 3.5 条禁止存储/缓存 API 返回数据，因此这里：
- *
- * <ul>
- *   <li>不写任何表、不缓存、不记响应体
- *   <li>只在用户显式点击时调用一次，结果直接回给前端
- *   <li>调用前做 WGS-84 → GCJ-02 转换（OSM/浏览器给的是 WGS-84，高德要 GCJ-02）
- *   <li>每日预算与最小间隔闸门，防止误用打爆 5,000/月 的搜索配额
- *   <li>未配置 Key 时优雅降级，不影响主功能
- * </ul>
+ * L2 实时层（ADR-0001/0002）：只展示不落库，不写表、不缓存、不记响应体。
+ * 调用前做 WGS-84 → GCJ-02 转换，并经每日预算与最小间隔闸门。
  */
 @Service
 public class LiveService {
@@ -63,7 +54,7 @@ public class LiveService {
             return result;
         }
 
-        // 本地库/OSM 是 WGS-84，高德 regeo 没有坐标系入参，必须先转成 GCJ-02
+        // 高德 regeo 无坐标系入参，须先转 GCJ-02
         double[] gcj = GeoCoord.wgs84ToGcj02(lng, lat);
         LiveQuota.Decision gate = quota.acquire(false);
         if (!gate.allowed()) {
@@ -101,12 +92,7 @@ public class LiveService {
         }
     }
 
-    /**
-     * L2 实时周边 POI：用高德 around 搜索补齐"本地库这里没数据"的体验。
-     *
-     * <p>同样不落库、不缓存，只回给当前请求。返回坐标统一转回 WGS-84，
-     * 避免前端把它画到 OSM 底图上时偏数百米。
-     */
+    /** L2 周边 POI：不落库不缓存，返回坐标统一转回 WGS-84。 */
     public Map<String, Object> searchAround(double lng, double lat, int radius, String keywords) {
         Map<String, Object> result = new LinkedHashMap<>();
         if (amapKey.isBlank()) {
@@ -161,7 +147,7 @@ public class LiveService {
                         item.put("lng", round6(wgs[0]));
                         item.put("lat", round6(wgs[1]));
                     } catch (NumberFormatException ignored) {
-                        // 坐标异常就只展示名称/地址，不阻断整条结果
+                    // 坐标异常时仅展示名称/地址
                     }
                 }
                 items.add(item);
@@ -183,12 +169,7 @@ public class LiveService {
         }
     }
 
-    /**
-     * L2 实时周边配套：学校 / 医院 / 地铁站 / 商场，一次 around 查询按类型归组。
-     *
-     * <p>库内小区只存了"周边银行/ATM"这类可授权落库的字段；学校、医院、地铁、商场
-     * 没有可落库的授权源，因此这里走 L2：即取即显、不写表、不缓存。
-     */
+    /** L2 周边配套：学校/医院/地铁/商场无可授权落库来源，经 L2 即取即显。 */
     public Map<String, Object> facilities(double lng, double lat, int radius) {
         Map<String, Object> result = new LinkedHashMap<>();
         if (amapKey.isBlank()) {
@@ -267,7 +248,7 @@ public class LiveService {
         }
     }
 
-    /** 把高德类型文本归到四类配套；不认识的返回 null（不展示，避免噪音）。 */
+    /** 高德类型文本归为四类配套；未知类型返回 null。 */
     private static String categoryOf(String typeText) {
         if (typeText == null) {
             return null;
@@ -311,7 +292,7 @@ public class LiveService {
         return result;
     }
 
-    /** 把高德的英文错误码翻成人话，方便前端直接展示与排查。 */
+    /** 高德错误码转为可展示文案。 */
     private static String friendly(String info) {
         if (info == null || info.isBlank()) {
             return "高德返回异常";

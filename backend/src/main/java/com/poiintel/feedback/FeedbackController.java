@@ -28,15 +28,12 @@ public class FeedbackController {
     @PostMapping
     public ApiResult<Map<String, Object>> submit(@Valid @RequestBody FeedbackRequest request,
                                                  HttpServletRequest http) {
-        // 匿名可写：按 IP 限流，避免单人刷库（评审指出原先零限流）
+        // 匿名可写，按 IP 限流
         rateLimiter.checkFeedback(clientIp(http));
         return ApiResult.ok(feedbackService.submit(request));
     }
 
-    /**
-     * 用户查询自己的反馈进展（凭受理编号）。
-     * 之前只有运营后台能看到状态，用户提交完就是黑盒——闭环缺了"状态回流"这一环。
-     */
+    /** 凭受理编号查询反馈进展。 */
     @GetMapping("/{code}")
     public ApiResult<Map<String, Object>> status(@PathVariable String code) {
         Map<String, Object> row = feedbackService.findByCode(code);

@@ -1,9 +1,6 @@
 package com.poiintel.common;
 
-/**
- * 统一响应体：{ code, message, data }
- * code = 0 表示成功，其余为业务错误码。
- */
+/** 统一响应体 {code, message, data}；code = 0 表示成功。 */
 public record ApiResult<T>(int code, String message, T data) {
 
     public static <T> ApiResult<T> ok(T data) {

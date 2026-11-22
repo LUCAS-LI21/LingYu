@@ -20,7 +20,7 @@ public class LiveController {
 
     private final LiveService liveService;
 
-    /** 实时地址（L2）：即取即显，绝不落库；响应头显式 no-store，浏览器也不缓存 */
+    /** 实时地址（L2）：即取即显不落库，响应头 no-store。 */
     @GetMapping("/address")
     public ResponseEntity<ApiResult<Map<String, Object>>> address(
             @RequestParam double lng,
@@ -30,7 +30,7 @@ public class LiveController {
                 .body(ApiResult.ok(liveService.reverseGeocode(lng, lat)));
     }
 
-    /** 实时周边 POI（L2）：本地库缺数据时临时补一眼，同样不落库 */
+    /** 实时周边 POI（L2）：本地缺数据时临时补齐，不落库。 */
     @GetMapping("/pois")
     public ResponseEntity<ApiResult<Map<String, Object>>> around(
             @RequestParam double lng,
@@ -42,7 +42,7 @@ public class LiveController {
                 .body(ApiResult.ok(liveService.searchAround(lng, lat, radius, keywords)));
     }
 
-    /** 实时周边配套（L2）：学校/医院/地铁/商场，一次查询按类型归组，不落库 */
+    /** 实时周边配套（L2）：学校/医院/地铁/商场按类型归组，不落库。 */
     @GetMapping("/facilities")
     public ResponseEntity<ApiResult<Map<String, Object>>> facilities(
             @RequestParam double lng,
