@@ -1,47 +1,64 @@
-# PaaS 部署（Render / Railway / Fly.io）
+# PaaS 部署步骤（Render + TiDB Cloud）
 
-目标：获得公网 HTTPS API，供网站与微信小程序共用。
+目标：获得公网 HTTPS API，供网站与微信小程序使用。
+费用：0 元（Render 免费实例 + TiDB Cloud Serverless 免费额度）。
 
-## 前置条件
+## 1. 创建 MySQL 数据库（TiDB Cloud）
 
-1. 一个支持 Docker 的 PaaS 账号（Render、Railway 或 Fly.io）。
-2. 一个公网 MySQL 8.0 实例（如 Aiven、PlanetScale、TiDB Cloud 的免费档）。
-3. 后端镜像使用仓库内 `backend/Dockerfile`。
+1. 打开 https://tidbcloud.com，用 GitHub 或邮箱注册。
+2. **Create Cluster → Serverless**，Region 选 `Singapore`，创建。
+3. 等待 1–2 分钟，进入集群 → **Connect**，记录：
+   - `Host`：如 `gateway01.ap-southeast-1.prod.aws.tidbcloud.com`
+   - `Port`：`4000`
+   - `User`：如 `3xxxxxx.root`
+   - `Password`：点 **Generate Password** 生成并保存
+   - `Database`：`test`
+4. （可选）在 **SQL Editor** 执行 `CREATE DATABASE poi_intel;`，后面 `DB_NAME` 填 `poi_intel`；不建则填 `test`。
 
-## Render（Blueprint）
+## 2. 部署后端（Render）
 
-仓库根目录已提供 [render.yaml](../render.yaml)。
+1. 打开 https://render.com，用 GitHub 登录并授权访问仓库。
+2. 控制台 **New + → Blueprint**，选择 `LUCAS-LI21/LingYu`，点击 **Apply**。
+3. 按页面提示填写环境变量：
 
-1. Render 控制台 → **New → Blueprint**，连接本仓库。
-2. 按提示填写 `DB_HOST`、`DB_USER`、`DB_PASSWORD`、`OPERATOR_PASSWORD`、`AMAP_KEY`（可空）。
-3. 部署完成后访问 `https://<service>.onrender.com/api/v1/health`，应返回 HTTP 200。
-4. 首次启动自动执行 `db/migration` 下的迁移脚本。
+   | 变量                | 填写                     |
+   | ------------------- | ------------------------ |
+   | `DB_HOST`           | TiDB 的 Host             |
+   | `DB_PORT`           | `4000`                   |
+   | `DB_NAME`           | `poi_intel` 或 `test`    |
+   | `DB_USER`           | TiDB 的 User             |
+   | `DB_PASSWORD`       | TiDB 的 Password         |
+   | `OPERATOR_PASSWORD` | 自定义后台口令（强口令） |
+   | `AMAP_KEY`          | 可留空                   |
+   | `DEEPSEEK_API_KEY`  | 可留空                   |
 
-> 免费实例长时间无请求会休眠，首次唤醒约 30 秒；正式演示建议升级到付费实例。
+   `AUTH_SECRET` 由 Render 自动生成，`DB_SSL_MODE=REQUIRED` 已写在配置里。
 
-## Railway / Fly.io
+4. 点击 **Deploy**，等待 5–10 分钟。
+5. 打开 `https://lingyu-api.onrender.com/api/v1/health`，返回 HTTP 200 即成功。
+   首次访问可能休眠约 30 秒。
 
-- Railway：新建项目 → Deploy from GitHub → 选择仓库，Root Directory 设为 `backend`，变量同上。
-- Fly.io：`fly launch --dockerfile backend/Dockerfile`，再 `fly secrets set DB_HOST=... AUTH_SECRET=...`。
+## 3. 验证接口
 
-## 小程序接入
+```bash
+curl https://lingyu-api.onrender.com/api/v1/health
+curl "https://lingyu-api.onrender.com/api/v1/pois?size=1"
+```
 
-1. 后端域名必须为 HTTPS，并完成 ICP 备案（微信要求）。
-2. 修改 `miniprogram/config.js`：
+## 4. 小程序连接
+
+1. 修改 `miniprogram/config.js`：
 
    ```js
-   const API_BASE = 'https://<你的域名>'
+   const API_BASE = 'https://lingyu-api.onrender.com'
    ```
 
-3. 微信公众平台 → 开发 → 开发设置 → **服务器域名 → request 合法域名** 添加该域名。
-4. 重新编译上传，真机即可访问。
+2. 微信公众平台 → 开发管理 → 开发设置 → **服务器域名 → request 合法域名**，添加该域名。
+3. 微信开发者工具中重新编译、上传体验版，真机即可使用。
 
-## 验证清单
+## 注意事项
 
-| 项                        | 预期                       |
-| ------------------------- | -------------------------- |
-| `GET /api/v1/health`      | HTTP 200                   |
-| `GET /api/v1/pois?size=1` | 返回 1 条数据              |
-| `POST /api/v1/feedback`   | 返回受理编号               |
-| 管理后台登录              | `operator` + 自定义口令    |
-| 小程序真机                | 地图、列表、详情、反馈可用 |
+- Render 免费实例无请求会休眠，评审前先访问一次唤醒。
+- TiDB Serverless 免费额度足够本项目的读写量。
+- 后台口令必须自定义，不要使用示例值。
+- 数据库表由后端启动时自动迁移，无需手动建表。
