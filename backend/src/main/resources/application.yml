@@ -1,7 +1,7 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
   shutdown: graceful
-  # 首屏一次拉 5000+ 点位，未压缩约 2.9MB；开 gzip 后约 1/6（实测见 MEMORY）
+  # 首屏响应开启 gzip
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript
@@ -12,7 +12,7 @@ spring:
     name: poi-intel
   datasource:
     # 主机/端口/库名都可用环境变量覆盖，容器里传 DB_HOST=mysql 即可
-    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:poi_intel}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:poi_intel}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&sslMode=${DB_SSL_MODE:PREFERRED}&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
     username: ${DB_USER:root}
     password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
