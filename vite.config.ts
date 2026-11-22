@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
   const isAnalyze = mode === 'analyze'
 
   return {
+    // GitHub Pages 部署在子路径 /LingYu/ 下；本地与 Docker 仍用根路径。
+    // 由 CI 传 VITE_BASE，避免影响本地开发与 e2e。
+    base: env.VITE_BASE || '/',
     plugins: [
       vue(),
       // Tailwind CSS v4 通过 postcss.config.js 接入（见该文件）

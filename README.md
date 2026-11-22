@@ -1,6 +1,7 @@
-# 邻域 POI 情报系统
+# 邻域 POI 情报系统 · 以小区和银行为基线的智慧数据洞察与服务平台
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/LUCAS-LI21/LingYu/actions/workflows/ci.yml/badge.svg)](https://github.com/LUCAS-LI21/LingYu/actions/workflows/ci.yml)
+[![Pages](https://github.com/LUCAS-LI21/LingYu/actions/workflows/pages.yml/badge.svg)](https://github.com/LUCAS-LI21/LingYu/actions/workflows/pages.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 银行网点与小区信息的**采集 → 清洗 → 多维查询 → 用户反馈 → 审核生效 → 热点驱动重采**闭环。
@@ -8,7 +9,17 @@
 前端 Vue 3 + Vite + Leaflet，后端 Spring Boot 3 + MySQL 8，数据来自 OpenStreetMap（ODbL）。
 
 > 完整技术说明见 **[docs/tech/技术文档.md](docs/tech/技术文档.md)**：技术栈、功能清单、账号体系、使用说明。
-> 代码改动后请同步更新该文档与 `docs/api/openapi.yaml`。
+> 部署方式见 **[docs/deploy/GitHub部署.md](docs/deploy/GitHub部署.md)**（Pages / Codespaces / 公网后端）。
+
+## 🌐 在线体验
+
+| 入口                       | 地址                                 | 能力                                           |
+| -------------------------- | ------------------------------------ | ---------------------------------------------- |
+| **网页（静态演示）**       | https://lucas-li21.github.io/LingYu/ | 地图 / 列表 / 洞察可浏览（种子数据），无需登录 |
+| **完整系统（Codespaces）** | 仓库 Code → Codespaces               | 前端 + 后端 + MySQL，含后台与反馈闭环          |
+| 小程序                     | `miniprogram/`                       | 需指向公网 HTTPS 后端（见部署文档第五节）      |
+
+> Pages 只能托管静态文件，后端跑不了；要完整体验请用 Codespaces 或自建服务器。
 
 ## 🚀 评委怎么打开
 
@@ -19,7 +30,7 @@
 3. 状态栏端口 **8081** 点开即为系统首页；后端 18080（排障）、HTTPS 8443 也会转发
 4. 运营后台：首页顶部「管理后台」，账号 `operator`，**口令见 Codespaces 里的 `.env` 文件**（每次创建随机生成，不会硬编码在仓库里）
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/OWNER/REPO)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/LUCAS-LI21/LingYu)
 
 **方式二：本地 Docker 一键跑**
 
@@ -85,15 +96,36 @@ pnpm install && pnpm dev
 
 文档站：`pnpm docs:dev`（VitePress）。
 
-## 目录
+## 目录结构
 
 ```text
-src/            前端（api / components / views / types）
-backend/        Spring Boot 服务（poi / admin / feedback / auth / seed）
-docs/           技术文档、需求、设计、接口
-scripts/        OSM 拉取、截图、联调验证脚本
-skills/         六阶段工程作业规程
+LingYu/
+├─ src/                     前端（Vue 3 + TS）
+│  ├─ api/                  HTTP 封装（pois / server / live / agent / auth）
+│  ├─ components/           UI 组件（地图、筛选、详情、后台面板）
+│  ├─ views/                页面（地图 / 列表 / 洞察 / 用户后台 / 管理后台）
+│  ├─ types/                领域类型
+│  └─ router/               路由（history base 跟随 VITE_BASE）
+├─ backend/                 Spring Boot 3 服务
+│  ├─ src/main/java/        poi / admin / feedback / auth / live / agent / common
+│  ├─ src/main/resources/
+│  │  ├─ db/migration/      数据库迁移 V1–V6（启动自动执行）
+│  │  ├─ mapper/            MyBatis XML
+│  │  └─ seed/              离线种子数据
+│  └─ Dockerfile
+├─ miniprogram/             微信小程序（与 Web 共用同一后端）
+├─ docker/                  nginx 配置
+├─ docker-compose.yml       本地/服务器一键编排（web + backend + mysql）
+├─ .devcontainer/           Codespaces 一键环境（自动生成 .env 并启动）
+├─ .github/workflows/       CI（测试 + 镜像）与 Pages（前端静态站）
+├─ scripts/                 采集适配器、导入脚本、演示录制
+├─ docs/                    需求 / 设计 / 接口 / 部署 / 演示材料
+├─ data/                    官方数据与解析结果（ODbL/政府开放数据）
+├─ tests/ e2e/              前端单测与 Playwright 端到端
+└─ STRUCTURE.md             本结构说明与文件职责
 ```
+
+> 不提交的内容：`.env`、`node_modules/`、`dist/`、`backend/target/`、`test-results/`、`*.log`（见 `.gitignore`）。
 
 ## 常用命令
 

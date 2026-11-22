@@ -1,0 +1,65 @@
+name: Deploy Web (GitHub Pages)
+
+# 仅部署「前端静态站」到 GitHub Pages。
+# 说明：Pages 只能托管静态文件，Spring Boot + MySQL 后端无法跑在 Pages 上；
+# 没后端时前端会自动降级到本地种子数据（339 条），地图/列表/洞察可浏览，后台不可用。
+# 需要完整功能请用 Codespaces（.devcontainer 已配好）或自建服务器。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (subpath /LingYu/)
+        env:
+          VITE_BASE: /LingYu/
+        run: pnpm build
+
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
