@@ -23,6 +23,8 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - mysql-data:/var/lib/mysql
+      # 首次启动自动导入完整数据快照（已有数据卷时跳过）
+      - ./data/poi_intel_dump.sql:/docker-entrypoint-initdb.d/01-seed.sql:ro
     ports:
       # 只绑本机，避免把数据库暴露到局域网
       - '127.0.0.1:${MYSQL_PORT:-3307}:3306'
