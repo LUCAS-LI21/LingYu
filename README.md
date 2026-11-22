@@ -8,4 +8,13 @@
 - 后端：Spring Boot 3、MyBatis-Plus、MySQL 8
 - 小程序：微信小程序，共用后端 API
 - 部署：Docker Compose、GitHub Actions、GitHub Pages
+## 运行
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/LUCAS-LI21/LingYu)
+
+或在本地：
+
+```bash
+cp .env.deploy.example .env
+docker compose --env-file .env up -d --build
+```
