@@ -123,6 +123,6 @@
 - **退避策略**：端点失败按镜像轮换，全部失败退避 3 秒重试一轮；仍失败记 failed 并写 `ingest_job.error_summary`
 - **镜像**：overpass-api.de / overpass.kumi.systems / overpass.private.coffee（可用环境变量覆盖）
 - **不做什么**：不抓取商业地图（高德/百度/腾讯）的坐标与地址入库；不使用来源不明的数据集
-- **升级路径**：公共实例持续 504 时改用自建 Overpass/Nominatim（见 docs/research/coordinate-system-research.md）
+- **升级路径**：公共实例持续 504 时改用自建 Overpass/Nominatim（见 docs/internal/research/coordinate-system-research.md）
 
 > 说明（2026-11-20）：原用户侧 /compliance 独立页已移除，页面内容（三级授权模型、来源清单、不采集清单）即本文档第 3–5 节，统一在此维护。

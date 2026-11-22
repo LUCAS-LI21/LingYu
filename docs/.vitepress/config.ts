@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   // 初赛提交材料（docx/pdf）不参与文档站构建
-  srcExclude: ['preliminary/**'],
+  srcExclude: ['preliminary/**', 'internal/**'],
   lang: 'zh-CN',
   title: '邻域 POI 情报系统',
   description: '银行/小区 POI 采集与查询系统 · 工程手册',
@@ -45,9 +45,6 @@ export default defineConfig({
       {
         text: '调研与核查',
         items: [
-          { text: '开源选型调研', link: '/research/poi-open-source-selection' },
-          { text: 'appKey 申请入口核查', link: '/research/shenzhen-open-platform-appkey' },
-          { text: '核查记录', link: '/research/verification-log' },
         ],
       },
       {

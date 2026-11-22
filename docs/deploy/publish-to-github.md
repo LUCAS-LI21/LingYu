@@ -1,4 +1,4 @@
-# 发布到 GitHub（评委可打开）
+# 发布到 GitHub
 
 > 本地仓库已就绪，但没有配置 remote、也没有 `gh` CLI。
 > 下面两条命令由你在有 GitHub 凭据的机器上执行即可（**仓库里没有任何密钥，可安全公开**）。
@@ -24,11 +24,11 @@ sed -i 's#OWNER/REPO#<你的账号>/poi-intel#g' README.md
 git commit -am "docs: 替换仓库路径" && git push
 ```
 
-## 二、开启 Codespaces（评委"点开就能用"）
+## 二、开启 Codespaces
 
 1. 仓库 **Settings → General** 无需改动；
 2. 仓库首页 → **Code → Codespaces** → 已有 `/.devcontainer/devcontainer.json`，会自动识别；
-3. 评委点 README 里的 **Open in GitHub Codespaces** 徽章即可创建；
+3. 访问者点击 README 中的 **Open in GitHub Codespaces** 徽章即可创建；
 4. 首次创建会执行：
    - `setup.sh`：生成 `.env`（随机运营口令 / 数据库口令 / AUTH_SECRET）
    - `start.sh`：`docker compose up -d --build`，随后等待就绪
@@ -61,7 +61,7 @@ git commit -am "docs: 替换仓库路径" && git push
 
 ## 五、如果不想开 Codespaces
 
-仓库根目录自带一键 compose，评委本地装 Docker 后：
+仓库根目录提供 Docker Compose，本地安装 Docker 后：
 
 ```bash
 git clone https://github.com/<账号>/poi-intel.git && cd poi-intel
@@ -86,5 +86,5 @@ Key 不进仓库，用 Codespaces Secrets 注入（容器里会变成同名环�
      | head -c 200                # 返回 enabled:true 即生效
    ```
 
-> 注意：Codespaces Secrets 只对**你选择授权的仓库**生效；分发给评委的公开仓无需包含 Key，
-> 评委没有 Key 时实时层显示「未配置」，其余功能完全可用。
+> Codespaces Secrets 仅对已授权的仓库生效；公开仓库不包含 Key，
+> 未配置 Key 时实时层显示「未配置」，其余功能可用。

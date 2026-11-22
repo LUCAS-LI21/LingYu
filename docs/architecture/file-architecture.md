@@ -53,7 +53,7 @@ BISAI-AGENT/
 │   ├── miniprogram/             小程序后端契约 ← 小程序线必读
 │   ├── architecture/            本文
 │   ├── deploy/                  一键部署说明
-│   └── research/                调研与核查记录
+│   └── internal/research/       调研与核查记录（不对外发布）
 ├── docker/ + Dockerfile*        部署（nginx 配置、compose）
 ├── data/                        本地数据产物（已 gitignore，除少量种子）
 └── tests/ e2e/                  Web 前端测试

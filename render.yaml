@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: lingyu-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_NAME
+        value: poi_intel
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: OPERATOR_USERNAME
+        value: operator
+      - key: OPERATOR_PASSWORD
+        sync: false
+      - key: AMAP_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://lucas-li21.github.io
