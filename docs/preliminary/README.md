@@ -6,22 +6,22 @@
 
 官方七件套（Word 由 `src/*.md` 生成，Excel 由脚本生成）：
 
-| 文件 | 格式 | 内容 | 页数 |
-| --- | --- | --- | --- |
-| `00-submission-checklist.xlsx` | Excel | 提交物、格式与内容概要 | 1 表 |
-| `01-requirements-analysis.docx` | Word | 需求理解、功能清单、新增功能、核心流程 | 6 |
-| `02-prototype-design.docx` | Word | 界面清单、界面内容、界面设计（截图） | 6 |
-| `03-database-design.docx` | Word | 表清单、字段说明、建表 SQL | 19 |
-| `04-api-design.docx` | Word | 44 个接口清单、接口详情 | 10 |
-| `05-initial-validation.docx` | Word | 技术选择、验证清单、验证结果 | 10 |
-| `06-other` | — | 仓库地址 / Codespaces / 演示视频（待补） | — |
+| 文件                            | 格式  | 内容                                     | 页数 |
+| ------------------------------- | ----- | ---------------------------------------- | ---- |
+| `00-submission-checklist.xlsx`  | Excel | 提交物、格式与内容概要                   | 1 表 |
+| `01-requirements-analysis.docx` | Word  | 需求理解、功能清单、新增功能、核心流程   | 6    |
+| `02-prototype-design.docx`      | Word  | 界面清单、界面内容、界面设计（截图）     | 6    |
+| `03-database-design.docx`       | Word  | 表清单、字段说明、建表 SQL               | 19   |
+| `04-api-design.docx`            | Word  | 44 个接口清单、接口详情                  | 10   |
+| `05-initial-validation.docx`    | Word  | 技术选择、验证清单、验证结果             | 9    |
+| `06-other`                      | —     | 仓库地址 / Codespaces / 演示视频（待补） | —    |
 
 评审要点对应两份：
 
-| 文件 | 格式 | 内容 | 页数 |
-| --- | --- | --- | --- |
+| 文件                             | 格式 | 内容                                     | 页数             |
+| -------------------------------- | ---- | ---------------------------------------- | ---------------- |
 | `design-document-condensed.docx` | Word | 架构图、闭环流程图、核心接口、关键表结构 | **10（上限内）** |
-| `feasibility-analysis.docx` | Word | 技术 / 数据 / 时间三维度 + 难点预案 | 8 |
+| `feasibility-analysis.docx`      | Word | 技术 / 数据 / 时间三维度 + 难点预案      | 8                |
 
 素材与源稿：
 
