@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-OUT = Path("docs/preliminary/src/03-database-design.md")
+OUT = Path("docs/preliminary/src/03-数据库设计.md")
 
 TABLES = {
     "poi_bank": (

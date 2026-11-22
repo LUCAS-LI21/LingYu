@@ -58,6 +58,21 @@ def set_font(run, name=SONG, size=BODY_PT, bold=False, color=None):
             del rfonts.attrib[qn(attr)]
 
 
+def set_mixed_font(run, ascii_name, east_name, size, bold=False):
+    """西文用等宽字体、中文用宋体，避免缺字回退到其它字体。"""
+    run.font.size = Pt(size)
+    run.bold = bold
+    rpr = run._element.get_or_add_rPr()
+    rfonts = rpr.find(qn("w:rFonts"))
+    if rfonts is None:
+        rfonts = OxmlElement("w:rFonts")
+        rpr.append(rfonts)
+    rfonts.set(qn("w:ascii"), ascii_name)
+    rfonts.set(qn("w:hAnsi"), ascii_name)
+    rfonts.set(qn("w:eastAsia"), east_name)
+    rfonts.set(qn("w:cs"), east_name)
+
+
 def first_line_indent_chars(paragraph, chars=2, size=BODY_PT):
     """中文首行缩进按字符数设置（w:firstLineChars），字号变化时仍然对齐。"""
     ppr = paragraph._p.get_or_add_pPr()
@@ -140,7 +155,12 @@ def parse_markdown(text):
         m = re.match(r"^(#{1,4})\s+(.*)$", stripped)
         if m:
             level = len(m.group(1))
-            blocks.append((f"h{level}", m.group(2).strip()))
+            text = m.group(2).strip()
+            if level == 1:
+                mm = re.match(r"^(\d+)\s+(.+)$", text)
+                if mm:
+                    text = f"{mm.group(1)}. {mm.group(2)}"
+            blocks.append((f"h{level}", text))
             i += 1
             continue
         if stripped.startswith("|"):
@@ -200,7 +220,7 @@ def add_inline(paragraph, text, size=BODY_PT, bold_default=False):
             set_font(run, SONG, size, True)
         else:
             run = paragraph.add_run(token[1:-1])
-            set_font(run, MONO, size - 0.5, False)
+            set_mixed_font(run, MONO, SONG, size - 0.5)
         pos = m.end()
     if pos < len(text):
         run = paragraph.add_run(text[pos:])
@@ -306,7 +326,7 @@ def add_toc(doc, entries=None):
     run._r.append(instr)
     run._r.append(sep)
 
-    toc_pt = 11.0 if len(entries or []) > 30 else H1_PT
+    toc_pt = H1_PT
 
     if entries:
         for level, text, page in entries:
@@ -363,6 +383,11 @@ def enable_update_fields(doc):
 CAPTION_RE = re.compile(r"^(表|图)\s*\d+")
 
 
+def is_caption(text):
+    """只有「图 1 标题 / 表 1 标题」这种短行才算题注；以「图 1 为……」开头的说明段落按正文排。"""
+    return bool(CAPTION_RE.match(text)) and len(text) <= 60 and not text.rstrip().endswith("。")
+
+
 def add_caption(doc, text, space_before=3, space_after=2, keep_next=False):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -378,7 +403,7 @@ def add_caption(doc, text, space_before=3, space_after=2, keep_next=False):
 def add_table(doc, rows):
     cols = max(len(r) for r in rows)
     rows = [r + [""] * (cols - len(r)) for r in rows]
-    size = 9.5
+    size = BODY_PT
 
     table = doc.add_table(rows=len(rows), cols=cols)
     table.style = "Table Grid"
@@ -409,12 +434,14 @@ def add_table(doc, rows):
             p.paragraph_format.line_spacing = 1.0
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER if (ri == 0 or ci == 0 or len(text) <= 6) else WD_ALIGN_PARAGRAPH.LEFT
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER if (ri == 0 or ci == 0 or len(text) <= 6) else WD_ALIGN_PARAGRAPH.JUSTIFY
             add_inline(p, text, size=size, bold_default=(ri == 0))
             if ri == 0:
                 shade(cell, "EDF1F7")
+        trpr = tr._tr.get_or_add_trPr()
+        cant = OxmlElement("w:cantSplit")
+        trpr.append(cant)
         if ri == 0:
-            trpr = tr._tr.get_or_add_trPr()
             header = OxmlElement("w:tblHeader")
             trpr.append(header)
 
@@ -441,7 +468,7 @@ def add_code(doc, text):
         shd.set(qn("w:color"), "auto")
         shd.set(qn("w:fill"), "F4F6F8")
         ppr.append(shd)
-        set_font(p.add_run(line if line else " "), MONO, 9)
+        set_mixed_font(p.add_run(line if line else " "), MONO, SONG, 9)
 
 
 def add_body(doc, blocks):
@@ -461,7 +488,7 @@ def add_body(doc, blocks):
         elif kind == "h4":
             doc.add_heading(payload, level=4)
         elif kind == "p":
-            if CAPTION_RE.match(payload):
+            if is_caption(payload):
                 if payload.startswith("表"):
                     add_caption(doc, payload, keep_next=True)
                 else:
@@ -536,13 +563,14 @@ def estimate_pages(blocks):
 
 # ---------------------------------------------------------------- 主流程
 DOCS = [
-    ("01-requirements-analysis.md", "01-requirements-analysis.docx", "01"),
-    ("02-prototype-design.md", "02-prototype-design.docx", "02"),
-    ("03-database-design.md", "03-database-design.docx", "03"),
-    ("04-api-design.md", "04-api-design.docx", "04"),
-    ("05-initial-validation.md", "05-initial-validation.docx", "05"),
-    ("design-document-condensed.md", "design-document-condensed.docx", "design"),
-    ("feasibility-analysis.md", "feasibility-analysis.docx", "feasibility"),
+    ("01-需求分析.md", "01_需求分析.docx", "01"),
+    ("02-原型设计.md", "02_原型设计.docx", "02"),
+    ("03-数据库设计.md", "03_数据库设计.docx", "03"),
+    ("04-接口设计.md", "04_接口设计.docx", "04"),
+    ("05-初步验证.md", "05_初步验证.docx", "05"),
+    ("06-其他.md", "06_其他.docx", "06"),
+    ("设计文档（精简版）.md", "设计文档（精简版）.docx", "design"),
+    ("可行性分析.md", "可行性分析.docx", "feasibility"),
 ]
 
 
