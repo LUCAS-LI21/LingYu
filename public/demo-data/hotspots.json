@@ -1,0 +1,72 @@
+{
+  "items": [
+    {
+      "grid": "114.05,22.55",
+      "queryCount": 143,
+      "zeroResultCount": 4,
+      "priority": 40,
+      "lastDate": "2026-11-22"
+    },
+    {
+      "grid": "114.07,22.55",
+      "queryCount": 96,
+      "zeroResultCount": 2,
+      "priority": 19,
+      "lastDate": "2026-11-22"
+    },
+    {
+      "grid": "114.07,22.53",
+      "queryCount": 85,
+      "zeroResultCount": 0,
+      "priority": 33,
+      "lastDate": "2026-11-22"
+    },
+    {
+      "grid": "113.95,22.55",
+      "queryCount": 84,
+      "zeroResultCount": 0,
+      "priority": 14,
+      "lastDate": "2026-11-16"
+    },
+    {
+      "grid": "113.83,22.73",
+      "queryCount": 67,
+      "zeroResultCount": 0,
+      "priority": 25,
+      "lastDate": "2026-11-22"
+    },
+    {
+      "grid": "113.93,22.51",
+      "queryCount": 66,
+      "zeroResultCount": 0,
+      "priority": 11,
+      "lastDate": "2026-11-16"
+    },
+    {
+      "grid": "113.91,22.57",
+      "queryCount": 52,
+      "zeroResultCount": 0,
+      "priority": 8,
+      "lastDate": "2026-11-22"
+    },
+    {
+      "grid": "114.03,22.53",
+      "queryCount": 32,
+      "zeroResultCount": 0,
+      "priority": 5,
+      "lastDate": "2026-11-22"
+    }
+  ],
+  "keywords": [
+    { "keyword": "招商", "searchCount": 71 },
+    { "keyword": "宝生村镇银行", "searchCount": 25 },
+    { "keyword": "广发银行深圳奥林支行", "searchCount": 10 },
+    { "keyword": "建设银行", "searchCount": 2 },
+    { "keyword": "华夏银行坂田支行", "searchCount": 2 },
+    { "keyword": "21区生资公司宿舍楼", "searchCount": 2 },
+    { "keyword": "布心", "searchCount": 1 },
+    { "keyword": "中国建设银行深圳布心支行", "searchCount": 1 }
+  ],
+  "totalSearches": 119,
+  "totalQueries": 625
+}

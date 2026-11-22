@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 
 import {
+  demoDataMode,
   apiRequest,
   fetchAllPois,
   fetchNearby as fetchNearbyRemote,
@@ -167,6 +168,12 @@ export async function loadPois(): Promise<Poi[]> {
   if (cache) return cache
   if (loading) return loading
   loading = (async () => {
+    // Pages 静态演示：直接读导出的全量快照，不探测后端
+    if (demoDataMode) {
+      const remote = await fetchAllPois()
+      cache = remote.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
+      return cache
+    }
     // 优先走真实后端；失败则静默降级到本地种子，保证演示不中断
     if (await isServerMode()) {
       try {
@@ -576,6 +583,11 @@ export async function listFeedback(): Promise<FeedbackRecord[]> {
 
 /** 优先走后端统计接口，失败返回 null，调用方用本地统计兜底 */
 export async function statsFromServer(): Promise<Stats | null> {
+  if (demoDataMode) {
+    const res = await fetch(`${import.meta.env.BASE_URL}demo-data/stats.json`).catch(() => null)
+    if (!res?.ok) return null
+    return (await res.json()) as Stats
+  }
   if (!(await isServerMode())) return null
   try {
     const remote = await fetchStatsRemote()

@@ -134,8 +134,21 @@ function toPoi(row: ServerPoi): Poi {
   }
 }
 
+/** Pages 静态演示：构建时 VITE_DEMO_DATA=1，数据来自 public/demo-data/*.json */
+export const demoDataMode = import.meta.env.VITE_DEMO_DATA === '1'
+
+async function demoJson<T>(name: string): Promise<T> {
+  const res = await fetch(`${import.meta.env.BASE_URL}demo-data/${name}.json`)
+  if (!res.ok) throw new Error(`演示数据缺失：${name}`)
+  return (await res.json()) as T
+}
+
 export async function fetchAllPois(): Promise<Poi[]> {
   // view=lite：地图/列表只需要核心字段，整包体积约减 60%（详情接口仍取全量）
+  if (demoDataMode) {
+    const data = await demoJson<{ items: ServerPoi[]; total: number }>('pois')
+    return data.items.map(toPoi)
+  }
   const data = await request<{ items: ServerPoi[]; total: number }>('/pois?size=20000&lite=true')
   return data.items.map(toPoi)
 }
@@ -237,7 +250,8 @@ export interface Hotspots {
   totalQueries: number
 }
 
-/** 查询热点（公开接口）：query_log 聚合的近 7 天热门网格 */
+/** 查询热点（公开接口）：query_log 聚合的近 7 天热门搜索 */
 export async function fetchHotspots(limit = 8): Promise<Hotspots> {
+  if (demoDataMode) return demoJson<Hotspots>('hotspots')
   return request<Hotspots>(`/hotspots?limit=${limit}`)
 }

@@ -41,6 +41,8 @@ jobs:
       - name: Build (subpath /LingYu/)
         env:
           VITE_BASE: /LingYu/
+          # 静态演示：构建时打包真实数据快照（scripts/export-demo-data.mjs 生成）
+          VITE_DEMO_DATA: '1'
         run: pnpm build
 
       - name: SPA fallback
