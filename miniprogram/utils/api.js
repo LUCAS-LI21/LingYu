@@ -45,10 +45,7 @@ function friendlyFail(err) {
   return '网络异常，请检查 API 地址或后端服务'
 }
 
-/**
- * 统一请求：{code,message,data} 信封，code !== 0 一律 reject。
- * options: { method, data, auth, header, loading }
- */
+/** 统一请求封装：code !== 0 时 reject。 */
 function request(path, options) {
   const opts = options || {}
   const token = getToken()
@@ -102,7 +99,7 @@ function post(path, data, options) {
   return request(path, Object.assign({}, options, { method: 'POST', data: data || {} }))
 }
 
-/** 记录查询行为：静默失败，不影响主流程（与 Web 的 FR-Q-11 对齐） */
+/** 记录查询行为，失败不影响主流程。 */
 function trackQuery(keyword, district, types) {
   const params = {
     size: 1,

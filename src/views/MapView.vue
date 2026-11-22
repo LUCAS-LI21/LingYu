@@ -53,7 +53,7 @@ const nearbyLoading = ref(false)
 const feedbackTarget = ref<{ poi: Poi; field?: string } | null>(null)
 const mapRef = ref<InstanceType<typeof MapCanvas> | null>(null)
 
-// 底图选择：默认浅灰，记住用户上次选择
+// 底图选择：默认浅灰，localStorage 记忆
 type BaseMap = 'light' | 'color' | 'satellite'
 const BASE_MAP_OPTIONS: Array<{ key: BaseMap; label: string }> = [
   { key: 'light', label: '浅灰' },
@@ -68,7 +68,7 @@ function setBaseMap(kind: BaseMap): void {
   try {
     localStorage.setItem(BASE_MAP_KEY, kind)
   } catch {
-    // 隐私模式下 localStorage 可能不可用，忽略即可
+    // 隐私模式下 localStorage 可能不可用
   }
 }
 const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -421,7 +421,7 @@ function locate(poi: Poi): void {
   trackPoiQuery(poi)
 }
 
-/** 地图气泡上的「周边1km」：选中该点并真正发起周边查询（之前错接到 locate，只移动地图） */
+/** 地图气泡「周边1km」：选中该点并发起周边查询 */
 function onMapNearby(poi: Poi): void {
   locate(poi)
   void handleNearby({ poi, radius: 1000, branchType: 'all' })
@@ -754,8 +754,7 @@ function closeDetail(): void {
 
 <style scoped>
 .intro-card {
-  /* 不要写 position：卡片本身用 Tailwind 的 absolute 浮在地图上，
-     这里写 relative 会覆盖它，把筛选栏/命令条挤进文档流（曾导致整页错位） */
+  /* 不要在此设置 position：卡片用 Tailwind absolute 浮在地图上 */
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

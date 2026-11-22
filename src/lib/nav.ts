@@ -1,13 +1,6 @@
 /**
  * 导航链接构建：把 POI 交给高德 / 腾讯地图 App 或网页打开。
- *
- * 三个必须记住的细节：
- * 1. **坐标系**：国内地图用 GCJ-02，库里存的是 WGS-84。直接用 lng/lat 会偏 500 米左右，
- *    所以这里一律用后端算好的 `gcjLng / gcjLat`。
- * 2. **坐标顺序**：高德 URI 是 `lng,lat`，腾讯是 `lat,lng`——写反了会跳到海里。
- * 3. **没有坐标时**：退化成"按地址搜索"，不要拼一个 (0,0) 出来。
- *
- * 这些链接都不需要 API Key，也不会把我们库里的坐标发给对方（只是把点交给地图展示/导航）。
+ * 坐标用后端换算的 GCJ-02；高德 URI 为 lng,lat，腾讯为 lat,lng；无坐标时按地址搜索。
  */
 
 export interface NavTarget {
@@ -50,7 +43,7 @@ export function amapNavigationUrl(target: NavTarget, mode: 'car' | 'bus' | 'walk
   return `https://uri.amap.com/navigation?to=${to}&mode=${mode}&policy=1&src=${UA_SRC}&coordinate=gaode`
 }
 
-/** 腾讯：在地图上标出这个点（注意 lat,lng 顺序） */
+/** 腾讯：地图标注该点（lat,lng 顺序） */
 export function tencentMarkerUrl(target: NavTarget): string {
   if (!hasCoord(target)) {
     return `https://apis.map.qq.com/uri/v1/search?keyword=${encodeURIComponent(addrOf(target))}&region=${encodeURIComponent('深圳')}&referer=${UA_SRC}`
@@ -66,7 +59,7 @@ export function tencentNavigationUrl(target: NavTarget): string {
   return `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${encodeURIComponent(target.name)}&tocoord=${tocoord}&policy=0&referer=${UA_SRC}`
 }
 
-/** 是否具备导航条件（有 GCJ 坐标）；没有时前端应只展示"按地址搜索" */
+/** 是否具备导航条件（有 GCJ-02 坐标） */
 export function canNavigate(target: NavTarget): boolean {
   return hasCoord(target)
 }

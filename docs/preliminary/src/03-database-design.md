@@ -54,6 +54,7 @@ regno: 待填写
 | 13   | `source_level`  | VARCHAR(8)     | 授权级别   | L1 可入库 / L2 仅展示 / L3 禁用    |
 | 14   | `status`        | VARCHAR(16)    | 状态       | `active` / `closed` 等状态机取值   |
 | 15   | `updated_at`    | DATETIME       | 更新时间   | 最后写入时间                       |
+| 16   | `service_types` | VARCHAR(64)    | —          | —                                  |
 
 索引与约束：KEY idx_bank_geo (lat, lng)；KEY idx_bank_district (district)；KEY idx_bank_brand (brand)。
 
@@ -83,13 +84,13 @@ regno: 待填写
 | 18   | `rent_gc`             | DECIMAL(8, 2)  | 高层租金        | 政府租赁参考价                           |
 | 19   | `rent_dmd`            | DECIMAL(8, 2)  | 低密度租金      | 政府租赁参考价                           |
 | 20   | `developer`           | VARCHAR(64)    | 建设单位        | 竣工验收备案中的建设单位/开发商          |
-| 21   | `demo_attributes`     | TINYINT(1)     | 演示字段标记    | 1 表示含演示值                           |
+| 21   | `demo_attributes`     | TINYINT(1)     | 演示字段标记    | 1 表示含演示值；当前已全部置 0           |
 | 22   | `source`              | VARCHAR(64)    | 数据来源        | 来源名称，与 `ds_source.name` 对应       |
 | 23   | `license`             | VARCHAR(32)    | 数据许可        | ODbL / 政府开放数据条款等                |
 | 24   | `source_level`        | VARCHAR(8)     | 授权级别        | L1 可入库 / L2 仅展示 / L3 禁用          |
 | 25   | `status`              | VARCHAR(16)    | 状态            | `active` / `closed` 等状态机取值         |
 | 26   | `updated_at`          | DATETIME       | 更新时间        | 最后写入时间                             |
-| 27   | `avg_price_demo`      | INT            | 演示均价        | 哈希生成的演示值，不参与筛选/排序/统计   |
+| 27   | `avg_price_demo`      | INT            | 演示均价        | 历史列，演示值已清理，当前为空           |
 
 索引与约束：KEY idx_comm_geo (lat, lng)；KEY idx_comm_district (district)；KEY idx_comm_price (avg_price)。
 
@@ -409,6 +410,7 @@ CREATE TABLE poi_bank (
   source_level VARCHAR(8) NOT NULL DEFAULT 'L1',
   status VARCHAR(16) NOT NULL DEFAULT 'active',
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  service_types VARCHAR(64) NOT NULL DEFAULT '' COMMENT '服务类型，逗号分隔：对公/对私/自助',
   KEY idx_bank_geo (lat, lng),
   KEY idx_bank_district (district),
   KEY idx_bank_brand (brand)

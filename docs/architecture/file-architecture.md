@@ -98,14 +98,14 @@ curl http://127.0.0.1:8080/api/v1/meta
 
 ## 6. 构建与部署
 
-| 目标       | 命令                                                                   |
-| ---------- | ---------------------------------------------------------------------- |
-| 后端构建   | `cd backend && mvn -q -DskipTests package` → `target/poi-intel.jar`    |
-| 后端测试   | `pnpm test:backend`（30 个 JUnit）                                     |
-| Web 构建   | `pnpm build`（产物 `dist/`）                                           |
-| Web 质量门 | `pnpm check`（lint + format + typecheck + 76 用例）                    |
+| 目标       | 命令                                                                               |
+| ---------- | ---------------------------------------------------------------------------------- |
+| 后端构建   | `cd backend && mvn -q -DskipTests package` → `target/poi-intel.jar`                |
+| 后端测试   | `pnpm test:backend`（30 个 JUnit）                                                 |
+| Web 构建   | `pnpm build`（产物 `dist/`）                                                       |
+| Web 质量门 | `pnpm check`（lint + format + typecheck + 76 用例）                                |
 | 一键部署   | `docker compose up -d --build`（见 [一键部署](../deploy/one-click-deployment.md)） |
-| 小程序     | 微信开发者工具打开 `BISAI-MINIPROGRAM` 工作区                          |
+| 小程序     | 微信开发者工具打开 `BISAI-MINIPROGRAM` 工作区                                      |
 
 ## 7. 变更流程
 

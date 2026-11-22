@@ -15,7 +15,7 @@ import { SHENZHEN_DISTRICTS, type PoiType } from '@/types/poi'
 
 const router = useRouter()
 const stats = ref<Stats | null>(null)
-/** 查询热点：query_log 聚合结果，前台也展示，形成「搜索 → 热点 → 采集优先级」的可见闭环 */
+/** 查询热点：query_log 聚合结果 */
 const hotspots = ref<Hotspots | null>(null)
 const loading = ref(true)
 
@@ -63,7 +63,7 @@ function submitSearch(): void {
   }
   searchError.value = ''
   const types: PoiType[] = poiType.value === 'all' ? ['bank', 'community'] : [poiType.value]
-  // 记录本次查询：后端 query_log → 热点聚合 → 抓取优先级（FR-Q-11 / FR-O-01）
+  // 记录本次查询：query_log → 热点聚合 → 采集优先级
   trackQueryNow({ keyword: term, district: district.value, types })
   recentQueries.value = listRecentQueries()
 
@@ -313,7 +313,7 @@ function onClearRecent(): void {
         </div>
       </section>
 
-      <!-- 热门搜索：把内部网格坐标换成普通用户能懂的搜索词 -->
+      <!-- 热门搜索：展示搜索词，不展示网格坐标 -->
       <section class="rounded-card border border-line bg-surface p-5 shadow-card">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-sm font-semibold text-ink-900">大家都在搜</h2>

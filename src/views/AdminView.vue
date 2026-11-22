@@ -56,7 +56,7 @@ const jobsRefreshing = ref(false)
 const jobsUpdatedAt = ref('')
 const busy = ref('')
 
-/** 自动刷新间隔：任务从 pending/running 到终态应在 5s 内可见（FR-D-03） */
+/** 任务轮询间隔（FR-D-03） */
 const JOBS_POLL_MS = 5000
 const ACTIVE_JOB_STATUSES = ['pending', 'pending_job', 'running'] as const
 
@@ -180,7 +180,7 @@ async function loadFeedbackPage(): Promise<void> {
   const total = data.total ?? data.items.length
   const lastPage = Math.max(1, Math.ceil(total / feedbackSize.value))
   if (feedbackPage.value > lastPage) {
-    // 审核后当前页可能被抽空，退回最后一页而不是停在空列表
+    // 当前页被抽空时退回最后一页
     feedbackPage.value = lastPage
     const retry = await fetchFeedback(feedbackStatus.value, lastPage, feedbackSize.value)
     feedback.value = retry.items
@@ -237,7 +237,7 @@ async function pollJobs(): Promise<void> {
   try {
     await loadJobsPage()
   } catch (error) {
-    // 网络抖动留给下一轮；仅在登录失效时打断用户
+    // 网络波动留给下一轮；登录失效时中断
     if (error instanceof Error && error.message.includes('登录')) {
       authed.value = false
       toast(error.message, 'error')
@@ -325,7 +325,7 @@ async function onApprove(row: FeedbackRow): Promise<void> {
   busy.value = row.code
   try {
     const result = await approveFeedback(row.code)
-    // 审核后数据变了，清缓存保证地图/列表能看到（否则要手动刷新）
+    // 审核后清缓存，保证地图/列表刷新
     invalidatePoiCache()
     const jobError = (result as { jobError?: string }).jobError
     if (result.status === 'approved') {
@@ -388,7 +388,7 @@ async function onCorrectionSubmitted(): Promise<void> {
 onMounted(async () => {
   document.addEventListener('visibilitychange', onVisibilityChange)
   online.value = await isServerMode()
-  // 未登录时不打运营接口，避免一进来就弹 401
+  // 未登录时不调用运营接口，避免触发 401
   if (online.value && authed.value) {
     await refresh()
   }

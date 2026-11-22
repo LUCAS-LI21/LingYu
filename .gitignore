@@ -77,4 +77,8 @@ data/poi_intel_dump.sql
 .dsh-office-*/
 
 # 初赛文档构建中间产物
-docs/初赛/build/
+docs/preliminary/build/
+
+# Python 字节码
+__pycache__/
+*.pyc

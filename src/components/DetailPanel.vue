@@ -37,7 +37,7 @@ const radius = ref(1000)
 const branchType = ref<'all' | 'atm'>('all')
 const queried = ref(false)
 
-/** 字段级来源：换了点位就重新拉，离线或后端不可用时为空（区块隐藏） */
+/** 字段级来源：换点位重新拉取，离线为空（区块隐藏） */
 const fieldSources = ref<FieldSource[]>([])
 const FIELD_LABELS: Record<string, string> = {
   address: '地址',
@@ -61,7 +61,6 @@ watch(
   { immediate: true },
 )
 
-/** 最近的 3 家银行：只对小区有意义，后端按球面距离算，取不到就整块隐藏 */
 const navTarget = computed(() => ({
   name: props.poi?.name ?? '',
   address: props.poi?.address ?? '',
@@ -99,18 +98,18 @@ watch(
   { immediate: true },
 )
 
-/** 实时层状态：idle 未查 / loading / success 有结果 / empty 无结果 / unavailable 未开通 / error 请求失败 */
+/** 实时层状态：idle / loading / success / empty / unavailable / error */
 type LiveState = 'idle' | 'loading' | 'success' | 'empty' | 'unavailable' | 'error'
 
-// L2 实时地址：只在本次会话内存里，页面关闭即消失
+// L2 实时地址：仅内存，不落库
 const liveAddress = ref('')
 const liveAddressState = ref<LiveState>('idle')
 const liveAddressMessage = ref('')
 
-// L2 实时周边（高德）：同样只在内存
+// L2 实时周边（高德）：仅内存，不落库
 const livePois = ref<LivePoiItem[]>([])
 const livePoiState = ref<LiveState>('idle')
-/** 只查 ATM：库内 368 台覆盖不全，缺口用高德实时补（L2，不落库） */
+/** 只查 ATM：库内覆盖不全，缺口由高德实时补（L2，不落库） */
 const livePoiAtmOnly = ref(false)
 
 // L2 周边配套：学校/医院/地铁/商场，一次查询按类型归组
@@ -160,7 +159,7 @@ async function loadFacilities(): Promise<void> {
     facilityMessage.value = e instanceof Error ? e.message : '周边配套查询失败'
   }
 }
-// 切换点位时清空上一次的配套结果（放在声明之后，避免 immediate watch 命中 TDZ）
+// 切换点位时清空配套结果；须在声明之后，避免 immediate watch 命中 TDZ
 watch(
   () => props.poi?.id,
   () => {
@@ -173,7 +172,7 @@ watch(
 
 async function toggleLivePoiAtmOnly(): Promise<void> {
   livePoiAtmOnly.value = !livePoiAtmOnly.value
-  // 已查过就按新模式重查；没查过只改提示文案，避免无谓消耗配额
+  // 已查过按新模式重查，未查过只重置状态，避免消耗配额
   if (livePoiState.value === 'success' || livePoiState.value === 'empty') {
     await loadLivePois()
   } else {
@@ -283,7 +282,7 @@ const rows = computed(() => {
     return [
       { label: '地址', value: poi.address || '暂无' },
       { label: '类型', value: poi.branchType === 'atm' ? 'ATM 自助银行' : '营业网点' },
-      // 服务类型来自官网营业时间文本（含「对公/对私」才提取），无证据显示未提供
+      // 服务类型提取自官网营业时间文本（含「对公/对私」）；无证据时显示未提供
       { label: '服务类型', value: serviceText || (poi.branchType === 'atm' ? '自助' : '未提供') },
       { label: '品牌', value: poi.brand || '暂无' },
       { label: '营业时间', value: poi.openingHours || '待核实' },
@@ -293,13 +292,13 @@ const rows = computed(() => {
   return [
     { label: '地址', value: poi.address || '暂无' },
     { label: '建成年份', value: poi.builtYear ? `${poi.builtYear} 年` : '暂无' },
-    // 只展示官方成交参考价；没有就显示「暂无」，不展示哈希生成的演示价
+    // 只展示官方成交参考价，无则显示暂无
     {
       label: '成交参考价',
       value: poi.avgPrice ? `${poi.avgPrice.toLocaleString()} 元/㎡` : '暂无',
     },
     { label: '物业费', value: poi.propertyFee ? `${poi.propertyFee.toFixed(1)} 元/㎡·月` : '暂无' },
-    // 政府租赁参考价：真实数据，命中不到就不显示（不要给个假的）
+    // 政府租赁参考价，无匹配则不显示
     ...(rentText(poi) ? [{ label: '参考租金', value: rentText(poi) }] : []),
     ...(poi.developer ? [{ label: '建设单位', value: poi.developer }] : []),
     ...(poi.propertyCompany ? [{ label: '物业公司', value: poi.propertyCompany }] : []),
@@ -320,7 +319,7 @@ function rentText(poi: {
   return parts.length ? `${parts.join(' / ')} 元/㎡·月（政府参考）` : ''
 }
 
-/** 周边配套：由本地库按 1km 球面距离算出来的，不是抓取的 */
+/** 周边配套：本地库按 1km 球面距离计算 */
 const amenities = computed(() => {
   const poi = props.poi
   if (poi.type !== 'community' || !poi.surroundBankCount) return []
@@ -342,7 +341,7 @@ function queryNearby(type: 'all' | 'atm'): void {
   runNearby()
 }
 
-/** 切换半径要立刻重查，否则数字还是上一个半径的（用户反馈过） */
+/** 切换半径后立即重查 */
 function changeRadius(value: number): void {
   if (radius.value === value) return
   radius.value = value
@@ -435,7 +434,7 @@ function changeRadius(value: number): void {
         </div>
       </dl>
 
-      <!-- 导航入口：高德 / 腾讯。有 GCJ 坐标走导航，没有坐标退化成按地址搜索 -->
+      <!-- 导航入口：有 GCJ-02 坐标走导航，否则按地址搜索 -->
       <div
         v-if="hasAddress"
         data-testid="nav-links"
@@ -458,7 +457,7 @@ function changeRadius(value: number): void {
         >
       </div>
 
-      <!-- 地址入口分层：主操作「查实时地址」+ 次操作「补充地址」，避免两个同级文字链 -->
+      <!-- 地址入口：主操作查实时地址，次操作补充地址 -->
       <section
         v-if="!hasAddress"
         data-testid="address-action"
@@ -736,7 +735,7 @@ function changeRadius(value: number): void {
             </div>
           </div>
           <div class="flex shrink-0 items-center gap-1.5">
-            <!-- 库内只有 368 台可溯源 ATM，缺口靠高德实时补：这里只切关键词，不碰数据库 -->
+            <!-- 库内 ATM 覆盖不全，缺口由高德实时补：只切关键词，不写库 -->
             <button
               data-testid="live-atm-toggle"
               class="rounded-lg border px-2 py-1 text-[11px] transition"
@@ -841,7 +840,7 @@ function changeRadius(value: number): void {
         </p>
       </section>
 
-      <!-- 周边配套（L2）：学校/医院/地铁/商场，只在点开时查一次，不落库 -->
+      <!-- 周边配套（L2）：学校/医院/地铁/商场，点开时查一次，不落库 -->
       <section
         v-if="poi.type === 'community'"
         class="space-y-2.5 rounded-soft border border-line bg-surface-soft p-3"

@@ -14,7 +14,7 @@ import { join } from 'node:path'
 const BASE = process.env.API_BASE || 'http://127.0.0.1:8080'
 const USER = process.env.OPERATOR_USERNAME || 'operator'
 const PASS = process.env.OPERATOR_PASSWORD || ''
-const OUT = join('docs', '初赛', 'assets')
+const OUT = join('docs', 'preliminary', 'assets')
 const stamp = new Date().toISOString().replace('T', ' ').slice(0, 19)
 
 const rows = []

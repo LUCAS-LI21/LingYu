@@ -9,7 +9,7 @@ export interface BasePoi {
   address: string
   lng: number
   lat: number
-  /** GCJ-02 坐标（高德/腾讯导航用）；后端算好，前端不要自己转 */
+  /** GCJ-02 坐标（高德/腾讯导航用），由后端换算 */
   gcjLng?: number | null
   gcjLat?: number | null
   district: string
@@ -24,7 +24,7 @@ export interface BankPoi extends BasePoi {
   branchType: BranchType
   phone: string
   openingHours: string
-  /** 服务类型：对公/对私/自助（逗号分隔）；空串表示来源未提供 */
+  /** 服务类型：对公/对私/自助，逗号分隔 */
   serviceTypes?: string
 }
 
@@ -32,27 +32,26 @@ export interface CommunityPoi extends BasePoi {
   type: 'community'
   builtYear: number | null
   avgPrice: number | null
-  /** demo=哈希演示值 / gov_reference=政府成交参考价（2021 官方表） */
+  /** gov_reference=政府成交参考价；demo=演示值 */
   avgPriceSource?: string
-  /** 演示均价：仅展示用，带「演示」标注，不参与价格筛选/排序 */
+  /** 演示均价：仅展示，不参与筛选/排序 */
   avgPriceDemo?: number | null
   propertyFee: number | null
-  /** 物业公司（政府物业项目库匹配所得，可能为空） */
+  /** 物业公司 */
   propertyCompany?: string
-  /** 节水型小区获评年度（政府数据集），null 表示未获评或未匹配 */
+  /** 节水型小区获评年度；null 表示未获评 */
   waterSavingYear?: number | null
-  /** 政府租赁参考价（元/㎡·月）：多层 / 高层 / 低密度 */
+  /** 政府租赁参考价（元/㎡·月）：多层/高层/低密度 */
   rentDc?: number | null
   rentGc?: number | null
   rentDmd?: number | null
-  /** 建设单位/开发商（竣工验收备案） */
+  /** 建设单位/开发商 */
   developer?: string
-  /** 周边配套：1km 内银行网点数 / ATM 数 / 品牌数、最近银行距离（米） */
+  /** 周边配套：1km 内银行网点数/ATM 数/品牌数；最近银行距离（米） */
   surroundBankCount?: number
   surroundAtmCount?: number
   nearbyBrandCount?: number
   nearestBankM?: number
-  /** 均价等字段是否为演示数据 */
   demoAttributes?: boolean
 }
 
@@ -77,11 +76,8 @@ export interface Filters {
 }
 
 export const DEFAULT_FILTERS: Filters = {
-  // 默认只显示银行：小区数量是银行的四倍，混显会让首屏糊成一团
   layers: ['bank'],
   district: '全部区域',
-  // 默认只显示「网点」：368 台 ATM 与 1485 个网点叠在一起会糊成一片；
-  // 地图同一时间只展示一类，需要看 ATM 时手动切换
   branchType: 'branch',
   priceRange: null,
   yearRange: null,

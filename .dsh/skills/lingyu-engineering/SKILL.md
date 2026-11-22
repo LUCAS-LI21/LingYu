@@ -16,14 +16,14 @@ whenToUse: 在本仓库继续开发、重构、部署或编写交付文档时加
 
 ## 命名与注释
 
-| 类型 | 规范 | 反例 |
-| --- | --- | --- |
-| 目录/文件 | `kebab-case`，英文 | `一键部署.md`、`build_db_doc.py` |
-| Vue 组件 | `PascalCase.vue` | `detailpanel.vue` |
-| Java 类 | `PascalCase`，按领域分包 | `Utils2.java` |
-| 接口路径 | `/api/v1/<resource>`，复数名词 | `/getData` |
-| 注释 | 1-3 行说明职责/约束 | 大段设计缘由、表情符号、"注意这里" |
-| 文档 | 结论先行、表格化 | 过程流水账、口语化 |
+| 类型      | 规范                           | 反例                               |
+| --------- | ------------------------------ | ---------------------------------- |
+| 目录/文件 | `kebab-case`，英文             | `一键部署.md`、`build_db_doc.py`   |
+| Vue 组件  | `PascalCase.vue`               | `detailpanel.vue`                  |
+| Java 类   | `PascalCase`，按领域分包       | `Utils2.java`                      |
+| 接口路径  | `/api/v1/<resource>`，复数名词 | `/getData`                         |
+| 注释      | 1-3 行说明职责/约束            | 大段设计缘由、表情符号、"注意这里" |
+| 文档      | 结论先行、表格化               | 过程流水账、口语化                 |
 
 ## 部署要点
 

@@ -21,7 +21,7 @@ interface ServerPoi {
   branchType?: 'branch' | 'atm' | null
   phone?: string | null
   openingHours?: string | null
-  /** 服务类型：对公/对私/自助（逗号分隔，来自官网文本） */
+  /** 服务类型：对公/对私/自助，逗号分隔 */
   serviceTypes?: string | null
   gcjLng?: number | null
   gcjLat?: number | null
@@ -48,7 +48,7 @@ interface ServerPoi {
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  // 运营接口需要 Bearer token；其余接口带了也无害
+  // 运营接口需要 Bearer token
   const token = getToken()
   if (token) {
     headers.Authorization = `Bearer ${token}`
@@ -73,7 +73,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
 
 const request = apiRequest
 
-/** 探测后端是否可用；失败即整体降级到本地 mock，保证离线也能演示 */
+/** 探测后端可用性：超时 2.5s，失败降级到本地数据 */
 export async function probeServer(): Promise<boolean> {
   try {
     const data = await request<{ status: string }>('/health', {
@@ -134,7 +134,7 @@ function toPoi(row: ServerPoi): Poi {
   }
 }
 
-/** Pages 静态演示：构建时 VITE_DEMO_DATA=1，数据来自 public/demo-data/*.json */
+/** 静态演示模式：VITE_DEMO_DATA=1 时读 public/demo-data/*.json */
 export const demoDataMode = import.meta.env.VITE_DEMO_DATA === '1'
 
 async function demoJson<T>(name: string): Promise<T> {
@@ -144,7 +144,7 @@ async function demoJson<T>(name: string): Promise<T> {
 }
 
 export async function fetchAllPois(): Promise<Poi[]> {
-  // view=lite：地图/列表只需要核心字段，整包体积约减 60%（详情接口仍取全量）
+  // view=lite：只取核心字段，减少响应体积
   if (demoDataMode) {
     const data = await demoJson<{ items: ServerPoi[]; total: number }>('pois')
     return data.items.map(toPoi)
@@ -160,7 +160,7 @@ export interface FieldSource {
   updatedAt: string
 }
 
-/** 字段级来源：回答"这条地址/电话是哪来的" */
+/** 字段级来源 */
 export async function fetchFieldSources(id: string): Promise<FieldSource[]> {
   const rows = await request<
     Array<{ field: string; source: string; source_url?: string; updated_at?: string }>
@@ -181,7 +181,7 @@ export interface ServerStats {
   community: number
   districts: number
   brands: Array<{ label: string; value: number }>
-  /** 区域维度：每区银行数与小区数（可能为空数组，旧后端） */
+  /** 每区银行数与小区数；旧后端可能为空 */
   byDistrict?: Array<{ label: string; bank: number | string; community: number | string }>
   priceBuckets: Array<{ label: string; value: number }>
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
@@ -243,14 +243,14 @@ export interface HotspotKeyword {
 
 export interface Hotspots {
   items: HotspotItem[]
-  /** 面向用户的热门搜索词（原始网格坐标只在运营后台用） */
+  /** 热门搜索词 */
   keywords?: HotspotKeyword[]
-  /** 近 7 天关键词搜索总次数（与网格口径分开） */
+  /** 近 7 天关键词搜索总次数 */
   totalSearches?: number
   totalQueries: number
 }
 
-/** 查询热点（公开接口）：query_log 聚合的近 7 天热门搜索 */
+/** 查询热点：query_log 聚合的近 7 天数据 */
 export async function fetchHotspots(limit = 8): Promise<Hotspots> {
   if (demoDataMode) return demoJson<Hotspots>('hotspots')
   return request<Hotspots>(`/hotspots?limit=${limit}`)

@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-OUT = Path("docs/preliminary/src/03-数据库设计.md")
+OUT = Path("docs/preliminary/src/03-database-design.md")
 
 TABLES = {
     "poi_bank": (
@@ -54,7 +54,7 @@ COLS = {
     "created_at": ("创建时间", "记录落库时间"),
     "built_year": ("建成年份", "竣工验收备案来源为真实值"),
     "avg_price": ("官方参考均价", "元/平方米，仅放官方来源"),
-    "avg_price_demo": ("演示均价", "哈希生成的演示值，不参与筛选/排序/统计"),
+    "avg_price_demo": ("演示均价", "历史列，演示值已清理，当前为空"),
     "avg_price_source": ("均价来源", "`demo` 演示 / `gov_reference` 官方参考价"),
     "property_fee": ("物业费", "元/㎡·月"),
     "property_company": ("物业公司", "政府物业项目库匹配结果"),
@@ -67,7 +67,7 @@ COLS = {
     "rent_gc": ("高层租金", "政府租赁参考价"),
     "rent_dmd": ("低密度租金", "政府租赁参考价"),
     "developer": ("建设单位", "竣工验收备案中的建设单位/开发商"),
-    "demo_attributes": ("演示字段标记", "1 表示含演示值"),
+    "demo_attributes": ("演示字段标记", "1 表示含演示值；当前已全部置 0"),
     "code": ("编号", "反馈编号，形如 FB20261119-0103"),
     "poi_type": ("POI 类型", "`bank` / `community`"),
     "poi_id": ("POI 主键", "指向主表 `id`"),

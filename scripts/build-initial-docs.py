@@ -24,8 +24,8 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "docs", "初赛", "src")
-OUT = os.path.join(ROOT, "docs", "初赛")
+SRC = os.path.join(ROOT, "docs", "preliminary", "src")
+OUT = os.path.join(ROOT, "docs", "preliminary")
 
 SONG = "宋体"
 MONO = "Consolas"
@@ -491,7 +491,7 @@ def add_body(doc, blocks):
             add_table(doc, payload)
         elif kind == "img":
             alt, path = payload
-            full = os.path.join(ROOT, "docs", "初赛", path) if not os.path.isabs(path) else path
+            full = os.path.join(ROOT, "docs", "preliminary", path) if not os.path.isabs(path) else path
             if not os.path.exists(full):
                 print(f"  ! 缺图 {full}")
                 continue
@@ -525,7 +525,7 @@ def estimate_pages(blocks):
         elif kind == "img":
             from PIL import Image
 
-            full = os.path.join(ROOT, "docs", "初赛", payload[1])
+            full = os.path.join(ROOT, "docs", "preliminary", payload[1])
             with Image.open(full) as im:
                 w, h = im.size
             cm += 12.0 * h / w + 1.2
@@ -536,13 +536,13 @@ def estimate_pages(blocks):
 
 # ---------------------------------------------------------------- 主流程
 DOCS = [
-    ("01-requirements-analysis.md", "01_需求分析.docx", "01"),
-    ("02-原型设计.md", "02_原型设计.docx", "02"),
-    ("03-数据库设计.md", "03_数据库设计.docx", "03"),
-    ("04-接口设计.md", "04_接口设计.docx", "04"),
-    ("05-初步验证.md", "05_初步验证.docx", "05"),
-    ("设计文档（精简版）.md", "设计文档（精简版）.docx", "design"),
-    ("可行性分析.md", "可行性分析.docx", "feasibility"),
+    ("01-requirements-analysis.md", "01-requirements-analysis.docx", "01"),
+    ("02-prototype-design.md", "02-prototype-design.docx", "02"),
+    ("03-database-design.md", "03-database-design.docx", "03"),
+    ("04-api-design.md", "04-api-design.docx", "04"),
+    ("05-initial-validation.md", "05-initial-validation.docx", "05"),
+    ("design-document-condensed.md", "design-document-condensed.docx", "design"),
+    ("feasibility-analysis.md", "feasibility-analysis.docx", "feasibility"),
 ]
 
 

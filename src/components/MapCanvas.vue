@@ -9,7 +9,7 @@ const props = defineProps<{
   selectedId?: string | null
   /** 底图：浅灰（默认）/ 彩色 / 卫星 */
   baseMap?: 'light' | 'color' | 'satellite'
-  /** 开场动画：地图先落在远视角，由 MapIntro 汇合后再飞入深圳 */
+  /** 开场动画：远视角起步，由 MapIntro 汇合后飞入深圳 */
   cinematic?: boolean
 }>()
 
@@ -33,16 +33,16 @@ let introMode = false
 let introDoneEmitted = false
 let introFallback: number | null = null
 
-/** 已渲染的 marker 缓存：只做增删差量，避免每次 moveend 全量重建 */
+/** 已渲染 marker 缓存，按差量增删 */
 const rendered = new Map<string, L.Marker>()
 let renderTimer: number | null = null
 
-// 福田中心区，初始视野聚焦以便看清点位
+// 初始视野：福田中心区
 const SHENZHEN_CENTER: L.LatLngTuple = [22.5412, 114.0579]
 const INITIAL_ZOOM = 14
 
 function pinIcon(poi: Poi, active: boolean): L.DivIcon {
-  // ATM 单独一个类，颜色与网点区分开（两类互斥展示，不会同时上屏）
+  // ATM 使用独立样式类，两类互斥展示
   const atmClass = poi.type === 'bank' && poi.branchType === 'atm' ? ' poi-pin--atm' : ''
   return L.divIcon({
     className: 'poi-marker',
@@ -97,14 +97,13 @@ function openPopup(marker: L.Marker, poi: Poi): void {
   })
 }
 
-/** 只渲染当前视野内的点；低 zoom 时按网格聚合成带数字的圆点 */
+/** 只渲染当前视野内的点 */
 function renderMarkers(): void {
-  // 开场动画期间不铺点：地图还在远视角，铺了只会闪一下
+  // 开场动画期间不铺点
   if (!map || !markerLayer || introMode) return
   const bounds = map.getBounds().pad(0.12)
   const next = new Map<string, L.Marker>()
 
-  // 统一用白环蓝心小点：不做聚合、不画大圆，任何缩放级别都是同一种标记
   for (const poi of props.pois) {
     const inside = bounds.contains([poi.lat, poi.lng])
     if (!inside && poi.id !== props.selectedId) continue
@@ -127,7 +126,7 @@ function renderMarkers(): void {
     next.set(poi.id, marker)
   }
 
-  // 差量清理：把这次没出现的 marker 从地图上摘掉
+  // 移除本次未出现的 marker
   for (const [key, marker] of rendered) {
     if (!next.has(key)) {
       markerLayer.removeLayer(marker)
@@ -137,7 +136,7 @@ function renderMarkers(): void {
   for (const [key, marker] of next) rendered.set(key, marker)
 }
 
-/** moveend/zoomend 会连续触发，防抖后再算，避免拖动时反复重建 */
+/** moveend/zoomend 防抖 160ms 后渲染 */
 function scheduleRender(): void {
   if (renderTimer !== null) window.clearTimeout(renderTimer)
   renderTimer = window.setTimeout(() => {
@@ -146,16 +145,7 @@ function scheduleRender(): void {
   }, 160)
 }
 
-/**
- * 底图源。
- *
- * 为什么是 Esri 而不是 CARTO/OSM：
- * - CARTO 的栅格底图现在返回「API KEY REQUIRED」占位图（200 但内容是水印）
- * - 本机网络下 tile.openstreetmap.org 不可达（000），OSM 官方瓦片只能作为远端兜底
- * - Esri 的三个服务实测都是真 JPEG：浅灰 / 街道 / 影像
- *
- * 署名必须保留（Esri 的条款要求显示版权信息）。
- */
+/** 底图瓦片源；Esri 服务要求保留版权署名，OSM 瓦片仅作兜底 */
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services'
 const BASE_MAPS = {
   light: {
@@ -211,7 +201,7 @@ function applyBaseMap(target: L.Map, kind: keyof typeof BASE_MAPS): void {
   layer.addTo(target)
   baseLayer = layer
 
-  // 浅灰底图不含注记，叠一层 reference（道路/地名标签）
+  // 浅灰底图不含注记，叠加 reference 标签层
   if ('overlay' in config && config.overlay) {
     overlayLayer = L.tileLayer(config.overlay, {
       maxZoom: 19,
@@ -247,7 +237,7 @@ function emitIntroDone(): void {
   emit('introDone')
 }
 
-/** 粒子汇合结束：地图从远视角飞入深圳，然后铺点 */
+/** 粒子汇合结束后地图飞入深圳并铺点 */
 function beginZoom(): void {
   if (!map) {
     emitIntroDone()
@@ -259,7 +249,7 @@ function beginZoom(): void {
   }
   map.flyTo(SHENZHEN_CENTER, INITIAL_ZOOM, { duration: 1.8, easeLinearity: 0.2 })
   map.once('moveend', finishIntro)
-  // 兜底：瓦片或动画事件异常时也要落位
+  // 动画事件异常时兜底落位
   introFallback = window.setTimeout(finishIntro, 3200)
 }
 

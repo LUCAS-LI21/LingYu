@@ -44,8 +44,7 @@ export default defineConfig({
       },
       {
         text: '调研与核查',
-        items: [
-        ],
+        items: [],
       },
       {
         text: '全流程方法',

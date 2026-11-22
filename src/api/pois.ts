@@ -15,17 +15,17 @@ import { saveFeedbackRecord } from '@/lib/feedbackHistory'
 import type { BranchType, CommunityPoi, Filters, Poi, PoiDataset, PoiType } from '@/types/poi'
 
 let serverMode: boolean | null = null
-/** 后端是否在线：null 未知 / true 在线 / false 离线（供页面提示降级用） */
+/** 后端在线状态：null 未知 / true 在线 / false 离线 */
 export const backendOnline = ref<boolean | null>(null)
 let probing: Promise<boolean> | null = null
-/** 上次探活结束时间：离线不再永久缓存，10s 后允许重试（否则后端晚启动一次就永远 339 条） */
+/** 上次探活时间；离线冷却 10s 后允许重试 */
 let lastProbeAt = 0
 const OFFLINE_RETRY_MS = 10_000
 
-/** 后端在线则走真实接口，否则整体降级到本地种子数据（离线也能演示） */
+/** 后端在线走真实接口，否则降级到本地种子数据 */
 export async function isServerMode(): Promise<boolean> {
   if (serverMode === true) return true
-  // 离线状态：冷却期过后重新探活，避免一次超时把全站永久锁在 mock
+  // 离线冷却期内直接返回，冷却结束后重新探活
   if (serverMode === false && Date.now() - lastProbeAt < OFFLINE_RETRY_MS && !probing) {
     return false
   }
@@ -34,7 +34,6 @@ export async function isServerMode(): Promise<boolean> {
       .then((value) => {
         serverMode = value
         lastProbeAt = Date.now()
-        // 页面横幅依赖这个响应式状态；之前只写了非响应式的 serverMode，横幅永远不出现
         backendOnline.value = value
         return value
       })
@@ -51,7 +50,7 @@ export async function isServerMode(): Promise<boolean> {
   return probing
 }
 
-/** 深圳 10 区近似中心，用于把坐标归到行政区（MVP 用最近质心，后端接入后换成点面判定） */
+/** 深圳 10 区近似中心，按最近质心归属行政区 */
 const DISTRICT_ANCHORS = [
   { name: '福田区', lng: 114.055, lat: 22.541 },
   { name: '罗湖区', lng: 114.131, lat: 22.548 },
@@ -64,8 +63,6 @@ const DISTRICT_ANCHORS = [
   { name: '光明区', lng: 113.936, lat: 22.748 },
   { name: '大鹏新区', lng: 114.479, lat: 22.596 },
 ]
-
-/** FNV-1a：给演示属性一个稳定的伪随机源，同名小区每次刷新数值一致 */
 
 function nearestDistrict(lng: number, lat: number): string {
   let best = DISTRICT_ANCHORS[0]!
@@ -125,9 +122,7 @@ function normalize(raw: Record<string, unknown>): Poi | null {
     }
   }
 
-  // 小区属性只认后端真实字段：没有就留空，不再用哈希生成「演示均价/年份/物业费」。
-  // 假数据一旦标成「演示」仍会被当成数据看，直接不展示更诚实。
-  // 防御：后端若仍返回 demo_attributes=1 的历史演示值，年份/物业费一律不展示。
+  // 小区属性只取后端真实字段；demo_attributes=1 的历史演示值不展示
   const demo = raw.demoAttributes === true || Number(raw.demoAttributes) === 1
   const community: CommunityPoi = {
     ...base,
@@ -147,17 +142,13 @@ function normalize(raw: Record<string, unknown>): Poi | null {
 let cache: Poi[] | null = null
 let loading: Promise<Poi[]> | null = null
 
-/**
- * 让点位缓存失效。
- * 管理后台审核/标注/导入之后必须调用，否则列表和地图还是旧数据，
- * 演示「反馈审核后立即生效」时会看起来没反应。
- */
+/** 清空点位缓存；后台审核/标注/导入后需调用 */
 export function invalidatePoiCache(): void {
   cache = null
   loading = null
 }
 
-/** 过滤「29栋」「3号楼」这类建筑级命名，小区名应至少有一个非数字字符 */
+/** 过滤「29栋」「3号楼」类建筑级命名 */
 function isNoiseName(name: string): boolean {
   const value = name.trim()
   if (value.length < 2) return true
@@ -174,7 +165,7 @@ export async function loadPois(): Promise<Poi[]> {
       cache = remote.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
       return cache
     }
-    // 优先走真实后端；失败则静默降级到本地种子，保证演示不中断
+    // 优先真实后端，失败降级到本地种子数据
     if (await isServerMode()) {
       try {
         const remote = await fetchAllPois()
@@ -193,10 +184,9 @@ export async function loadPois(): Promise<Poi[]> {
     const pois = dataset.pois
       .map(normalize)
       .filter((item): item is Poi => item !== null)
-      // OSM 里大量建筑被标成 residential 并命名为「29栋」这类，对业务无意义
       .filter((poi) => poi.type === 'bank' || !isNoiseName(poi.name))
 
-    // OSM 里同一小区常被拆成多个地块，按名称去重并优先保留带地址的那条
+    // 同小区多地块按名称去重，保留地址更长的一条
     const byName = new Map<string, Poi>()
     for (const poi of pois) {
       const key = poi.type === 'community' ? `c:${poi.name}` : poi.id
@@ -233,7 +223,7 @@ export interface QueryEvent {
   maxYear?: number
 }
 
-/** 把用户搜索行为记到后端 query_log：复用 /pois（size=1），失败静默不影响主流程 */
+/** 记录查询行为到后端 query_log（复用 /pois，size=1），失败静默 */
 export async function recordQuery(event: QueryEvent): Promise<void> {
   if (!(await isServerMode())) return
   const params = new URLSearchParams({ size: '1' })
@@ -257,7 +247,7 @@ export async function recordQuery(event: QueryEvent): Promise<void> {
   try {
     await apiRequest<unknown>(`/pois?${params.toString()}`)
   } catch {
-    // 行为埋点失败不影响查询本身；热点分析可接受少量缺失
+    // 埋点失败静默
   }
 }
 
@@ -274,7 +264,7 @@ function districtBounds(district?: string): QueryBounds | undefined {
   }
 }
 
-/** 本地全量检索：用于纠错表单选点位，避免每次输入都打后端 */
+/** 本地全量检索，最多返回 limit 条 */
 export async function searchPois(keyword: string, limit = 8): Promise<Poi[]> {
   const term = keyword.trim().toLowerCase()
   if (!term) return []
@@ -292,11 +282,7 @@ export interface QueryOptions {
   pageSize?: number
 }
 
-/**
- * 品牌打散：按完整度排序后，同一品牌最多连续 maxRun 条。
- * 否则字段最全的那家银行会霸屏（广发官网字段最全，一度占了首屏全部）。
- * 做法是稳定的贪心交换：遇到超限就向后找第一个不同品牌的记录换上来，其余顺序不变。
- */
+/** 同一品牌最多连续 maxRun 条 */
 function diversifyBrands(list: Poi[], maxRun = 2): Poi[] {
   const brandOf = (poi: Poi): string => (poi.type === 'bank' ? poi.brand || '' : '')
   const out = list.slice()
@@ -307,7 +293,6 @@ function diversifyBrands(list: Poi[], maxRun = 2): Poi[] {
     if (brand && brand === runBrand) {
       runCount += 1
       if (runCount > maxRun) {
-        // 找后面第一条不同品牌的记录，把它换到当前位置
         const swapAt = out.findIndex((item, j) => j > i && brandOf(item) !== brand)
         if (swapAt > i) {
           const [moved] = out.splice(swapAt, 1)
@@ -323,7 +308,7 @@ function diversifyBrands(list: Poi[], maxRun = 2): Poi[] {
   }
   return out
 }
-/** 数据完整度：地址/价格/年份等字段的加权分（与后端 quality_score 口径一致） */
+/** 数据完整度加权分（与后端 quality_score 口径一致） */
 function qualityScore(poi: Poi): number {
   if (poi.type === 'bank') {
     return (
@@ -348,8 +333,7 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
   const maxYear = filters.yearRange?.[1] ?? null
 
   const result = pois.filter((poi) => {
-    // 关键词搜索跨图层：搜「流塘新村」时用户期望找到小区，
-    // 而不是因为默认只勾了银行就返回「没有符合条件的点位」
+    // 关键词搜索跨图层
     if (!keyword && !filters.layers.includes(poi.type)) return false
     if (filters.district !== '全部区域' && poi.district !== filters.district) return false
     if (bounds) {
@@ -378,7 +362,7 @@ export function filterPois(pois: Poi[], options: QueryOptions): Poi[] {
 
   if (sort === 'name') result.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))
   if (sort === 'default' || sort === 'quality') {
-    // 默认按数据完整度：字段越全越靠前，避免首屏出现"只有名字"的空壳记录
+    // 默认按数据完整度排序
     result.sort((a, b) => {
       const diff = qualityScore(b) - qualityScore(a)
       return diff !== 0 ? diff : a.name.localeCompare(b.name, 'zh-CN')
@@ -442,7 +426,7 @@ export interface Stats {
   /** 区域维度：每区银行数与小区数 */
   byDistrict: Array<{ label: string; bank: number; community: number }>
   priceBuckets: Array<{ label: string; value: number }>
-  /** 小区总数与其中「有官方参考价」的数量，用于标注价格分布样本口径 */
+  /** 小区总数与有官方参考价的数量，价格分布样本口径 */
   priceSample?: { total: number; real_count: number }
   gridTop: Array<{ label: string; value: number; lng: number; lat: number }>
 }
@@ -560,7 +544,7 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<Feedback
       saveFeedbackRecord(record)
       return record
     } catch {
-      // 后端异常时退回本地记录，避免用户白填
+      // 后端异常时退回本地记录
     }
   }
 
@@ -581,7 +565,7 @@ export async function listFeedback(): Promise<FeedbackRecord[]> {
   return [...feedbackStore]
 }
 
-/** 优先走后端统计接口，失败返回 null，调用方用本地统计兜底 */
+/** 后端统计接口，失败返回 null，调用方本地兜底 */
 export async function statsFromServer(): Promise<Stats | null> {
   if (demoDataMode) {
     const res = await fetch(`${import.meta.env.BASE_URL}demo-data/stats.json`).catch(() => null)
@@ -591,7 +575,7 @@ export async function statsFromServer(): Promise<Stats | null> {
   if (!(await isServerMode())) return null
   try {
     const remote = await fetchStatsRemote()
-    // JDBC 的 SUM() 会以字符串返回，统一转数字；旧后端没有 byDistrict 时给空数组
+    // JDBC SUM() 返回字符串，统一转数字
     return {
       ...remote,
       brands: remote.brands ?? [],
@@ -608,7 +592,7 @@ export async function statsFromServer(): Promise<Stats | null> {
   }
 }
 
-/** 字段级来源：后端在线才有，离线返回 null 让界面隐藏该区块 */
+/** 字段级来源：仅后端在线时可用，离线返回 null */
 export async function fieldSourcesFromServer(poi: Poi): Promise<FieldSource[] | null> {
   if (!(await isServerMode())) return null
   try {
@@ -617,7 +601,7 @@ export async function fieldSourcesFromServer(poi: Poi): Promise<FieldSource[] | 
     return null
   }
 }
-/** 优先走后端球面距离查询，失败返回 null 让调用方本地兜底 */
+/** 后端球面距离查询，失败返回 null，调用方本地兜底 */
 export async function nearbyFromServer(
   poi: Poi,
   radius: number,
@@ -632,8 +616,7 @@ export async function nearbyFromServer(
 }
 
 /**
- * L2 实时层（ADR-0001）：仅展示、不落库。
- * 前端优先保证「无 Key 时优雅降级」，接入后端后改调 /api/v1/live/nearby。
+ * L2 实时层（ADR-0001）：仅展示、不落库；无 Key 时降级为本地库数据。
  */
 export interface LiveResult {
   enabled: boolean
@@ -712,7 +695,7 @@ export interface PendingCommunity {
   district: string
   street: string
   attribute: string
-  /** 官方成交参考价（已匹配到的才有），转正时会带入 */
+  /** 官方成交参考价 */
   avg_price?: number | null
 }
 
@@ -749,7 +732,7 @@ export async function fetchCommunityPending(params: {
   }
 }
 
-/** 某银行网点周边的小区（赛题「某银行服务范围内的小区」） */
+/** 银行网点周边小区 */
 export interface NearbyCommunity {
   id: string
   name: string

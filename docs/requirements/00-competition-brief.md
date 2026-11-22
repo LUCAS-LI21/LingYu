@@ -81,4 +81,4 @@
 | 模块化/可扩展数据源        | ⚠️ 部分        | 现有 OSM/政府/高德三路，适配器接口待抽象                                                |
 | 前端体验                   | ✅             | 白底卡片、阴影、地图交互                                                                |
 | robots 合规                | ✅             | 逐站核验，链家/贝壳禁用                                                                 |
-| **独立部署方案**           | ✅ 文件就绪    | `docker-compose.yml` + 双 Dockerfile + `docs/deploy/one-click-deployment.md`（未实跑）              |
+| **独立部署方案**           | ✅ 文件就绪    | `docker-compose.yml` + 双 Dockerfile + `docs/deploy/one-click-deployment.md`（未实跑）  |

@@ -13,7 +13,6 @@ import { copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const BASE = process.env.DEMO_BASE || 'http://127.0.0.1:8081'
-const API = process.env.DEMO_API || 'http://127.0.0.1:18080'
 const PASSWORD = process.env.OPERATOR_PASSWORD || ''
 const OUT = 'docs/demo'
 const RAW = join(OUT, 'raw-full')
@@ -53,7 +52,9 @@ function writeSubtitles(durationMs, name) {
 
 function writePlayer(durationMs, name, title) {
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-  const rows = captions.map((c) => `<tr><td>${srtTime(c.ms)}</td><td>${esc(c.text)}</td></tr>`).join('\n')
+  const rows = captions
+    .map((c) => `<tr><td>${srtTime(c.ms)}</td><td>${esc(c.text)}</td></tr>`)
+    .join('\n')
   writeFileSync(
     join(OUT, `${name}.html`),
     `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>${title}</title>
@@ -99,7 +100,11 @@ async function main() {
   const pin = page.locator('.poi-pin:visible').first()
   if (await pin.count()) {
     await pin.click({ force: true })
-    await page.locator('.leaflet-popup-content').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {})
+    await page
+      .locator('.leaflet-popup-content')
+      .first()
+      .waitFor({ state: 'visible', timeout: 5000 })
+      .catch(() => {})
     await wait(2400)
     mark('点开任意点位：地址 / 营业时间 / 服务类型 / 数据来源')
     await shot('full-03-pin-detail')
@@ -141,7 +146,10 @@ async function main() {
   await shot('full-06-list')
   const selects = page.locator('select')
   if ((await selects.count()) >= 2) {
-    await selects.nth(1).selectOption({ index: 3 }).catch(() => {})
+    await selects
+      .nth(1)
+      .selectOption({ index: 3 })
+      .catch(() => {})
     await wait(1800)
     mark('按区域/均价/建成年份组合筛选')
   }
@@ -201,14 +209,20 @@ async function main() {
     await page.getByRole('button', { name: '登录' }).click()
     await wait(2600)
   }
-  await page.getByRole('button', { name: /反馈审核/ }).click().catch(() => {})
+  await page
+    .getByRole('button', { name: /反馈审核/ })
+    .click()
+    .catch(() => {})
   await wait(3600)
   mark('审核通过：写主表 + 记录版本 + 字段来源，前台立即生效')
   await shot('full-11-admin-review')
   if (feedbackCode) {
     const row = page.locator('li', { hasText: feedbackCode }).first()
     if (await row.count()) {
-      await row.getByRole('button', { name: '采纳生效' }).click().catch(() => {})
+      await row
+        .getByRole('button', { name: '采纳生效' })
+        .click()
+        .catch(() => {})
       await wait(2800)
       mark('采纳成功：数据版本 +1，地图与列表同步更新')
       await shot('full-12-admin-approved')
@@ -217,7 +231,11 @@ async function main() {
 
   // ---------- 8. Agent 质量巡检 ----------
   mark('数据接入 Agent：来源白名单 + 质量巡检')
-  await page.getByRole('button', { name: /Agent/ }).first().click().catch(() => {})
+  await page
+    .getByRole('button', { name: /Agent/ })
+    .first()
+    .click()
+    .catch(() => {})
   await wait(3000)
   await shot('full-13-agent')
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))

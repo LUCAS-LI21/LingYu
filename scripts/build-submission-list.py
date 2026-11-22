@@ -8,40 +8,40 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 
-OUT = os.path.join("docs", "初赛", "00_提交清单.xlsx")
+OUT = os.path.join("docs", "preliminary", "00-submission-checklist.xlsx")
 
 ROWS = [
-    ("00_提交清单", "本文件。列出全部提交物、格式与内容概要，便于评审核对。"),
+    ("00-submission-checklist", "本文件。列出全部提交物、格式与内容概要，便于评审核对。"),
     (
-        "01_需求分析",
+        "01-requirements-analysis",
         "需求理解（约 600 字）、题目要求对应的 18 项功能清单、8 项新增功能、2 张核心流程图（业务闭环、采集入库）。",
     ),
     (
-        "02_原型设计",
+        "02-prototype-design",
         "14 个界面的清单与内容说明，附地图、待定位网点、离线降级三张部署环境截图。",
     ),
     (
-        "03_数据库设计",
+        "03-database-design",
         "17 张表/视图的清单与关系、逐表字段说明（字段名/类型/中文名/解释）、建表 SQL 与迁移机制。",
     ),
     (
-        "04_接口设计",
+        "04-api-design",
         "44 个接口清单，21 节接口详情（路由、方法、参数、涉及表、返回示例），公共约定与错误码。",
     ),
     (
-        "05_初步验证",
+        "05-initial-validation",
         "13 项验证清单与结果：接口快照 20/20、接口验收 32/32、落库与覆盖率、三条闭环实测、AI 抽取样例、部署与降级截图。",
     ),
     (
-        "设计文档（精简版）",
+        "design-document-condensed",
         "赛题要求的精简版设计文档，不超过 10 页：系统架构图、业务闭环流程图、核心接口定义、关键表结构。",
     ),
     (
-        "可行性分析",
+        "feasibility-analysis",
         "技术 / 数据 / 时间三维度论证，附主要难点与应对预案。",
     ),
     (
-        "06_其他（代码仓库与演示）",
+        "06-other（仓库与演示）",
         "仓库已含 Codespaces 配置、CI 与 MIT LICENSE；README 顶部 OWNER/REPO 占位需替换为实际仓库地址。演示视频待录制。",
     ),
 ]

@@ -10,9 +10,7 @@ const ENDPOINT = import.meta.env.VITE_ANALYTICS_ENDPOINT
 let sentry: SentryModule | null = null
 let started = false
 
-/**
- * 统一埋点出口：同一份事件同时满足「自建分析」和「Sentry 面包屑」两条链路。
- */
+/** 统一埋点出口：自建分析 + Sentry 面包屑 */
 export function track(event: string, payload: Payload = {}): void {
   const body = { event, payload, path: window.location.pathname, ts: Date.now() }
 
@@ -55,8 +53,8 @@ function installErrorHooks(): void {
 }
 
 /**
- * 业务闭环初始化：错误监控（Sentry）+ Core Web Vitals + 全局异常兜底。
- * 未配置 DSN 时自动降级为纯埋点模式，保证本地/CI 不产生噪音。
+ * 初始化错误监控（Sentry）、Core Web Vitals 与全局异常兜底。
+ * 未配置 DSN 时降级为纯埋点模式。
  */
 export async function initTelemetry(app: App): Promise<void> {
   if (started) return

@@ -1,8 +1,4 @@
-/**
- * GCJ-02 → WGS-84。
- * 后端库坐标是 WGS-84；微信地图/chooseLocation 返回 GCJ-02。
- * 提交待定位小区坐标前转换成 WGS-84，避免入库偏移。
- */
+/** GCJ-02 → WGS-84：微信定位返回 GCJ-02，入库与 Leaflet 使用 WGS-84。 */
 const PI = Math.PI
 const A = 6378245.0
 const EE = 0.00669342162296594323

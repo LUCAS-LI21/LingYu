@@ -1,11 +1,6 @@
 const { get } = require('../../utils/api')
 
-/**
- * 查询热点：消费公开接口 /hotspots（query_log 聚合的近 7 天热门网格）。
- *
- * 与 Web 洞察页同一个数据源；热点是「用户搜了什么 → 采集优先补哪里」的对外可见半环，
- * 之前只有运营后台能看到。
- */
+/** 查询热点：读取公开接口 /hotspots。 */
 Page({
   data: {
     loading: true,
@@ -54,7 +49,7 @@ Page({
     }
   },
 
-  /** 点一条看详情：给出网格坐标与空结果提示，可复制坐标去地图定位 */
+  /** 查看网格详情 */
   onTapItem(e) {
     const item = this.data.items[e.currentTarget.dataset.index]
     if (!item) return
